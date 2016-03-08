@@ -3,7 +3,10 @@
 *** STILL IN DEVELOPMENT ***
 
 This application reads an RDF data file that describes a web application using the [knowledgelinks.io][KL] data-structures RDF Vocabulary. The current test web application is for issuing and hosting [Open Badges][OPENBADGE].
-@prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
+
+###RDF Namespaces
+PREFIX kds: http://knowledgelinks.io/ns/data-structures/
+PREFIX kdr: http://knowledgelinks.io/ns/data-resources/
 
 ## Introduction
 The versitility of RDF allows a simple means for describing anything. Using our developed vocabulary for describing a web application we are building a framework for a highly customizable, secure and a fully RDF/bigdata integrated web application framework. Since RDF databases do not have an inherent forced data structures like SQL Databases (i.e. table defs, primary keys, etc) they have great flexibility, however they are left open to having a lot of junk data. To solve this problem the kds vocabulary completely integrates with the any other RDF vocabulary (i.e. schema, FOAF, etc.) by augmenting those vocabularies with how they are to be used in the specific application. 
