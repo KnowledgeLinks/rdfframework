@@ -10,7 +10,7 @@ The versitility of RDF allows a simple means for describing anything. Using our 
 
 ## Installation
 This is set to run as a python package but does not need to be installed as a package. Add this repository as a git submodule 
-Then add sys.path.append(os.path.realpath('./ebadges/rdfframework')) to your root init or application start-up
+Then add sys.path.append(os.path.realpath('./....path-to..../rdfframework')) to your root init or application start-up
 
 ### From source
 
