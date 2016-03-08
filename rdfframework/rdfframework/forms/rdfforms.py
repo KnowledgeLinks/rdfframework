@@ -54,10 +54,13 @@ class Form(flask_wtf.Form):
         self.save_subject_uri = None
         self.save_results = None
         self.data_subject_uri = kwargs.get("subject_uri",self.data_subject_uri)
-        self.edit_path = "{}{}?id={}".format(\
-                self.base_url,
-                rdfw().get_form_path(self.form_uri, "kdr_EditForm"),
-                self.data_subject_uri)
+        edit_path = rdfw().get_form_path(self.form_uri, "kdr_EditForm")
+        self.edit_path = None
+        if edit_path:
+            self.edit_path = "{}{}?id={}".format(\
+                    self.base_url,
+                    edit_path,
+                    self.data_subject_uri)
         self.display_path = "{}{}?id={}".format(\
                 self.base_url,
                 rdfw().get_form_path(self.form_uri, "kdr_DisplayForm"),
