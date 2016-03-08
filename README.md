@@ -6,6 +6,7 @@ This application reads an RDF data file that describes a web application using t
 
 ###RDF Namespaces
 PREFIX kds: http://knowledgelinks.io/ns/data-structures/
+
 PREFIX kdr: http://knowledgelinks.io/ns/data-resources/
 
 ## Introduction
