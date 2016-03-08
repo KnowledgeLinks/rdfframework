@@ -1,72 +1,28 @@
-# Islandora.ca eBadges Repository
+# knowledgelinks.io RDF Framework for web applications
 
-This Flask application allows the [Islandora.ca][ISLANDORA_CA] foundation to issue Camp, special
-projects, and other types of [Open Badges][OPENBADGE]. Badge class
-information and individually issued badge images are stored in a [Fedora 4][FEDORA] digital
-repository.
+*** STILL IN DEVELOPMENT ***
+
+This application reads an RDF data file that describes a web application using the [knowledgelinks.io][KL] data-structures RDF Vocabulary. The current test web application is for issuing and hosting [Open Badges][OPENBADGE].
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> 
 
 ## Introduction
-The [Islandora.ca][ISLANDORA_CA] eBadges Repository application provides a 
-light-weight web front-end for issuing and hosting [Open Badges][OPENBADGE] by the
-Islandora Foundation and possible use by other organizations.
+The versitility of RDF allows a simple means for describing anything. Using our developed vocabulary for describing a web application we are building a framework for a highly customizable, secure and a fully RDF/bigdata integrated web application framework. Since RDF databases do not have an inherent forced data structures like SQL Databases (i.e. table defs, primary keys, etc) they have great flexibility, however they are left open to having a lot of junk data. To solve this problem the kds vocabulary completely integrates with the any other RDF vocabulary (i.e. schema, FOAF, etc.) by augmenting those vocabularies with how they are to be used in the specific application. 
 
 ## Installation
-To install this application, you'll need to install [Python 3][PY3]. Using a
-[virtualenv][VRTENV] to isolate your Python environment from the OS version is 
-highly recommended.
-
-### Using PIP
-This application is available on https://pypi.python.org/ and can be installed
-from the command-line:
-
-`$ pip install IslandoraOpenBadges`  
+This is set to run as a python package but does not need to be installed as a package. Add this repository as a git submodule 
+Then add sys.path.append(os.path.realpath('./ebadges/rdfframework')) to your root init or application start-up
 
 ### From source
-To install and use the application from source, 
 
-1.  Clone the repository from github
-
-    `$ git clone https://github.com/Islandora/Islandora-eBadges-Repository.git`
-
-1.  Run setup.py to install
-
-    `$ cd Islandora-eBadges-Repository`
-    `$ python setup.py install`
 
 ## Configuration
-This application requires the following variables to be set prior to running;  
-An **application.cfg** needs be
-created in the root directory. This application is a simple text file with the
-following configuration variables, one per line:
 
-    BADGE_ISSUER_NAME = 'Islandora Foundation'
-    BADGE_ISSUER_URL = 'http://islandora.ca'
-    FEDORA_BASE_URL = 'http//localhost:8080'
 
 ## Usage
-To run the front-end web application in debug mode using the built-in development
-web server, run the following command:
 
-`$ python badges.py serve --host 0.0.0.0 --port 8100`
 
-To create a badge and then issue that badge to individuals requires a running  
-two commands. 
 
-### Create a Badge Class
-Run the following command and answer the prompts to create a Badge Class:
-
-`python badges.py new` 
-
-### Issue an Badge  
-To issue an [Open Badge][OPENBADGE] to an individual that has registered their
-email address and created an [Mozilla Backpack](http://backpack.openbadges.org/)
-account, run the following:
-
-`$ python badges.py issue --email holly@example.com --badge IslandoraCampCO`
-
-This will return an URL to the issued badge PNG image that the user can then
-upload to their backpack.
-
+[KL]: http://knowledgelinks.io/
 [FEDORA]: http://fedora-commons.org/
 [ISLANDORA_CA]: http://islandora.ca/
 [OPENBADGE]: http://openbadges.org/
