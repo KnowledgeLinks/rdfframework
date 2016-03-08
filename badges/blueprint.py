@@ -15,11 +15,12 @@ from flask_negotiate import produces
 from flask.ext.login import login_required, login_user
 
 from . import new_badge_class, issue_badge
-from ..rdfframework.rdfframework.utilities import render_without_request, code_timer, \
+from rdfframework import get_framework as rdfw
+from rdfframework.utilities import render_without_request, code_timer, \
         remove_null, pp, clean_iri, uid_to_repo_uri
-from ..rdfframework.rdfframework import get_framework as rdfw
-from ..rdfframework.rdfframework.forms import rdf_framework_form_factory 
-from ..rdfframework.rdfframework.api import rdf_framework_api_factory
+
+from rdfframework.forms import rdf_framework_form_factory 
+from rdfframework.api import rdf_framework_api_factory
 from .user import User
 
 open_badge = Blueprint("open_badge", __name__,

@@ -12,7 +12,6 @@ vocabulary.
 :copyright: Copyright (c) 2016 by Michael Stabile and Jeremy Nelson.
 :license: To be determined, see LICENSE.txt for details.
 """
-
 from .getframework import get_framework
 from .rdfclass import RdfClass
 from .rdfdatatype import *

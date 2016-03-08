@@ -32,7 +32,13 @@ class RdfFramework(object):
 
     def __init__(self):
         reset = False
-        
+        print(JSON_LOCATION)
+        if not os.path.isdir(JSON_LOCATION):
+            print("Cached JSON directory not found.\nCreating directory")
+            reset = True
+            os.makedirs(JSON_LOCATION)
+        if not os.path.exists(os.path.join(JSON_LOCATION, "app_query.json")):
+            reset = True 
         print("*** Loading Framework ***")
         self._load_rdf_data(reset)
         self._load_app(reset)

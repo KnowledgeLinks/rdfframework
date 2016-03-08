@@ -28,8 +28,7 @@ import re
 import requests
 import time
 import urllib.parse
-import sys
-sys.path.append(os.path.realpath('./web/ebadges/rdfframework'))
+
 try:
     from flask_wtf import Form
 except ImportError:
