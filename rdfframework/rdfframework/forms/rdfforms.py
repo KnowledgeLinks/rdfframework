@@ -322,7 +322,7 @@ def get_form_instructions_json(instructions, instance):
             instructions.get("kds_lookupClassUri", ""))
     _new_instr['kds_lookupPropertyUri'] =\
             _form_instance_info.get('kds_lookupPropertyUri',\
-                    instructions.get("kds_lookupPropertyUri", ""))
+                    instructions.get("kds_lookupPropertyUri"))
     _new_instr['kds_submitSuccessRedirect'] = \
             _form_instance_info.get('kds_submitSuccessRedirect',
                                     instructions.get(\
@@ -333,6 +333,9 @@ def get_form_instructions_json(instructions, instance):
     _new_instr['kds_saveAction'] = \
             _form_instance_info.get('kds_saveAction',
                                     instructions.get("kds_saveAction", ""))
+    _new_instr["kds_lookupPropertyClass"] = \
+            _form_instance_info.get('"kds_lookupPropertyClass"',
+                                    instructions.get("kds_lookupPropertyClass"))                                
 
 # Determine css classes
     #form row css

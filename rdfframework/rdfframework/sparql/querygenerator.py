@@ -28,7 +28,7 @@ def create_data_sparql_query(obj, **kwargs):
     if DEBUG:
         debug = True
     else:
-        debug = False
+        debug = True
     if debug: print("START create_data_sparql_query -----------------------\n")
     from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)
@@ -44,16 +44,20 @@ def create_data_sparql_query(obj, **kwargs):
                 _subject_uri = uid_to_repo_uri(id_value)
                 subject_uri = _subject_uri
                 obj.data_subject_uri = _subject_uri
-    elif kwargs.get("id_value"):
+    elif kwargs.get("id_value") or obj.rdf_instructions.get("kds_lookupPropertyUri"):
         # find the details for formating the sparql query for the supplied
-        # id_value
+        # id_value or lookup via a property Value
+        id_value = kwargs.get("id_value")
+        if not id_value:
+            id_value = subject_uri
         _kds_propUri = obj.rdf_instructions.get("kds_lookupPropertyUri")
-        _rdf_class = getattr(rdfw(),
-                             obj.rdf_instructions.get("kds_lookupClassUri"))
+        _rdf_class_uri = obj.rdf_instructions.get("kds_lookupPropertyClass")
+        if not _rdf_class_uri: 
+            _rdf_class_uri = obj.rdf_instructions.get("kds_lookupClassUri")
+        _rdf_class = getattr(rdfw(),_rdf_class_uri)
         _rdf_prop = _rdf_class.kds_properties[_kds_propUri]
         _range = make_list(_rdf_prop.get("rdfs_range"))[0]
-        _formated_val = RdfDataType(_range.get("rangeClass")).sparql(\
-                kwargs.get("id_value"))
+        _formated_val = RdfDataType(_range.get("rangeClass")).sparql(id_value)
         _lookup_triple = "\t{}\n\t{}\n\t".format(
                 make_triple("?subject",
                             "a",
@@ -65,6 +69,7 @@ def create_data_sparql_query(obj, **kwargs):
         
     subject_lookup = kwargs.get("subject_lookup")
     if subject_lookup:
+        # subject lookup will pull a subject and all of its related data
         _kds_propUri = iri(uri(subject_lookup.kds_propUri))
         _data_type = uri(make_list(subject_lookup.rdfs_range)[0])
         _prop_value = RdfDataType(_data_type).sparql(\
@@ -90,6 +95,7 @@ def create_data_sparql_query(obj, **kwargs):
     if is_not_null(subject_uri):
         # find the primary linkage between the supplied subjectId and
         # other form classes
+        
         for _rdf_class in _sparql_constructor:
             for _prop in _sparql_constructor[_rdf_class]:
                 try:
@@ -105,7 +111,6 @@ def create_data_sparql_query(obj, **kwargs):
         if debug:
             print("+++++++++++++++++++++++ SPARQL Constructor")
             pp.pprint(_sparql_constructor)
-            pp.pprint(obj.dependancies)
         if _sparql_args:
             # create a binding for multi-item results
             if _data_list:
@@ -153,13 +158,23 @@ def create_data_sparql_query(obj, **kwargs):
                     _list_binding = "BIND(?s AS ?itemID) ."
                 else:
                     _list_binding = ''
-                format_string = \
-                            "\t{}BIND({} AS ?s) .\n\t{}\n\t{}\n\t?s ?p ?o ."
-                _sparql_elements.append(format_string.format(
+                if is_not_null(_lookup_triple) and is_not_null(_list_binding):
+                    format_string = \
+                            "{}BIND({} AS ?basesub).\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o ."
+                    _sparql_elements.append(format_string.format(
                             _lookup_triple,
                             iri(subject_uri),
-                            make_triple("?s", "a", iri(uri(_lookup_class_uri))),
-                            _list_binding))
+                            make_triple('?baseSub','a',iri(uri(_lookup_class_uri))),
+                            make_triple('?classID',iri(uri(_sparql_args.get("kds_propUri"))),'?s'),
+                            "BIND(?classID AS ?itemID) ."))
+                else:
+                    format_string = \
+                                "\t{}BIND({} AS ?s) .\n\t{}\n\t{}\n\t?s ?p ?o ."
+                    _sparql_elements.append(format_string.format(
+                                _lookup_triple,
+                                iri(subject_uri),
+                                make_triple("?s", "a", iri(uri(_lookup_class_uri))),
+                                _list_binding))
             for _prop in _sparql_constructor[_rdf_class]:
                 if _rdf_class == _class_uri:
                     if _data_list:

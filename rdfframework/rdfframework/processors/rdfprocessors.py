@@ -6,7 +6,7 @@ from base64 import b64encode
 from dateutil.parser import parse as parse_date
 from passlib.hash import sha256_crypt
 from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
-        slugify, clean_iri, iri, cbool
+        slugify, clean_iri, iri, cbool, remove_null
 from rdfframework import get_framework
 from .imageprocessor import image_processor
 
@@ -341,11 +341,11 @@ def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
         _concat_list[i] = item_val
     
     if return_type == "prop":
-        prop.processed_data = "".join(_concat_list)
+        prop.processed_data = "".join(remove_null(_concat_list))
         #if prop.kds_apiFieldName == "image":
         #S    prop.processed_data = "adfadsf"
     else:
-        return "".join(_concat_list)
+        return "".join(remove_null(_concat_list))
      
    
 def calculator_object_generator(processor, obj, prop, mode, return_type="prop"):   

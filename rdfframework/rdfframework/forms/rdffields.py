@@ -219,11 +219,14 @@ def get_wtform_field(field, instance='', **kwargs):
             _form_field = StringField(_field_label,
                     description=field.get('kds_formFieldHelp', ''))
             field['kds_formFieldName'] = field['kds_formFieldName'] + "_image"
+            
+            print(" image count ")
         else:
             _form_field = [{"kds_fieldName":_field_name +"_image",
                             "kds_field":FileField("Image File")},
                            {"kds_fieldName":_field_name + "_url",
                             "kds_field":StringField("Image Url", [URL])}]
+            x=y
     elif _field_type == 'kdr_SubForm':
         from .rdfforms import rdf_framework_form_factory
         _sub_form_instance = _field_type_obj.get('kds_subFormInstance',\

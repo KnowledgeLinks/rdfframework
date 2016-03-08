@@ -435,10 +435,10 @@ schema:image a rdf:Property;
 		kds:fieldType [
 			a	kdr:ImageFileOrURLField; 
 		];
-		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
-			kds:applicationAction kdr:NotEditable
-		]
+		#kds:formInstance [
+		#	kds:formInstanceType kdr:EditForm;
+		#	kds:applicationAction kdr:NotEditable
+		#]
 	] .
 
 
@@ -1020,7 +1020,7 @@ obi:AssertionPerson a kds:FormClass;
 		]
 	].
 	
-kdr:Badge a kds:FormClass;
+obi:BadgeForm a kds:FormClass;
 	rdfs:label "Badge form";
 	rdfs:comment "Use this form for generating a new Badge.";
 	kds:formInstructions [
@@ -1029,6 +1029,7 @@ kdr:Badge a kds:FormClass;
 		kds:formTitle "Open Badge";
 		kds:formDescription "Badge infomation";
 		kds:lookupClassUri obi:BadgeClass;
+		kds:formUrl "badge";
 		kds:submitSuccessRedirect kdr:DisplayForm;
 		kds:submitFailRedirect "!--currentpage";
 		kds:formInstance [
@@ -1710,4 +1711,95 @@ obi:AssertionApi a kds:ApiClass;
 		] ;
 		kds:apiFieldName "verify";
 	].
+
+obi:PersonAwardsForm a kds:FormClass;
+	rdfs:label "Assertion form";
+	rdfs:comment "Use this form for generating a badge assertion.";
+	kds:formInstructions [
+		kds:form_Method "POST";
+		kds:form_enctype "multipart/form-data";
+		kds:formTitle "Badge Assertions";
+		kds:formUrl "mybadges";
+		kds:formDescription "Awarded Badges";
+		kds:lookupClassUri schema:Person;
+		kds:lookupPropertyUri schema:email;
+		kds:submitSuccessRedirect kdr:DisplayForm;
+		kds:submitFailRedirect "!--currentpage";
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm ;
+			kds:instanceUrl "none"
+		]
+	];
+	kds:hasProperty [
+		kds:propUri schema:givenName;
+		kds:classUri schema:Person;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 1;
+		kds:propertyProcessing [
+			a kdr:CalculationProcessor;
+			kds:calculationType kdr:Concat;
+			kds:calculationSeparator "#;";
+			kds:calculation "<strong>#;<<schema:givenName>>#;,<br><br>Below are a list of badges you have been awarded.<br><br>Click on the claim now button next to each badge to post your badge in your mozilla backpack.</strong>"
+		] ;
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm;
+			kds:formLabelName " ";
+		];
+	];
+	kds:hasProperty [
+		kds:propUri obi:recipient;
+		kds:formFieldOrder 3;
+		kds:formLayoutRow 3;
+		kds:formLabelName "Add recipients:";
+		kds:fieldType [
+			a kdr:SubForm;
+			kds:subFormUri obi:PersonAssertions;
+			kds:subFormInstance kdr:DisplayForm;
+			kds:subFormMode kdr:RepeatingSubForm
+		]
+	].	
 	
+obi:PersonAssertions a kds:FormClass;
+	rdfs:label "Sub-form to be used with the assertion form";
+	rdfs:comment "Sub-form to be used with the assertion form";
+	kds:formInstructions [
+		kds:formTitle "Awardees";
+		kds:formDescription "Award badges";
+		kds:lookupClassUri obi:Assertion;
+		kds:lookupPropertyUri schema:email;
+		kds:lookupPropertyClass schema:Person;
+		kds:formInstance [
+			kds:formInstanceType kdr:DisplayForm
+		]
+	];
+	kds:hasProperty [
+		kds:propUri schema:email;
+		kds:classUri schema:Person;
+		kds:formFieldOrder 4;
+		kds:formLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:LookupAddNewWorkFlow; 
+		]
+	];
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri obi:BadgeClass;
+		kds:formFieldOrder 1;
+		kds:formLayoutRow 1;
+		kds:formLabelName "Image"
+	];
+	kds:hasProperty [
+		kds:propUri schema:name;
+		kds:classUri obi:BadgeClass;
+		kds:formFieldOrder 2;
+		kds:formLayoutRow 2;
+		kds:formLabelName "Badge"
+	];
+	kds:hasProperty [
+		kds:propUri schema:description;
+		kds:classUri obi:BadgeClass;
+		kds:formFieldOrder 3;
+		kds:formLayoutRow 2;
+		kds:formLabelName "Description"
+	].

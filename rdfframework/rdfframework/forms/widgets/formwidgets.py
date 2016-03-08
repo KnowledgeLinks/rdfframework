@@ -84,7 +84,10 @@ class RepeatingSubFormWidget(object):
                 error_msg = ""
                 error_list = []
                 if display_mode:
-                    if hasattr(fld, "selected_display"):
+                    if fld.kds_formFieldName.endswith("_image"):
+                        data = '<img src="/badges/fedora_image?id=%s"></img>' \
+                                % fld.data.replace("<","").replace(">","")
+                    elif hasattr(fld, "selected_display"):
                         data = fld.selected_display
                     else:
                         data = fld.data
