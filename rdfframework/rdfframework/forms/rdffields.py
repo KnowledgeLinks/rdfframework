@@ -226,7 +226,6 @@ def get_wtform_field(field, instance='', **kwargs):
                             "kds_field":FileField("Image File")},
                            {"kds_fieldName":_field_name + "_url",
                             "kds_field":StringField("Image Url", [URL])}]
-            x=y
     elif _field_type == 'kdr_SubForm':
         from .rdfforms import rdf_framework_form_factory
         _sub_form_instance = _field_type_obj.get('kds_subFormInstance',\
