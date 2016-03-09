@@ -558,7 +558,7 @@ class RdfFramework(object):
             print("\tLoading rdf class definitions")
         if reset:
 
-            _sparql = render_without_request("jsonRdfClassDefinitions.rq",
+            _sparql = render_without_request("jsonRDFclassDefinitions.rq",
                                              graph=fw_config().get(\
                                                     'RDF_DEFINITION_GRAPH'))
             _class_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
