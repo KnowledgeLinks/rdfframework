@@ -3,6 +3,7 @@ import re
 import json
 import os
 import requests
+import time
 from wtforms import ValidationError
 from werkzeug.datastructures import MultiDict
 from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
@@ -43,13 +44,19 @@ class RdfFramework(object):
             os.makedirs(JSON_LOCATION)
         if not os.path.exists(os.path.join(JSON_LOCATION, "app_query.json")):
             reset = True 
-        print("*** Loading Framework ***")
-        self._load_rdf_data(reset)
-        self._load_app(reset)
-        self._generate_classes(reset)
-        self._generate_forms(reset)
-        self._generate_apis(reset)
-        print("*** Framework Loaded ***")
+        # verify that the server core is up and running
+        servers_up = True
+        servers_up = verify_server_core()
+        if not servers_up:
+            print("Sever core not initialized --- Framework Not loaded")
+        if servers_up:
+            print("*** Loading Framework ***")
+            self._load_rdf_data(reset)
+            self._load_app(reset)
+            self._generate_classes(reset)
+            self._generate_forms(reset)
+            self._generate_apis(reset)
+            print("*** Framework Loaded ***")
 
     def user_authentication(self, rdf_obj):
         ''' reads the object for authentication information and sets the
@@ -1031,3 +1038,42 @@ class RdfFramework(object):
 # Theses imports are placed at the end of the module to avoid circular imports
 from rdfframework import RdfClass
 #from rdfframework import RdfDataType
+
+def verify_server_core(timeout=60, delay=True):
+    ''' checks to see if the server_core is running 
+        
+        args:
+            delay: will cycle till core is up.
+            timeout: number of seconds to wait
+    '''
+    timestamp = time.time()
+    last_check = time.time() - 11
+    server_down = True
+    return_val = False
+    timeout += 1
+    # loop until the server is up or the timeout is reached
+    while((time.time()-timestamp) < timeout) and server_down:
+        # send a request check every 10s until the server is up
+        while ((time.time()-last_check) > 10) and server_down:
+            print("Checking status of servers at %ss" % \
+                    int((time.time()-timestamp)))
+            last_check = time.time()  
+            try:
+                repo = requests.get(fw_config().get('REPOSITORY_URL'))
+                repo_code = repo.status_code
+            except:
+                repo_code = 400
+            try:
+                triple = requests.get(fw_config().get('TRIPLESTORE_URL'))
+                triple_code = triple.status_code
+            except:
+                triple_code = 400
+            if repo_code == 200 and triple_code == 200:
+                server_down = False
+                return_val = True
+                print("**** Servers up at %ss" % \
+                    int((time.time()-timestamp)))
+                break
+    return return_val            
+            
+               
