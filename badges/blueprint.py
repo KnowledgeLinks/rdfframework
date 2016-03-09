@@ -266,6 +266,7 @@ def rdf_class_forms(form_name, form_instance=None):
             if form.save_state == "success":
                 if isinstance(form.save_results, User):
                     login_user(form.save_results)
+                    #x=y
                 return redirect(form.redirect_url(params=request.args))
 
         #form = form_class(subject_uri=request.args.get("id"))
