@@ -12,8 +12,11 @@ def get_wtform_validators(field):
     ''' reads the list of validators for the field and returns the wtforms
         validator list'''
     _field_validators = []
-    if field.get('required') is True:
+    required = field.get('kds_required', False)
+    if required:
         _field_validators.append(InputRequired())
+    else:
+        _field_validators.append(Optional())
     _validator_list = make_list(field.get('kds_validators', []))
     for _validator in _validator_list:
         _validator_type = _validator['rdf_type']
@@ -31,7 +34,6 @@ def get_wtform_validators(field):
         if _validator_type == 'kdr_UniqueValueValidator':
             _field_validators.append(UniqueValue())
         if _validator_type == 'kdr_StringLengthValidator':
-            print("enter StringLengthValidator")
             _string_params = _validator.get('kds_parameters')
             _param_list = _string_params.split(',')
             _param_obj = {}

@@ -9,7 +9,7 @@ import io
 import json
 import requests
 import falcon
-from flask import abort, Blueprint, jsonify, render_template, Response, request
+from flask import Flask, abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for, send_file, current_app
 from flask_negotiate import produces
 from flask.ext.login import login_required, login_user, current_user
@@ -40,7 +40,7 @@ def record_params(setup_state):
         [(key, value) for (key, value) in app.config.items()]
     )
     # initialize the rdfframework
-    rdfw(config=open_badge.config)
+    
 
 
 @open_badge.route("/")
@@ -65,31 +65,6 @@ def fedora_image_path():
         return redirect(url_for("open_badge.image_path",
                          image_id=uid))    
       
-'''@open_badge.route("/login", methods=["GET", "POST"])
-def login_user_view():
-    """Login view for badges"""
-    val = None
-    login_form = rdf_framework_form_factory(
-        "login/")
-    if request.method.startswith("POST"):
-        form = login_form(request.form)
-        val = form.validate()
-        username = request.form.get("username")
-        pwd = request.form.get("password")
-        user = User(username=username, password=pwd)
-        login_user(user, remember=True)
-        redirect("/")
-    else:
-        form = login_form()
-    return render_template(
-        "app_form_template.html",
-        actionURL=url_for("open_badge.login_user_view"),
-        form=form,
-        jsonFields=json.dumps(
-            form.rdfFieldList,
-            indent=4),
-        validated=val)'''
-
 @open_badge.route("/test/", methods=["POST", "GET"])
 def test_rdf_class():
     """View for displaying a test RDF class"""

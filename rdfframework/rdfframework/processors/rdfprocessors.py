@@ -6,7 +6,7 @@ from base64 import b64encode
 from dateutil.parser import parse as parse_date
 from passlib.hash import sha256_crypt
 from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
-        slugify, clean_iri, iri, cbool, remove_null
+        slugify, clean_iri, iri, cbool, remove_null, pp
 from rdfframework import get_framework
 from .imageprocessor import image_processor
 
@@ -89,6 +89,11 @@ def password_processor(processor, obj, prop, mode="save"):
     Returns:
         modified passed in obj
     """
+    if DEBUG:
+        debug = True
+    else:
+        debug = False
+    if debug: print("START password_processor --------------------------\n")
     salt_url = "kdr_SaltProcessor"
     if mode == "save":
         # find the salt property
@@ -120,6 +125,7 @@ def password_processor(processor, obj, prop, mode="save"):
                 # assign the hashed password to the processedData
                 obj['processedData'][obj['propUri']] = _hash_value
                 obj['prop']['calcValue'] = True
+                if debug: print("END password_processor  mode = save-------\n")
             return obj
     elif mode == "verify":
         # verify the supplied password matches the saved password
@@ -144,10 +150,13 @@ def password_processor(processor, obj, prop, mode="save"):
                 salt_value = props.get(salt_property)
                 hashed_password = props.get(prop.kds_propUri)
                 break
+        if debug: print(salt_value, " - ", hashed_password, " - ", prop.data)
         setattr(prop, "password_verified", \
             sha256_crypt.verify(prop.data + salt_value, hashed_password)) 
+        if debug: print("END password_processor  mode = verify -------\n")
         return obj
     if mode == "load":
+        if debug: print("END password_processor  mode = load -------\n")
         return obj
     return obj
 

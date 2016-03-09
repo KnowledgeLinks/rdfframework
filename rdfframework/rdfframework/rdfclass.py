@@ -15,7 +15,7 @@ from rdfframework.utilities.debug import dumpable_obj
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import save_file_to_repository
 
-
+DEBUG = False
 class RdfClass(object):
     '''RDF Class for an RDF Class object.
        Used for manipulating and validating an RDF Class subject'''
@@ -188,7 +188,10 @@ class RdfClass(object):
                                         " / ".join(_prop_name_list))
                     for prop in _key_props:
                         if hasattr(prop, "errors"):
-                            prop.errors.append(error_msg)
+                            if isinstance(prop.errors, list):
+                                prop.errors.append(error_msg)
+                            else:
+                                prop.errors = [error_msg]
                         else:
                             setattr(prop, "errors", [error_msg])
                     return [{"errorType":"primaryKeyViolation",
@@ -261,7 +264,7 @@ class RdfClass(object):
     def _validate_required_properties(self, rdf_obj, old_data):
         '''Validates whether all required properties have been supplied and
             contain data '''
-        debug = True
+        debug = False
         _return_error = []
         #create sets for evaluating requiredFields
         _required = self.list_required()
@@ -365,7 +368,11 @@ class RdfClass(object):
     def _process_class_data(self, rdf_obj):
         '''Reads through the processors in the defination and processes the
             data for saving'''
-        debug = False
+        if DEBUG:
+            debug = True
+        else:
+            debug = False
+        if debug: print("START rdfclass.RdfClass._process_class_data ------\n")
         _pre_save_data = {}
         _save_data = {}
         _processed_data = {}
@@ -384,10 +391,11 @@ class RdfClass(object):
                     break
         subject_uri = _old_data.get("!!!!subjectUri", "<>")
         for prop in _class_obj_props:
+            #pp.pprint(prop.__dict__)
             _prop_uri = prop.kds_propUri
             if debug:
                 if _prop_uri == "schema_image":
-                    x=y
+                    x=1
             # gather all of the processors for the property
             _class_prop = self.kds_properties.get(_prop_uri,{})
             _class_prop_processors = make_list(_class_prop.get("kds_propertyProcessing"))
@@ -523,6 +531,11 @@ class RdfClass(object):
         return _save_data
 
     def _generate_save_query(self, save_data_obj, subject_uri=None):
+        if DEBUG:
+            debug = True
+        else:
+            debug = False
+        if debug: print("START RdfClass._generate_save_query -------------\n")
         _save_data = save_data_obj.get("data")
         # find the subject_uri positional argument or look in the save_data_obj
         # or return <> as a new node
@@ -539,8 +552,8 @@ class RdfClass(object):
         _where_clause = ""
         _prop_set = set()
         i = 1
-        #print("save data in generateSaveQuery\n",\
-                #json.dumps(dumpable_obj(_save_data), indent=4), "\n", _save_data)
+        if debug: print("save data in generateSaveQuery\n", \
+                    pp.pprint(_save_data))
         # test to see if there is data to save
         if len(_save_data) > 0:
             for prop in _save_data:
@@ -584,9 +597,11 @@ class RdfClass(object):
                     _save_query = "{}\n\n{}".format(
                         rdfw().get_prefix("turtle"),
                         _insert_clause)
-            #print(_save_query)
+            if debug: print(_save_query)
+            if debug: print("END RdfClass._generate_save_query -------------\n")
             return {"query":_save_query, "subjectUri":subject_uri}
         else:
+            if debug: print("END RdfClass._generate_save_query -------------\n")
             return {"subjectUri":subject_uri}
 
     def _run_save_query(self, save_query_obj, subject_uri=None):
@@ -607,6 +622,7 @@ class RdfClass(object):
                         fw_config().get("REPOSITORY_URL"),
                         data=_save_query,
         				headers={"Content-type": "text/turtle"})
+                    pp.pprint(repository_result)
                     object_value = repository_result.text
                 # if the subject uri exists send an update query to the
                 # repository
@@ -767,6 +783,7 @@ class RdfClass(object):
                         else:
                             _save_data.append([_prop_uri, iri(uri(item))])
                     else:
+                        _item = str(json.dumps(item)).encode('unicode_escape')
                         _save_data.append([_prop_uri, RdfDataType(\
                                 _data_type).sparql(str(item))])
         return _save_data

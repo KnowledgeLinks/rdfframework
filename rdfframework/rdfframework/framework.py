@@ -17,13 +17,13 @@ from .rdfproperty import RdfProperty
 from flask import current_app
 from flask.ext.login import login_user, current_user
 from rdfframework.security import User
-
+from rdfframework.forms import rdf_framework_form_factory
 DEBUG = False
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
         framework'''
 
-    rdf_class_dict = {}       # stores the Triplestore defined class defintions
+    rdf_class_dict = {}       # stores the Triplestore defined class defintions 
     class_initialized = False # used to state if the the class was properly
                               #     initialized with RDF definitions
     rdf_form_dict = {}        # stores the Triplestore defined form definitions
@@ -37,7 +37,6 @@ class RdfFramework(object):
 
     def __init__(self):
         reset = False 
-        print(JSON_LOCATION)
         if not os.path.isdir(JSON_LOCATION):
             print("Cached JSON directory not found.\nCreating directory")
             reset = True
@@ -57,7 +56,19 @@ class RdfFramework(object):
             self._generate_forms(reset)
             self._generate_apis(reset)
             print("*** Framework Loaded ***")
-
+        
+    def load_default_data(self):
+        ''' reads default data in the fw_config and attempts to add it 
+            to the server core i.e. inital users and organizations'''
+        data_list = make_list(fw_config().get('FRAMEWORK_DEFAULT'))
+        for data in data_list:
+            form_class = rdf_framework_form_factory(data['form_path'])
+            form_data = data['form_data']
+            form = form_class()
+            for prop in form.rdf_field_list:
+                prop.data = form_data.get(prop.name)
+            form.save() 
+            
     def user_authentication(self, rdf_obj):
         ''' reads the object for authentication information and sets the
             flask userclass information '''

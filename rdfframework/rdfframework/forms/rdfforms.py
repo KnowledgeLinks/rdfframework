@@ -6,6 +6,7 @@ import requests
 from rdfframework.validators import UniqueValue
 from .rdffields import add_field_attributes, calculate_default_value, \
         get_wtform_field, get_field_json
+import wtforms
 from wtforms.fields import StringField, FormField, FieldList
 import flask_wtf
 from rdfframework.utilities import cbool, make_list, make_set, code_timer, \
@@ -111,7 +112,8 @@ class Form(flask_wtf.Form):
         elif _url_instructions == "!--homepage":
             return "/"
         elif _url_instructions == "!--source":
-            return kwargs.get("params", {}).get("source","/")   
+            return kwargs.get("params", {}).get("source",\
+                kwargs.get("params", {}).get("next","/"))
         elif _url_instructions is not None:
             _form_url = rdfw().get_form_path(self.form_uri, _url_instructions)
             if _form_url is not None:
@@ -426,7 +428,7 @@ def rdf_framework_form_factory(form_url, **kwargs):
                         _new_field['kds_formFieldName'] = nfld['kds_fieldName']
                         _new_field['kds_formFieldOrder'] = \
                                 float(_new_field['kds_formFieldOrder']) + i
-                        if fld.get("doNotSave"):
+                        if nfld.get("doNotSave") == True:
                             _new_field['doNotSave'] = True
                         else:
                             _new_field['doNotSave'] = False
@@ -434,7 +436,7 @@ def rdf_framework_form_factory(form_url, **kwargs):
                                 nfld['kds_field'],_new_field)
                         rdf_field_list.append(_new_field)
                         setattr(rdf_form, nfld['kds_fieldName'], augmented_field)
-                        i += .1
+                        i += .1  
             else:
                 #print(field['formFieldName'], " - ", form_field)
                 if form_field:
