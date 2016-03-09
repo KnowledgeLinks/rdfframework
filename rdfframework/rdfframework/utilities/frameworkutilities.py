@@ -20,6 +20,9 @@ SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 DEBUG = True
 
 FRAMEWORK_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+if not os.path.exists(FRAMEWORK_BASE):
+    #! Quick hack to get running on Docker container -- jpn 2016-03-08
+    FRAMEWORK_BASE = "/opt/intro2libsys/ebadges/rdfframework/rdfframework"
 JSON_LOCATION = os.path.join(FRAMEWORK_BASE, "json-definitions")
 
 ENV = Environment(loader=FileSystemLoader(
