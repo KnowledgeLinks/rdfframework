@@ -13,6 +13,10 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from .rdfproperty import RdfProperty
+from flask import current_app
+from flask.ext.login import login_user, current_user
+from rdfframework.security import User
+
 DEBUG = False
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
@@ -31,7 +35,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = True 
+        reset = False 
         print(JSON_LOCATION)
         if not os.path.isdir(JSON_LOCATION):
             print("Cached JSON directory not found.\nCreating directory")
@@ -64,7 +68,27 @@ class RdfFramework(object):
                                        lookup_related=True,
                                        processor_mode="verify")
         if _password.password_verified:
+            person_info = None
+            user_obj = {}
+            for subject, value in query_data['query_data'].items():
+                if "<schema_Person>" in make_list(value.get("rdf_type")):
+                    person_info = value
+                    break
+            if person_info:
+                user_obj = {'username': _username.data,
+                            'email': person_info['schema_email'], 
+                            'full_name': person_info['schema_givenName'] +
+                                         person_info['schema_familyName']}      
+            new_user = User(user_obj)
+            #login_user(new_user)
+            #print(current_user.is_authenticated())
+            #print("framework ------------ ", current_user.is_authenticated)
+            #pp.pprint(current_user.__dict__)
+            #pp.pprint(current_app.__dict__)
+            
+            #current_app.login_manager.login_user(new_user)
             rdf_obj.save_state = "success"
+            rdf_obj.save_results = new_user
         else:
             error_msg = "The supplied credentials could not be verified"
             _username.errors.append(" ")

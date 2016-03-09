@@ -832,6 +832,7 @@ obi:OrganizationForm a kds:FormClass;
 	rdfs:comment "Form used for CRUD operations for an organization.";
 	kds:formInstructions [
 		kds:form_Method "POST";
+		kds:loginRequired true ;
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Organization";
 		kds:lookupClassUri schema:Organization;
@@ -901,6 +902,7 @@ obi:UserForm a kds:FormClass;
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "User Information";
+		kds:loginRequired true ;
 		kds:formDescription "User infomation";
 		kds:lookupClassUri schema:Person;
 		kds:submitSuccessRedirect kdr:DisplayForm;
@@ -969,6 +971,7 @@ obi:AssertionPerson a kds:FormClass;
 	kds:formInstructions [
 		kds:formTitle "Awardees";
 		kds:formDescription "Award badges";
+		kds:loginRequired true ;
 		kds:lookupClassUri obi:Assertion;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm
@@ -1027,6 +1030,7 @@ obi:BadgeForm a kds:FormClass;
 		kds:form_Method "POST";
 		kds:form_enctype "multipart/form-data";
 		kds:formTitle "Open Badge";
+		kds:loginRequired true ;
 		kds:formDescription "Badge infomation";
 		kds:lookupClassUri obi:BadgeClass;
 		kds:formUrl "badge";
@@ -1119,6 +1123,7 @@ obi:AssertionForm a kds:FormClass;
 		kds:formTitle "Badge Assertion";
 		kds:formDescription "Awarded Badge information";
 		kds:lookupClassUri obi:BadgeClass;
+		kds:loginRequired true ;
 		kds:lookupPropUri obi:hasBadge;
 		kds:submitSuccessRedirect kdr:DisplayForm;
 		kds:submitFailRedirect "!--currentpage";

@@ -4,6 +4,9 @@
 	</div>
 	<div class="panel-body">
 		<p class="lead">{{ form.rdf_instructions['kds_formDescription'] }}</p>
+		{% if login_message %}
+		<div class="form-group has-error"><p class="control-label">{{ login_message }}</p></div>
+		{% endif %}
 		{% include "/forms/default/form_base.html" %}
 	</div>
 	{% if debug %}

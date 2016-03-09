@@ -10,18 +10,18 @@ import json
 import requests
 import falcon
 from flask import abort, Blueprint, jsonify, render_template, Response, request
-from flask import redirect, url_for, send_file
+from flask import redirect, url_for, send_file, current_app
 from flask_negotiate import produces
-from flask.ext.login import login_required, login_user
+from flask.ext.login import login_required, login_user, current_user
 
 from . import new_badge_class, issue_badge
 from rdfframework import get_framework as rdfw
 from rdfframework.utilities import render_without_request, code_timer, \
-        remove_null, pp, clean_iri, uid_to_repo_uri
+        remove_null, pp, clean_iri, uid_to_repo_uri, cbool
 
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory
-from .user import User
+from rdfframework.security import User
 
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
@@ -97,7 +97,7 @@ def test_rdf_class():
     y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
-
+ 
 @open_badge.route("/rdfjson/", methods=["POST", "GET"])
 def form_rdf_class():
     """View displays the RDF json"""
@@ -227,18 +227,34 @@ def rdf_class_forms(form_name, form_instance=None):
     """
     _display_mode = False
     _form_path = "/".join(remove_null([form_name, form_instance]))
+    # test to see if the form exists
     _form_exists = rdfw().form_exists(_form_path)
     if _form_exists is False:
         return render_template(
             "error_page_template.html",
             error_message="The web address is invalid")
+    # if the form exists continue
     instance_uri = _form_exists.get("instance_uri")
     form_uri = _form_exists.get("form_uri")
     # generate the form class
     form_class = rdf_framework_form_factory(_form_path, \
             base_url=url_for("open_badge.base_path"), 
             current_url=request.url)
-            
+    # test to see if the form requires a login
+    login_message = None
+    if cbool(form_class.rdf_instructions.get("kds_loginRequired",False)) is \
+            True:
+        #print("blueprint ", current_user.is_authenticated())
+        pp.pprint(current_user.__dict__)
+        pp.pprint(current_app.__dict__)
+        if isinstance(current_user.is_authenticated, bool):
+            auth = current_user.is_authenticated
+        else:
+            auth = current_user.is_authenticated()
+        if not auth:
+            current_app.login_manager.login_message = \
+                    "Please log in to access this page"
+            return current_app.login_manager.unauthorized()        
     # if request method is post 
     if request.method == "POST":
         # let form load with post data
@@ -246,8 +262,10 @@ def rdf_class_forms(form_name, form_instance=None):
         # validate the form 
         if form.validate():
             # if validated save the form 
-            form.save()
+            obj = form.save()
             if form.save_state == "success":
+                if isinstance(form.save_results, User):
+                    login_user(form.save_results)
                 return redirect(form.redirect_url(params=request.args))
 
         #form = form_class(subject_uri=request.args.get("id"))
@@ -301,6 +319,7 @@ def rdf_class_forms(form_name, form_instance=None):
         display_mode = _display_mode,
         dateFormat = rdfw().app.get(\
                 'kds_dataFormats',{}).get('kds_javascriptDateFormat',''),
-        debug=request.args.get("debug",False))
+        debug=request.args.get("debug",False),
+        login_message=login_message)
     return template
     

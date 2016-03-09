@@ -131,8 +131,12 @@ def password_processor(processor, obj, prop, mode="save"):
         salt_property = None
         # find the property Uri that stores the salt value
         for _class_prop in _class_properties.values():
-            if _class_prop.get("kds_propertyProcessing") == salt_url:
-                salt_property = _class_prop.get("kds_propUri")
+            _processors = clean_processors([make_list(\
+                    _class_prop.get("kds_propertyProcessing",{}))])
+            for _processor in _processors.values():
+                if _processor.get("rdf_type") == salt_url:
+                    salt_property = _class_prop.get("kds_propUri")
+                    salt_processor_dict = _processor
         # find the salt value in the query_data
         salt_value = None
         for subject, props in obj.query_data.items():

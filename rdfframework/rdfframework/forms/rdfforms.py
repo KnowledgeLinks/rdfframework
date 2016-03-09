@@ -339,7 +339,9 @@ def get_form_instructions_json(instructions, instance):
     _new_instr["kds_lookupPropertyClass"] = \
             _form_instance_info.get('"kds_lookupPropertyClass"',
                                     instructions.get("kds_lookupPropertyClass"))                                
-
+    _new_instr["kds_loginRequired"] = \
+            _form_instance_info.get('"kds_loginRequired"',
+                                    instructions.get("kds_loginRequired"))
 # Determine css classes
     #form row css
     css = _form_instance_info.get('kds_rowOverideCss', instructions.get(\
