@@ -36,7 +36,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = False 
+        reset = True 
         if not os.path.isdir(JSON_LOCATION):
             print("Cached JSON directory not found.\nCreating directory")
             reset = True
