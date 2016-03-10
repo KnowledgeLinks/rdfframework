@@ -1785,7 +1785,10 @@ obi:PersonAssertions a kds:FormClass;
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:applicationAction kdr:LookupAddNewWorkFlow; 
-		]
+		];
+		kds:fieldType [
+			a kdr:OpenBagdePusher;
+		];
 	];
 	kds:hasProperty [
 		kds:propUri schema:image;

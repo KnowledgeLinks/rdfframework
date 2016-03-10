@@ -36,7 +36,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = False 
+        reset = True 
         if not os.path.isdir(JSON_LOCATION):
             print("Cached JSON directory not found.\nCreating directory")
             reset = True
@@ -1050,7 +1050,7 @@ class RdfFramework(object):
 from rdfframework import RdfClass
 #from rdfframework import RdfDataType
 
-def verify_server_core(timeout=60, delay=True):
+def verify_server_core(timeout=120, delay=True):
     ''' checks to see if the server_core is running 
         
         args:
