@@ -45,7 +45,7 @@ class RdfFramework(object):
             reset = True 
         # verify that the server core is up and running
         servers_up = True
-        servers_up = verify_server_core(120, 90)
+        servers_up = verify_server_core(240, 180)
         if not servers_up:
             print("Sever core not initialized --- Framework Not loaded")
         if servers_up:
