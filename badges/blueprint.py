@@ -69,7 +69,7 @@ def fedora_image_path():
 def test_rdf_class():
     """View for displaying a test RDF class"""
     f=rdfw() #This is an intentional error to cause a break in the code
-    y=z
+    #y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
  
@@ -219,9 +219,6 @@ def rdf_class_forms(form_name, form_instance=None):
     login_message = None
     if cbool(form_class.rdf_instructions.get("kds_loginRequired",False)) is \
             True:
-        #print("blueprint ", current_user.is_authenticated())
-        pp.pprint(current_user.__dict__)
-        pp.pprint(current_app.__dict__)
         if isinstance(current_user.is_authenticated, bool):
             auth = current_user.is_authenticated
         else:

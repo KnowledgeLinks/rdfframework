@@ -45,7 +45,7 @@ class RdfFramework(object):
             reset = True 
         # verify that the server core is up and running
         servers_up = True
-        servers_up = verify_server_core()
+        servers_up = verify_server_core(120, 90)
         if not servers_up:
             print("Sever core not initialized --- Framework Not loaded")
         if servers_up:
@@ -88,15 +88,18 @@ class RdfFramework(object):
         if _password.password_verified:
             person_info = None
             user_obj = {}
+            user_uri = ""
             for subject, value in query_data['query_data'].items():
                 if "<schema_Person>" in make_list(value.get("rdf_type")):
                     person_info = value
+                    user_uri = subject
                     break
             if person_info:
                 user_obj = {'username': _username.data,
                             'email': person_info['schema_email'], 
                             'full_name': person_info['schema_givenName'] +
-                                         person_info['schema_familyName']}      
+                                         person_info['schema_familyName'],
+                            'user_uri': user_uri}      
             new_user = User(user_obj)
             #login_user(new_user)
             #print(current_user.is_authenticated())
@@ -486,6 +489,7 @@ class RdfFramework(object):
             self.ns_obj = create_namespace_obj(_app_json)
             self.rdf_app_dict = convert_obj_to_rdf_namespace(_app_json,
                                                              self.ns_obj)
+            print("\t\t%s objects" % len(self.rdf_app_dict))
             # add the security attribute
             # add the app attribute
             _key_string = "kds_applicationSecurity"
@@ -515,6 +519,7 @@ class RdfFramework(object):
             _class_json = self._load_rdf_class_defintions(reset)
             self.rdf_class_dict = convert_obj_to_rdf_namespace(_class_json,
                                                                self.ns_obj)
+            print("\t\t%s objects" % len(self.rdf_class_dict))
             self.class_initialized = True
             for _rdf_class in self.rdf_class_dict:
                 setattr(self,
@@ -529,6 +534,7 @@ class RdfFramework(object):
             _form_json = self._load_rdf_form_defintions(reset)
             self.rdf_form_dict = convert_obj_to_rdf_namespace(_form_json,
                                                               self.ns_obj)
+            print("\t\t%s objects" % len(self.rdf_form_dict))
             self._make_form_list()
             self.form_initialized = True
     
@@ -540,6 +546,7 @@ class RdfFramework(object):
             _api_json = self._load_rdf_api_defintions(reset)
             self.rdf_api_dict = convert_obj_to_rdf_namespace(_api_json,
                                                               self.ns_obj)
+            print("\t\t%s objects" % len(self.rdf_api_dict))
             self._make_api_list()
             self.apis_initialized = True
     
@@ -547,8 +554,7 @@ class RdfFramework(object):
         ''' Queries the triplestore for settings defined for the application in
             the kl_app.ttl file'''
         
-        if DEBUG:
-            print("\tLoading application defaults")
+        print("\tLoading application defaults")
         if reset:
             _sparql = render_without_request(
                 "jsonApplicationDefaults.rq",
@@ -572,8 +578,7 @@ class RdfFramework(object):
     def _load_rdf_class_defintions(self, reset):
         ''' Queries the triplestore for list of classes used in the app as
             defined in the kl_app.ttl file'''
-        if DEBUG:
-            print("\tLoading rdf class definitions")
+        print("\tLoading rdf class definitions")
         if reset:
 
             _sparql = render_without_request("jsonRDFclassDefinitions.rq",
@@ -598,8 +603,7 @@ class RdfFramework(object):
     def _load_rdf_form_defintions(self, reset):
         ''' Queries the triplestore for list of forms used in the app as
             defined in the kl_app.ttl file'''
-        if DEBUG:
-            print("\tLoading form definitions")
+        print("\tLoading form definitions")
         if reset:
             _sparql = render_without_request("jsonFormQueryTemplate.rq",
                                              graph=fw_config().get(\
@@ -623,8 +627,7 @@ class RdfFramework(object):
     def _load_rdf_api_defintions(self, reset):
         ''' Queries the triplestore for list of forms used in the app as
             defined in the kl_app.ttl file'''
-        if DEBUG:
-            print("\tLoading api definitions")
+        print("\tLoading api definitions")
         if reset:
             _sparql = render_without_request("jsonApiQueryTemplate.rq",
                                              graph=fw_config().get(\
@@ -727,15 +730,17 @@ class RdfFramework(object):
                         base_url=base_url))
             # load the extensions in the triplestore
             context_uri = "http://knowledgelinks.io/ns/application-framework/" 
-            for data in rdf_data:
+            for i, data in enumerate(rdf_data):
                 result = requests.post(
                     url=triplestore_url,
                     headers={"Content-Type": "text/turtle"},
                     params={"context-uri": context_uri},
                     data=data)
                 if result.status_code > 399:
-                    raise ValueError("Cannot load extensions in {}".format(
-                        triplestore_url))  
+                    raise ValueError("Cannot load extensions {} into {}".format(
+                        rdf_resource_templates[i], triplestore_url))
+                else:
+                    print("\t%s file loaded" % rdf_resource_templates[i])
                       
     # possible deletion: no longer in use. Commented out till certian                
     """def get_form_data(self, rdf_form, **kwargs):
@@ -1050,7 +1055,7 @@ class RdfFramework(object):
 from rdfframework import RdfClass
 #from rdfframework import RdfDataType
 
-def verify_server_core(timeout=120, delay=True):
+def verify_server_core(timeout=120, start_delay=90):
     ''' checks to see if the server_core is running 
         
         args:
@@ -1058,12 +1063,19 @@ def verify_server_core(timeout=120, delay=True):
             timeout: number of seconds to wait
     '''
     timestamp = time.time()
-    last_check = time.time() - 11
+    last_check = time.time() + start_delay - 10
+    last_delay_notification = time.time() - 10
     server_down = True
     return_val = False
     timeout += 1
     # loop until the server is up or the timeout is reached
     while((time.time()-timestamp) < timeout) and server_down:
+        # if delaying, the start of the check, print waiting to start
+        if start_delay > 0 and time.time() - timestamp < start_delay \
+                and (time.time()-last_delay_notification) > 5:
+            print("Delaying server status check until %ss. Current time: %ss" \
+                    % (start_delay, int(time.time() - timestamp)))
+            last_delay_notification = time.time()
         # send a request check every 10s until the server is up
         while ((time.time()-last_check) > 10) and server_down:
             print("Checking status of servers at %ss" % \

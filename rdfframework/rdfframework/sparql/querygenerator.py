@@ -28,7 +28,7 @@ def create_data_sparql_query(obj, **kwargs):
     if DEBUG:
         debug = True
     else:
-        debug = True
+        debug = False
     if debug: print("START create_data_sparql_query -----------------------\n")
     from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)

@@ -327,7 +327,7 @@ def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
     if DEBUG:
         debug = True
     else:
-        debug = True
+        debug = False
     if debug: print("START calculator_concat ---------------------\n")
     if debug: print(prop.kds_propUri)
     

@@ -783,7 +783,7 @@ class RdfClass(object):
                         else:
                             _save_data.append([_prop_uri, iri(uri(item))])
                     else:
-                        _item = str(json.dumps(item)).encode('unicode_escape')
+                        _item = str(item).encode('unicode_escape')
                         _save_data.append([_prop_uri, RdfDataType(\
                                 _data_type).sparql(str(item))])
         return _save_data
