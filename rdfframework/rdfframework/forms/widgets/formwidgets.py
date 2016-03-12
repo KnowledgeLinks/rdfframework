@@ -2,7 +2,7 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 from wtforms.widgets import HTMLString, html_params
 from wtforms.compat import text_type
-
+from rdfframework.utilities import is_not_null
 class BsGridTableWidget(object):
     """
     Renders a list of fields as a bootstrap formated table.
@@ -35,7 +35,7 @@ class BsGridTableWidget(object):
         if hidden:
             html.append(hidden)
         return HTMLString(''.join(html))
-
+DEBUG = False
 class RepeatingSubFormWidget(object):
     """
     Renders a list of fields as a `row` list.
@@ -54,6 +54,11 @@ class RepeatingSubFormWidget(object):
         self.prefix_label = prefix_label
 
     def __call__(self, field, **kwargs):
+        if DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START RepeatingSubFormWidget.call ---------------\n")
         kwargs.setdefault('id', field.id)
         _params = html_params(**kwargs)
         html = []
@@ -65,9 +70,9 @@ class RepeatingSubFormWidget(object):
         for fld in field[0].form.rdf_field_list:
             flag_str = ""
             label = ""
-            if fld.flags.required:
+            if fld.flags.required and not display_mode:
                 flag_str = " *"
-            if fld.type != 'CSRFTokenField':
+            if fld.type not in ['CSRFTokenField', 'HiddenField']:
                 label = fld.label
             html.append('''
                 <section class="col-md-2">
@@ -75,26 +80,39 @@ class RepeatingSubFormWidget(object):
                         %s%s
                     </div>
                 </section>''' % (label, flag_str))
-        html.append('</%s>' % (self.html_tag))   
+        html.append('</%s>' % (self.html_tag))
+        row = 0   
         for subfield in field:
             html.append('<%s class="row subform-row">' % self.html_tag)
             html.append(subfield.form.hidden_tag())
+            if debug: print("row ",row)
+            row +=1
             for fld in subfield.form.rdf_field_list:
+                if debug: print(fld.name)
                 error_css = ""
                 error_msg = ""
                 error_list = []
+                if fld.type == 'HiddenField':
+                    continue
                 if display_mode:
                     if fld.kds_formFieldName.endswith("_image"):
-                        data = '<img src="/badges/fedora_image?id=%s" style="height:50px"></img>' \
+                        data = '<img src="/badges/fedora_image?id=%s" style="height:50px">' \
                                 % fld.data.replace("<","").replace(">","")
                     elif hasattr(fld, "selected_display"):
                         data = fld.selected_display
                     else:
                         data = fld.data
-                    fld_render ='<div class="form-control-static">%s</div>' % \
-                            data
+                    if hasattr(fld, "kds_call_in_display"):
+                        fld_render = fld(id=fld.name,
+                                         class_=fld.kds_css,
+                                         readonly=not fld.editable)
+                    else:
+                        fld_render = \
+                                '<div id="%s" class="form-control-static">%s</div>' % \
+                                (fld.name, data)
                 else:
-                    fld_render = fld(class_=fld.kds_css,
+                    fld_render = fld(id=fld.name,
+                                     class_=fld.kds_css,
                                      readonly=not fld.editable)
                 if fld.errors:
                     error_css = " has-error"
@@ -113,6 +131,8 @@ class RepeatingSubFormWidget(object):
                                      error_msg))
             html.append('</%s>' % self.html_tag)
         html.append('</div>')
+        if debug: print(HTMLString(''.join(html)))
+        if debug: print("\nEND RepeatingSubFormWidget.call ---------------\n")
         return HTMLString(''.join(html))
 
 class RepeatingSubFormTableJinga2Widget(object):
@@ -147,3 +167,46 @@ class RepeatingSubFormTableJinga2Widget(object):
                                            subfield(),
                                            self.html_tag))
         return HTMLString(''.join(html))
+        
+class ButtonActionWidget(object):
+    #def __init__(self, **kwargs):   
+    #    self.button_action = kwargs.get('button_action','')
+        
+    def __call__(self, field, **kwargs):
+        if hasattr(field,'kds_buttonAction'):
+            button_action = field.kds_buttonAction
+        else:
+            button_action = ''
+        if hasattr(field,'kds_buttonText'):
+            button_text = field.kds_buttonText
+        else:
+            button_text = 	{'false': 'Click', 'true': 'Resend'}
+        if hasattr(field,'kds_buttonLink'):
+            button_link = field.kds_buttonLink
+        else:
+            button_link = ''
+        button_action = kwargs.get('button_action', button_action)
+        button_text = kwargs.get('button_text', button_text)
+        button_link = kwargs.get('button_link', button_link)
+        css = kwargs.pop('class', '') or kwargs.pop('class_', '')
+        if button_action[:-2] == "()":
+            button_action = button_action[:-2]
+        return_args = []
+        return_args.append("<a ")
+        if is_not_null(field.data):
+            button_text = button_text['true']
+        else:
+            button_text = button_text['false']
+        if is_not_null(button_action):
+            return_args.append("href='javascript:;' ")
+            return_args.append('onclick="%s(\'%s\',this)" ' % (button_action, \
+                    field.data))
+        else:
+            return_args.append("href='%s' " % button_link)
+        return_args.append("class='%s' " % css)
+        return_args.append("kds_propUri='%s' " % field.kds_propUri)
+        return_args.append("kds_classUri='%s' " % field.kds_classUri)
+        return_args.append("data=\"%s\" " % field.data)
+        return_args.append("id='%s' " % field.name)
+        return_args.append(">%s</a>" % button_text)
+        return "".join(return_args)

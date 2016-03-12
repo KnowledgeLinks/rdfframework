@@ -39,130 +39,158 @@ SELECT *
 																		SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 (GROUP_CONCAT(?oV3; SEPARATOR=',') as ?o3a) (COUNT(?p3) AS ?o3aTest)
 																		{
 																			{
-																				SELECT * 
+																				SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 (GROUP_CONCAT(?pV4; SEPARATOR=',') as ?p4o) (COUNT(?o3) AS ?p4oTest)
 																				{
 																					{
-																						# Get the property details from the property definition
-																						SELECT ?klClass ?p (?properties as ?o) ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
+																						SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 (GROUP_CONCAT(?oV4; SEPARATOR=',') as ?o4a) (COUNT(?p4) AS ?o4aTest)
 																						{
 																							{
-
-																								{ 
-
-																									{
-																										# get the property object that apply to the current class
-																										?klClass a kds:ControlledClass .
-																										?properties rdfs:domain ?klClass .
-																										?properties ?p1 ?o1.
-																										?o1 kds:appliesTo ?appliesTest .
-																										filter(?appliesTest=?klClass)
-																										#?o1 ?p2_ ?o2_ .
-																									} UNION {
-																										# get all the property objects that are not bound by a class restriction
-																										?klClass a kds:ControlledClass .
-																										?properties rdfs:domain ?klClass .
-																										?properties ?p1 ?o1 .
-																										OPTIONAL {
-																											?o1 kds:appliesTo ?appliesTest .
-																										}
-																										filter(!(bound(?appliesTest)))
-																									} 
-																									# get the blank nodes of the property
-																									OPTIONAL {
-																										?o1 ?p2_ ?o2_ .
-																										filter(isblank(?o1))
-																										OPTIONAL {
-																											?o2_ ?p3_ ?o3_
-																											filter(isblank(?o2_))
-																										}
-																									}
-																								}
-																								filter(?p1!=rdfs:range)
-																								filter(?p1!=kds:requiredByDomain)
-																								filter(IF(?p1=rdfs:domain,if(?klClass=?o1,true,false),true))
-																								#filter(?klClass = obi:BadgeClass) 
-																								#filter(?properties = schema:image) 
-																							} UNION {
-																								# get the range information
-																								SELECT ?klClass	?properties	?p1 ?o1 ?p2_ ?o2_
+																								SELECT * 
 																								{
 																									{
-																										# get the range information
-																										?klClass a kds:ControlledClass .
-																										?properties rdfs:domain ?klClass .
-																										?properties rdfs:range ?ignore .
-																										OPTIONAL {
-																										  ?ignore kds:storageType ?sto_
-																										} .
-																										BIND (IF(bound(?sto_),?sto_,"literal") AS ?o2_)
-																										BIND (CONCAT("blanknode",STR(?ignore)) as ?o1)
-																										BIND ("storageType" as ?p2_)
-																										#?ignore ?p2_ ?o2_.
-																										Bind(rdfs:range as ?p1)
-																										#filter(?klClass = obi:BadgeClass) 
-																										#filter(?properties = schema:image) 
+																										# Get the property details from the property definition
+																										SELECT ?klClass ?p (?properties as ?o) ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											{
+				
+																												{ 
+				
+																													{
+																														# get the property object that apply to the current class
+																														?klClass a kds:ControlledClass .
+																														?properties rdfs:domain ?klClass .
+																														?properties ?p1 ?o1.
+																														?o1 kds:appliesTo ?appliesTest .
+																														filter(?appliesTest=?klClass)
+																														#?o1 ?p2_ ?o2_ .
+																													} UNION {
+																														# get all the property objects that are not bound by a class restriction
+																														?klClass a kds:ControlledClass .
+																														?properties rdfs:domain ?klClass .
+																														?properties ?p1 ?o1 .
+																														OPTIONAL {
+																															?o1 kds:appliesTo ?appliesTest .
+																														}
+																														filter(!(bound(?appliesTest)))
+																													} 
+																													# get the blank nodes of the property
+																													OPTIONAL {
+																														?o1 ?p2_ ?o2_ .
+																														filter(isblank(?o1))
+																														OPTIONAL {
+																															?o2_ ?p3_ ?o3_
+																															filter(isblank(?o2_))
+																															OPTIONAL {
+																																?o3_ ?p4_ ?o4_ .
+																																filter(isblank(?o3_))
+																															}
+																														}
+																													}
+																												}
+																												filter(?p1!=rdfs:range)
+																												filter(?p1!=kds:requiredByDomain)
+																												filter(IF(?p1=rdfs:domain,if(?klClass=?o1,true,false),true))
+																												#filter(?klClass = obi:BadgeClass) 
+																												#filter(?properties = schema:image) 
+																											} UNION {
+																												# get the range information
+																												SELECT ?klClass	?properties	?p1 ?o1 ?p2_ ?o2_
+																												{
+																													{
+																														# get the range information
+																														?klClass a kds:ControlledClass .
+																														?properties rdfs:domain ?klClass .
+																														?properties rdfs:range ?ignore .
+																														OPTIONAL {
+																														  ?ignore kds:storageType ?sto_
+																														} .
+																														BIND (IF(bound(?sto_),?sto_,"literal") AS ?o2_)
+																														BIND (CONCAT("blanknode",STR(?ignore)) as ?o1)
+																														BIND ("storageType" as ?p2_)
+																														#?ignore ?p2_ ?o2_.
+																														Bind(rdfs:range as ?p1)
+																														#filter(?klClass = obi:BadgeClass) 
+																														#filter(?properties = schema:image) 
+																													} UNION {
+																														?klClass a kds:ControlledClass .
+																														?properties rdfs:domain ?klClass .
+																														?properties rdfs:range ?o2_ .
+																														BIND (CONCAT("blanknode",STR(?o2_)) as ?o1)
+																														BIND ("rangeClass" as ?p2_)
+																														Bind(rdfs:range as ?p1)
+																														#filter(?klClass = obi:BadgeClass) 
+																														#filter(?properties = schema:image) 
+																													} UNION {
+																														?klClass a kds:ControlledClass .
+																														?properties rdfs:domain ?klClass .
+																														BIND (kds:propUri as ?p1) .
+																														BIND (?properties as ?o1) .
+																														#filter(?klClass = obi:BadgeClass) 
+																														#filter(?properties = schema:image) 
+																													} UNION {
+																														?klClass a kds:ControlledClass .
+																														?properties rdfs:domain ?klClass .
+																														?properties kds:requiredByDomain ?klClass .
+																														BIND (kds:requiredByDomain as ?p1) .
+																														BIND (?klClass as ?o1) .
+																														#filter(?klClass = obi:BadgeClass) 
+																														#filter(?properties = schema:image) 
+																													}
+																												}
+																											}
+																											BIND(IF(bound(?p2_),?p2_,"") AS ?p2)
+																											BIND(IF(bound(?o2_),?o2_,"") AS ?o2)
+																											BIND(IF(bound(?p3_),?p3_,"") AS ?p3)
+																											BIND(IF(bound(?o3_),?o3_,"") AS ?o3)
+																											BIND(IF(bound(?p4_),?p4_,"") AS ?p4)
+																											BIND(IF(bound(?o4_),?o4_,"") AS ?o4)
+																											BIND(kds:hasProperty as ?p)
+																										}
 																									} UNION {
-																										?klClass a kds:ControlledClass .
-																										?properties rdfs:domain ?klClass .
-																										?properties rdfs:range ?o2_ .
-																										BIND (CONCAT("blanknode",STR(?o2_)) as ?o1)
-																										BIND ("rangeClass" as ?p2_)
-																										Bind(rdfs:range as ?p1)
-																										#filter(?klClass = obi:BadgeClass) 
-																										#filter(?properties = schema:image) 
-																									} UNION {
-																										?klClass a kds:ControlledClass .
-																										?properties rdfs:domain ?klClass .
-																										BIND (kds:propUri as ?p1) .
-																										BIND (?properties as ?o1) .
-																										#filter(?klClass = obi:BadgeClass) 
-																										#filter(?properties = schema:image) 
-																									} UNION {
-																										?klClass a kds:ControlledClass .
-																										?properties rdfs:domain ?klClass .
-																										?properties kds:requiredByDomain ?klClass .
-																										BIND (kds:requiredByDomain as ?p1) .
-																										BIND (?klClass as ?o1) .
-																										#filter(?klClass = obi:BadgeClass) 
-																										#filter(?properties = schema:image) 
+																										# get all of the class information
+																										SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											{
+																												?klClass a kds:ControlledClass .
+																												?klClass ?p ?o
+																												OPTIONAL {
+																												  ?o ?p1_ ?o1_. 
+																												  filter(isblank(?o))
+																												}
+																											} UNION {
+																												# add triple for the classUri
+																												?klClass a kds:ControlledClass .
+																												BIND (kds:classUri as ?p)
+																												BIND (?klClass as ?o)
+																											}
+																											BIND(IF(bound(?p1_),?p1_,"") AS ?p1)
+																											BIND(IF(bound(?o1_),?o1_,"") AS ?o1)
+																											BIND("" AS ?p2)
+																											BIND("" AS ?o2)
+																											BIND("" AS ?p3)
+																											BIND("" AS ?o3)
+																											BIND("" AS ?p4)
+																											BIND("" AS ?o4)
+																											#filter(?klClass = obi:BadgeClass) 
+																										}
 																									}
-																								}
+																								}								
 																							}
-																							BIND(IF(bound(?p2_),?p2_,"") AS ?p2)
-																							BIND(IF(bound(?o2_),?o2_,"") AS ?o2)
-																							BIND(IF(bound(?p3_),?p3_,"") AS ?p3)
-																							BIND(IF(bound(?o3_),?o3_,"") AS ?o3)
-																							BIND(kds:hasProperty as ?p)
+																							BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o4),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?oV4)
 																						}
-																					} UNION {
-																						# get all of the class information
-																						SELECT ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
-																						{
-																							{
-																								?klClass a kds:ControlledClass .
-																								?klClass ?p ?o
-																								OPTIONAL {
-																								  ?o ?p1_ ?o1_. 
-																								  filter(isblank(?o))
-																								}
-																							} UNION {
-																								# add triple for the classUri
-																								?klClass a kds:ControlledClass .
-																								BIND (kds:classUri as ?p)
-																								BIND (?klClass as ?o)
-																							}
-																							BIND(IF(bound(?p1_),?p1_,"") AS ?p1)
-																							BIND(IF(bound(?o1_),?o1_,"") AS ?o1)
-																							BIND("" AS ?p2)
-																							BIND("" AS ?o2)
-																							BIND("" AS ?p3)
-																							BIND("" AS ?o3)
-																							#filter(?klClass = obi:BadgeClass) 
-																						}
+																						GROUP BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4
+																						ORDER BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
 																					}
-																				}								
+																					BIND(IF(?o4aTest>1,true,false)AS?o4aTestResult) .
+																					BIND(IF(?o4a!='""',true,false)AS?o4aShow) .
+																					BIND(isBlank(?o3) AS ?level4Blank) .
+																					BIND(IF(?o4aShow&&?level4Blank,CONCAT('"',STR(?p4),'":',IF(?o4aTestResult,"[",""),?o4a,IF(?o4aTestResult,"]","")),"") as ?pV4)
+																				}
+																				GROUP BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
 																			}
-																			BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o3),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?oV3)
+																			BIND(?p4oTest>1 as ?p4ObjTest)
+																			BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o3),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?temp3)
+																			BIND(IF(?p4o!="",CONCAT(IF(?p4ObjTest,"{",""),?p4o,IF(?p4ObjTest,"}","")),?temp3) AS ?oV3)
 																		}
 																		GROUP BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3
 																		ORDER BY ?klClass ?p ?o ?p1 ?o1 ?p2 ?o2 ?p3

@@ -18,30 +18,78 @@ class Api(object):
     def __init__(self, *args, **kwargs):
         self.obj_type = "api"
         self.xsd_load = "python"
-        self.id_value = kwargs.get("id_value")
+        if kwargs.get("id_value"):
+            self.id_value = kwargs.get("id_value")
         self.api_changed = False
-        self.base_url = kwargs.get("base_url", self.base_url)
-        self.current_url = kwargs.get("current_url", self.current_url)  
-        self.base_api_url = kwargs.get("base_api_url", self.base_api_url)
-        self.api_url = kwargs.get("api_url", self.api_url)
-        self.api_uri = self.api_uri
+        if kwargs.get("prop_list"):
+            for prop in kwargs.get("prop_list"):
+                setattr(self, prop.kds_apiFieldName, prop)
+        if hasattr(self, 'base_url'):
+            base_url = self.base_url
+        else:
+            base_url = None
+        self.base_url = kwargs.get("base_url", base_url)
+        if hasattr(self, 'current_url'):
+            current_url = self.current_url
+        else:
+            current_url = None
+        self.current_url = kwargs.get("current_url", current_url) 
+        if hasattr(self, 'base_api_url' ):
+            base_api_url = self.base_api_url
+        else:
+            base_api_url = None
+        self.base_api_url = kwargs.get("base_api_url", base_api_url)
+        if hasattr(self, 'api_url'):
+            api_url = self.api_url
+        else:
+            api_url = None
+        self.api_url = kwargs.get("api_url", api_url)
         self.save_state = None
         self.save_subject_uri = None
         self.save_results = None
-        self.data_subject_uri = kwargs.get("subject_uri",self.data_subject_uri)     
-        self.data_class_uri = self.data_class_uri
-        self.has_subobj = self.has_subobj
-        self.is_subobj = self.is_subobj                        
-        self.rdf_field_list = self.rdf_field_list                
-        self.rdf_instructions = self.rdf_instructions            
-        self.instance_uri = self.instance_uri                
-        self.data_class_uri = self.data_class_uri                          
-        self.data_prop_uri = self.data_prop_uri                
+        if hasattr(self, 'data_class_uri'):
+            class_uri = self.data_class_uri
+        else:
+            class_uri = None
+        self.data_subject_uri = kwargs.get("subject_uri", class_uri) 
+            
+        if hasattr(self,'has_subobj'):
+            has_subobj = self.has_subobj
+        else:
+            has_subobj = None
+        self.has_subobj = kwargs.get('has_subobj', has_subobj)
+        if hasattr(self,'is_subobj'):
+            is_subobj = self.is_subobj
+        else:
+            is_subobj = None
+        self.is_subobj = kwargs.get('is_subobj', is_subobj)
+        if hasattr(self,'rdf_field_list'):
+            rdf_field_list = self.rdf_field_list
+        else:
+            rdf_field_list = []
+        self.rdf_field_list = kwargs.get('rdf_field_list', rdf_field_list)
+        if hasattr(self,'rdf_instructions'):
+            rdf_instructions = self.rdf_instructions
+        else:
+            rdf_instructions = {}
+        self.rdf_instructions = kwargs.get('rdf_instructions', rdf_instructions)  
+        if hasattr(self,'instance_uri'):
+            instance_uri = self.instance_uri
+        else:
+            instance_uri = None
+        self.instance_uri = kwargs.get('instance_uri', instance_uri) 
+        if hasattr(self,'data_class_uri'):
+            data_class_uri = self.data_class_uri
+        else:
+            data_class_uri = None
+        self.data_class_uri = kwargs.get('data_class_uri', data_class_uri)           
+        if hasattr(self,'data_prop_uri'):
+            data_prop_uri = self.data_prop_uri
+        else:
+            data_prop_uri = None
+        self.data_prop_uri = kwargs.get('data_prop_uri', data_prop_uri)                                
         self._set_class_links()
         self._tie_fields_to_field_list()   
-        for fld in self.rdf_field_list:
-            pretty_data = pp.pformat(fld.__dict__)
-            setattr(fld, 'debug_data', pretty_data)
         pretty_data = pp.pformat(self.__dict__)
         self.debug_data = pretty_data
         

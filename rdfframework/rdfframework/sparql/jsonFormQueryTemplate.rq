@@ -39,124 +39,157 @@ SELECT *
 																		SELECT ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ (GROUP_CONCAT(?oV3; SEPARATOR=',') as ?o3a) (COUNT(?p3_) AS ?o3aTest)
 																		{
 																			{
-																				# Union query to gather all relevant information
-																				SELECT ?klForms ?p ?o ?1st ?fieldOrder ?propClass ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ ?o3_
+																				SELECT ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ ?o3_ (GROUP_CONCAT(?pV4; SEPARATOR=',') as ?p4o) (COUNT(?o3_) AS ?p4oTest)
 																				{
 																					{
-																						# Get the form related info
-																						SELECT DISTINCT ?klForms ?p ?o ("_____" as ?1st) (-1 as ?fieldOrder) ("_____" AS ?propClass)  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
-																						{
-																							?klForms a kds:FormClass .
-																							?klForms ?p ?o .
-																							FILTER (!(kds:hasProperty=?p)).
-																							OPTIONAL {
-																								?o ?p1 ?o1 .
-																								OPTIONAL {
-																									?o1 ?p2 ?o2 .
-																									FILTER(ISBLANK(?o1))
-																								}
-																								FILTER(ISBLANK(?o))
-																							} .
-																						}
-																					} UNION {
-																						# Get class related info 
-																						SELECT DISTINCT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ("classInfo" AS ?p1) ("_____" AS ?o1) ?p2 ?o2 ?p3 ?o3
-																						{
-																							?klForms a kds:FormClass .
-																							?klForms ?p ?o .
-																							BIND(?o AS ?bn ).
-																							?o kds:propUri ?property .
-																							?o kds:formFieldOrder ?fieldOrder .
-																							FILTER(isBlank(?o)) .
-																							OPTIONAL {?o kds:classUri ?classUri } .
-																							?property rdfs:domain ?domain .
-																							BIND(COALESCE(?classUri,?domain) AS ?propClass) .
-																							?propClass ?p2 ?o2 .
-																							FILTER(?p2=kds:classSecurity||?p2=kds:primaryKey) .
-																							OPTIONAL {
-																								?o2 ?p3 ?o3 .
-																								FILTER(isBlank(?o2))
-																							} .
-																						}
-																					} UNION {
-																						SELECT DISTINCT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
-																						{
-																							?klForms a kds:FormClass .
-																							?klForms ?p ?o .
-																							BIND(?o AS ?bn ).
-																							FILTER(isBlank(?o))
-																							?o kds:propUri ?property .
-																							?o kds:formFieldOrder ?fieldOrder .
-																							OPTIONAL {?o kds:classUri ?classUri } .
-																							?property rdfs:domain ?domain .
-																							BIND(COALESCE(?classUri,?domain) AS ?propClass) .	
-																							?o ?p1 ?o1 .
-																							FILTER(ISBLANK(?o1))
-																							FILTER(!(kds:classUri=?p1))
-																							?o1 ?p2 ?o2 .
-																							OPTIONAL {
-																								?o2 ?p3 ?o3 .
-																								FILTER(isBlank(?o2))
-																							} .
-																							
-																						}
-																					} UNION {	
-																						# Get the details from the form non-blank node hasProperty properties
-																						SELECT DISTINCT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
-																						{
-																							?klForms a kds:FormClass .
-																							?klForms ?p ?o .
-																							?o kds:propUri ?property .
-																							?o kds:formFieldOrder ?fieldOrder .
-																							FILTER(isBlank(?o))
-																							OPTIONAL {?o kds:classUri ?classUri } .
-																							?property rdfs:domain ?domain .
-																							BIND(COALESCE(?classUri,?domain) AS ?propClass) .	
-																							?o ?p1 ?o1 .
-																							FILTER(!(ISBLANK(?o1)))
-																							FILTER(!(kds:classUri=?p1))
-																						}
-																					} UNION {
-																						# Get the property details from the property definition
-																						SELECT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3
+																						SELECT ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ ?o3_ ?p4_ (GROUP_CONCAT(?oV4; SEPARATOR=',') as ?o4a) (COUNT(?p4_) AS ?o4aTest)
 																						{
 																							{
-																								#SELECT ?klForms ?p ?o ?property ?fieldOrder ?propClass
-																								{ 
-																									?klForms a kds:FormClass .
-																									?klForms ?p ?o .
-																									FILTER(isBlank(?o)) .
-																									?o kds:propUri ?property . 
-																									?o kds:formFieldOrder ?fieldOrder .
-																									OPTIONAL {?o kds:classUri ?classUri } .
-																									?property rdfs:domain ?domain .
-																									BIND(COALESCE(?classUri,?domain) AS ?propClass) .
-																									FILTER((bound(?classUri) && ?domain = ?classUri) || !(bound(?classUri)))
-																								}
+																								# Union query to gather all relevant information
+																								SELECT ?klForms ?p ?o ?1st ?fieldOrder ?propClass ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ ?o3_ ?p4_ ?o4_
 																								{
-																								  ?property ?p1 ?o1 .
-																								  OPTIONAL {
-																									?o1 ?p2 ?o2 .
-																									FILTER(isBlank(?o1))
-																									OPTIONAL {
-																										?o2 ?p3 ?o3 .
-																										FILTER(isBlank(?o2))
+																									{
+																										# Get the form related info
+																										SELECT DISTINCT ?klForms ?p ?o ("_____" as ?1st) (-1 as ?fieldOrder) ("_____" AS ?propClass)  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											?klForms a kds:FormClass .
+																											?klForms ?p ?o .
+																											FILTER (!(kds:hasProperty=?p)).
+																											OPTIONAL {
+																												?o ?p1 ?o1 .
+																												OPTIONAL {
+																													?o1 ?p2 ?o2 .
+																													FILTER(ISBLANK(?o1))
+																												}
+																												FILTER(ISBLANK(?o))
+																											} .
+																										}
+																									} UNION {
+																										# Get class related info 
+																										SELECT DISTINCT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ("classInfo" AS ?p1) ("_____" AS ?o1) ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											?klForms a kds:FormClass .
+																											?klForms ?p ?o .
+																											BIND(?o AS ?bn ).
+																											?o kds:propUri ?property .
+																											?o kds:formFieldOrder ?fieldOrder .
+																											FILTER(isBlank(?o)) .
+																											OPTIONAL {?o kds:classUri ?classUri } .
+																											?property rdfs:domain ?domain .
+																											BIND(COALESCE(?classUri,?domain) AS ?propClass) .
+																											?propClass ?p2 ?o2 .
+																											FILTER(?p2=kds:classSecurity||?p2=kds:primaryKey) .
+																											OPTIONAL {
+																												?o2 ?p3 ?o3 .
+																												FILTER(isBlank(?o2)) .
+																												OPTIONAL {
+																													?o3 ?p4 ?o4 .
+																													filter(isBlank(?o3))
+																												}
+																											} .
+																										}
+																									} UNION {
+																										SELECT DISTINCT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											?klForms a kds:FormClass .
+																											?klForms ?p ?o .
+																											BIND(?o AS ?bn ).
+																											FILTER(isBlank(?o))
+																											?o kds:propUri ?property .
+																											?o kds:formFieldOrder ?fieldOrder .
+																											OPTIONAL {?o kds:classUri ?classUri } .
+																											?property rdfs:domain ?domain .
+																											BIND(COALESCE(?classUri,?domain) AS ?propClass) .	
+																											?o ?p1 ?o1 .
+																											FILTER(ISBLANK(?o1))
+																											FILTER(!(kds:classUri=?p1))
+																											?o1 ?p2 ?o2 .
+																											OPTIONAL {
+																												?o2 ?p3 ?o3 .
+																												FILTER(isBlank(?o2)) .
+																												OPTIONAL {
+																													?o3 ?p4 ?o4
+																													FILTER(isBlank(?o3))
+																												}
+																											} .
+																											
+																										}
+																									} UNION {	
+																										# Get the details from the form non-blank node hasProperty properties
+																										SELECT DISTINCT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											?klForms a kds:FormClass .
+																											?klForms ?p ?o .
+																											?o kds:propUri ?property .
+																											?o kds:formFieldOrder ?fieldOrder .
+																											FILTER(isBlank(?o))
+																											OPTIONAL {?o kds:classUri ?classUri } .
+																											?property rdfs:domain ?domain .
+																											BIND(COALESCE(?classUri,?domain) AS ?propClass) .	
+																											?o ?p1 ?o1 .
+																											FILTER(!(ISBLANK(?o1)))
+																											FILTER(!(kds:classUri=?p1))
+																										}
+																									} UNION {
+																										# Get the property details from the property definition
+																										SELECT ?klForms ?p ?o (?property as ?1st) ?fieldOrder ?propClass  ?p1 ?o1 ?p2 ?o2 ?p3 ?o3 ?p4 ?o4
+																										{
+																											{
+																												#SELECT ?klForms ?p ?o ?property ?fieldOrder ?propClass
+																												{ 
+																													?klForms a kds:FormClass .
+																													?klForms ?p ?o .
+																													FILTER(isBlank(?o)) .
+																													?o kds:propUri ?property . 
+																													?o kds:formFieldOrder ?fieldOrder .
+																													OPTIONAL {?o kds:classUri ?classUri } .
+																													?property rdfs:domain ?domain .
+																													BIND(COALESCE(?classUri,?domain) AS ?propClass) .
+																													FILTER((bound(?classUri) && ?domain = ?classUri) || !(bound(?classUri)))
+																												}
+																												{
+																												  ?property ?p1 ?o1 .
+																												  OPTIONAL {
+																													?o1 ?p2 ?o2 .
+																													FILTER(isBlank(?o1))
+																													OPTIONAL {
+																														?o2 ?p3 ?o3 .
+																														FILTER(isBlank(?o2)) .
+																														OPTIONAL {
+																															?o3 ?p4 ?o4 .
+																															filter(isblank(?o3))
+																														}
+																													}
+																												  }
+																												}
+																											}
+																										}
 																									}
-																								  }
+																									# Below binds ensures every variable for each row exists
+																									BIND(IF(bound(?p1),?p1,"") AS ?p1_) .
+																									BIND(IF(bound(?o1),?o1,"") AS ?o1_) .
+																									BIND(IF(bound(?p2),?p2,"") AS ?p2_) .
+																									BIND(IF(bound(?o2),?o2,"") AS ?o2_) .
+																									BIND(IF(bound(?p3),?p3,"") AS ?p3_) .
+																									BIND(IF(bound(?o3),?o3,"") AS ?o3_) .
+																									BIND(IF(bound(?p4),?p4,"") AS ?p4_) .
+																									BIND(IF(bound(?o4),?o4,"") AS ?o4_) .
 																								}
 																							}
+																							BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o4_),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?oV4)
 																						}
-																					}
-																					# Below binds ensures every variable for each row exists
-																					BIND(IF(bound(?p1),?p1,"") AS ?p1_) .
-																					BIND(IF(bound(?o1),?o1,"") AS ?o1_) .
-																					BIND(IF(bound(?p2),?p2,"") AS ?p2_) .
-																					BIND(IF(bound(?o2),?o2,"") AS ?o2_) .
-																					BIND(IF(bound(?p3),?p3,"") AS ?p3_) .
-																					BIND(IF(bound(?o3),?o3,"") AS ?o3_) .
+																						GROUP BY ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ ?o3_ ?p4_
+																					}																		
+																					BIND(IF(?o4aTest>1,true,false)AS?o4aTestResult) .
+																					BIND(IF(?o4a!='""',true,false)AS?o4aShow) .
+																					BIND(isBlank(?o3_) AS ?level4Blank) .
+																					BIND(IF(?o4aShow&&?level4Blank,CONCAT('"',STR(?p4_),'":',IF(?o4aTestResult,"[",""),?o4a,IF(?o4aTestResult,"]","")),"") as ?pV4)
 																				}
+																				GROUP BY ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_ ?p3_ ?o3_ 
 																			}
-																			BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o3_),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?oV3)
+																			BIND(?p4oTest>1 as ?p4ObjTest)
+																			BIND(CONCAT('"',REPLACE(REPLACE(REPLACE(REPLACE(STR(?o3_),"\n"," "),"\t"," "),"[ ]+"," "),'"',"&quot"),'"') as ?temp3)
+																			BIND(IF(?p4o!="",CONCAT(IF(?p4ObjTest,"{",""),?p4o,IF(?p4ObjTest,"}","")),?temp3) AS ?oV3)
 																		}
 																		GROUP BY ?klForms ?p ?o ?fieldOrder ?1st  ?propClass  ?p1_ ?o1_ ?p2_ ?o2_ ?p3_
 																	}																		

@@ -2,7 +2,7 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 from rdflib import RDF, RDFS, OWL, XSD
 
-from rdfframework.utilities import iri, uri, make_list
+from rdfframework.utilities import iri, uri, make_list, xsd_to_python
 from .getframework import get_framework as rdfw
 
 class RdfDataType(object):
@@ -23,6 +23,7 @@ class RdfDataType(object):
         if "http" in val:
             val = "string"
         self.prefix = "xsd:{}".format(val)
+        self.py_prefix = "xsd_%s" % val
         self.iri = iri("{}{}".format(str(XSD), val))
         self.name = val
         if val.lower() == "literal" or val.lower() == "langstring":
@@ -43,6 +44,10 @@ class RdfDataType(object):
             return '"{}"^^{}'.format(str(data_value).lower(),
                                      self.prefix)
         else:
+            formated_data = xsd_to_python(data_value, 
+                                          self.py_prefix, 
+                                          "literal",
+                                          "string")
             return '"{}"^^{}'.format(data_value, self.prefix)
 
     def _find_type(self, class_uri, prop_uri):

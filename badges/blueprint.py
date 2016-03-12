@@ -15,14 +15,14 @@ from flask_negotiate import produces
 from flask.ext.login import login_required, login_user, current_user
 
 from . import new_badge_class, issue_badge
-from rdfframework import get_framework as rdfw
+from rdfframework import RdfProperty, get_framework as rdfw
 from rdfframework.utilities import render_without_request, code_timer, \
         remove_null, pp, clean_iri, uid_to_repo_uri, cbool
 
 from rdfframework.forms import rdf_framework_form_factory 
-from rdfframework.api import rdf_framework_api_factory
+from rdfframework.api import rdf_framework_api_factory, Api
 from rdfframework.security import User
-
+DEBUG = False
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
@@ -296,3 +296,55 @@ def rdf_class_forms(form_name, form_instance=None):
         login_message=login_message)
     return template
     
+
+@open_badge.route("/api/form_generic_prop/<class_uri>/<prop_uri>",
+                  methods=["POST", "GET"])
+def rdf_generic_api(class_uri, prop_uri):
+    if DEBUG:
+        debug = True
+    else:
+        debug = True
+    if debug: print("START rdf_generic_api ----------------------------\n")
+    subject_uri = request.args.get("id")
+    data = request.form.get("dataValue")
+    subject_uri = request.form.get("id",subject_uri)
+    #if debug: print("REQUEST dict: \n", pp.pprint(request.__dict__))
+    rdf_class = getattr(rdfw(), class_uri)
+    prop_json = rdf_class.kds_properties.get(prop_uri)
+    prop_json['kds_classUri'] = class_uri
+    prop_json['kds_apiFieldName'] = prop_uri
+    prop = RdfProperty(prop_json, data, subject_uri)
+    base_url = "%s%s" % (request.url_root[:-1], url_for("open_badge.base_path")) 
+    current_url = request.url
+    base_api_url = "%s%sapi/form_generic_prop/" % (request.url_root[:-1],
+                                   url_for("open_badge.base_path"))
+    if debug:
+        print('subject_uri: ', subject_uri)
+        print('data: ', data)
+        print('rdf_class: ', rdf_class)
+        print('prop_json: ', prop_json)
+        print('prop: ', prop)
+        print('base_url: ', base_url)
+        print('current_url: ', current_url)
+        print('base_api_url: ', base_api_url)
+
+    api_url = request.base_url
+    rdf_obj = Api(subject_uri=subject_uri,
+                  data_class_uri=class_uri,
+                  data_prop_uri=prop_uri,
+                  rdf_field_list=[prop_json],
+                  prop_list = [prop],
+                  base_url=base_url, 
+                  current_url=current_url,
+                  base_api_url=base_api_url,
+                  api_url=api_url)
+    if request.method == "POST":
+        save_result = rdf_obj.save()
+        if debug: print("\t**** save_result:\n",save_result)
+        if debug: print("END rdf_generic_api POST -------------------------\n")
+        return save_result
+    else:
+        api_data = rdfw().get_obj_data(rdf_obj)
+        if debug: print("\t**** api_data:\n",pp.pprint(api_data))
+        if debug: print("END rdf_generic_api GET --------------------------\n")
+        return json.dumps(api_data['obj_json'], indent=4) 

@@ -7,7 +7,7 @@ from rdfframework.validators import UniqueValue
 from .rdffields import add_field_attributes, calculate_default_value, \
         get_wtform_field, get_field_json
 import wtforms
-from wtforms.fields import StringField, FormField, FieldList
+from wtforms.fields import StringField, FormField, FieldList, HiddenField
 import flask_wtf
 from rdfframework.utilities import cbool, make_list, make_set, code_timer, \
         fw_config, iri, is_not_null, convert_spo_to_dict, uri, pp, \
@@ -38,7 +38,7 @@ def form_loader(form_url, **kwargs):
                       subject_uri=subject_uri)
     return form
 """
-    
+DEBUG = False    
 class Form(flask_wtf.Form):
     ''' This class extends the wtforms base form class to add rdfframework
         specific attributes and functions '''
@@ -85,6 +85,7 @@ class Form(flask_wtf.Form):
         pretty_data = pp.pformat(self.__dict__)
         self.debug_data = pretty_data
         self.original_fields = copy_obj(self._fields)
+        self._renumber_field_rows()
         
 
     def save(self):
@@ -294,6 +295,31 @@ class Form(flask_wtf.Form):
                         setattr(fld,"selected_display",_option['value'])
                 fld.choices = [(_option['id'], _option['value']) \
                         for _option in _options]
+                        
+    def _renumber_field_rows(self):
+        ''' this will renmber the rows based upon any inserts into the form '''
+        if DEBUG:
+            debug = True
+        else:
+            debug = False
+        if debug: print("START Form._renumber_field_rows ------------------\n")
+        current_row = float(self.rdf_field_list[0].kds_formLayoutRow)
+        last_row = current_row 
+        for fld in self.rdf_field_list:
+            if hasattr(fld, 'kds_formLayoutRow'):
+                current_row = float(fld.kds_formLayoutRow)
+            else:
+                current_row = last_row + .01
+            if debug: print("%s cr:%s lr:%s" % (fld.name, 
+                                                current_row, 
+                                                last_row))
+            if current_row >= last_row:
+                fld.kds_formLayoutRow = current_row
+                last_row = current_row
+            else:
+                fld.kds_formLayoutRow = last_row + 1
+                last_row += 1
+        if debug: print("\nEND Form._renumber_field_rows ------------------\n")
 
     
 
@@ -428,6 +454,9 @@ def rdf_framework_form_factory(form_url, **kwargs):
                         _new_field['kds_formFieldName'] = nfld['kds_fieldName']
                         _new_field['kds_formFieldOrder'] = \
                                 float(_new_field['kds_formFieldOrder']) + i
+                        _new_field['kds_formLayoutRow'] = \
+                                nfld.get("kds_formLayoutRow",
+                                         _new_field['kds_formLayoutRow'])
                         if nfld.get("doNotSave") == True:
                             _new_field['doNotSave'] = True
                         else:
@@ -436,7 +465,7 @@ def rdf_framework_form_factory(form_url, **kwargs):
                                 nfld['kds_field'],_new_field)
                         rdf_field_list.append(_new_field)
                         setattr(rdf_form, nfld['kds_fieldName'], augmented_field)
-                        i += .1  
+                        i += .01  
             else:
                 #print(field['formFieldName'], " - ", form_field)
                 if form_field:
@@ -460,7 +489,7 @@ def rdf_framework_form_factory(form_url, **kwargs):
                  'editable': False,
                  'doNotSave': False}
         rdf_field_list.append(field)
-        augmented_field = add_field_attributes(StringField('dataSubjectUri'),
+        augmented_field = add_field_attributes(HiddenField('dataSubjectUri'),
                                                field)
         setattr(rdf_form, 'subjectUri', augmented_field)
         setattr(rdf_form, 'is_subobj', True)
@@ -478,3 +507,5 @@ def rdf_framework_form_factory(form_url, **kwargs):
     #pp.pprint(rdf_form.__dict__)
     return rdf_form
     #return rdf_form
+
+

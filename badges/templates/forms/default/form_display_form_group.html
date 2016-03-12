@@ -13,7 +13,7 @@
 			{% else %}
 				{% set data = fld.data %} 
 			{% endif %}	
-			<div class="form-control-static">{{ data|safe }}</div>
+			<div id="{{ fld.name }}" class="form-control-static" >{{ data|safe }}</div>
 		{% endif %}
 	</div>
 	{% if debug %}

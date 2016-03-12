@@ -2,7 +2,7 @@ import datetime
 import json
 from wtforms.fields import StringField, TextAreaField, PasswordField, \
         BooleanField, FileField, DateField, DateTimeField, SelectField, Field,\
-        FormField, FieldList
+        FormField, FieldList, HiddenField
 from wtforms.validators import InputRequired, Optional, URL
 from rdfframework import get_framework as rdfw
 from rdfframework.processors import clean_processors
@@ -10,7 +10,8 @@ from rdfframework.validators import get_wtform_validators
 from rdfframework.utilities import make_list, make_set, cbool, \
         calculate_default_value #, code_timer, \
 #        fw_config, iri, is_not_null
-from rdfframework.forms.widgets import BsGridTableWidget, RepeatingSubFormWidget
+from rdfframework.forms.widgets import BsGridTableWidget, \
+        RepeatingSubFormWidget, ButtonActionWidget
 
 def get_field_json(field, instructions, instance, user_info, item_permissions=None):
     '''This function will read through the RDF defined info and proccess the
@@ -110,8 +111,8 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
         _new_field['editable'] = False
 
     # Determine css classes
-    css = _form_instance_info.get('kds_overideCss', field.get('kds_overideCss', \
-            instructions.get('kds_overideCss', None)))
+    css = _form_instance_info.get('kds_overrideCss', field.get('kds_overrideCss', \
+            instructions.get('kds_overrideCss', None)))
     if css is None:
         css = _rdf_app.get('kds_formDefault', {}).get('kds_fieldCss', '')
         css = css.strip() + " " + instructions.get('kds_propertyAddOnCss', '')
@@ -134,11 +135,22 @@ def get_wtform_field(field, instance='', **kwargs):
         _field_type_obj = _field_type_obj['rdf_type'][0]
     _field_validators = get_wtform_validators(field)
     _field_type = _field_type_obj.get('rdf_type', '')
+    _field_row = float(field.get("kds_formLayoutRow",0))
     _default_val = calculate_default_value(field)
     if _field_type == 'kdr_TextField':
         _form_field = StringField(_field_label,
                                   _field_validators,
                                   description=field.get('kds_formFieldHelp', ''))
+    elif _field_type == 'kdr_OpenBadgeSenderField':
+        _form_field =  ButtonActionField(_field_label,
+                                  description=field.get('kds_formFieldHelp', ''),
+                                  #button_action="mozillaBackpackSender",
+                                  #button_text={'true':"Resend",'false':'Claim now'}
+                                  )
+        field['kds_call_in_display'] = True
+        field['kds_buttonAction']="mozillaBackpackSender"
+        field['kds_buttonText']={'true':"Resend",'false':'Claim now'}
+        #x=y
     elif _field_type == 'kdr_ServerField':
         _form_field = None
         #form_field = StringField(_field_label, _field_validators, description= \
@@ -162,15 +174,17 @@ def get_wtform_field(field, instance='', **kwargs):
                             "doNotSave":True}]
 
         elif _field_mode == "kdr_ChangePassword":
-
+            
             _form_field = [{"kds_fieldName":_field_name + "_old",
                             "kds_field":PasswordField("Current"),
                             "doNotSave":True},
                            {"kds_fieldName":_field_name,
-                            "kds_field":PasswordField("New")},
+                            "kds_field":PasswordField("New"),
+                            "kds_formLayoutRow":_field_row + .01},
                            {"kds_fieldName":_field_name + "_confirm",
                             "kds_field":PasswordField("Re-enter"),
-                            "doNotSave":True}]
+                            "doNotSave":True,
+                            "kds_formLayoutRow":_field_row + .02}]
         elif _field_mode == "kdr_LoginPassword":
             _form_field = PasswordField(_field_label,
                                         [InputRequired()],
@@ -181,6 +195,10 @@ def get_wtform_field(field, instance='', **kwargs):
                                    _field_validators,
                                    description=field.get('kds_formFieldHelp', ''))
     elif _field_type == 'kdr_FileField':
+        _form_field = FileField(_field_label,
+                                _field_validators,
+                                description=field.get('kds_formFieldHelp', ''))
+    elif _field_type == 'kdr_HiddenField':
         _form_field = FileField(_field_label,
                                 _field_validators,
                                 description=field.get('kds_formFieldHelp', ''))
@@ -311,3 +329,7 @@ def add_field_attributes(wt_field, attributes):
     setattr(wt_field, "processed_data", None)
     setattr(wt_field, "query_data", None)
     return wt_field
+    
+class ButtonActionField(StringField):
+    widget =  ButtonActionWidget()
+    

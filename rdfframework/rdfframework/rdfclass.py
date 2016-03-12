@@ -40,13 +40,22 @@ class RdfClass(object):
         validDependancies = self._validate_dependant_props(
             rdf_obj,
             old_form_data)"""
+            
+        if DEBUG:
+            debug = True
+        else:
+            debug = True
+        if debug: print("START RdfClass.save ---------------------------\n")
         if not validation_status:
             return self.validate_form_data(rdf_obj)
 
         save_data = self._process_class_data(rdf_obj)
-        #print("-------------- Save data:\n",json.dumps(dumpable_obj(save_data)))
+        if debug: print("-------------- Save data:\n",pp.pprint(save_data))
         save_query = self._generate_save_query(save_data)
+        if debug: print("save_query: \n", pp.pprint(save_query))
+        if debug: print("END RdfClass.save ---------------------------\n")
         return self._run_save_query(save_query)
+        #return None
 
 
     def new_uri(self):
@@ -371,7 +380,7 @@ class RdfClass(object):
         if DEBUG:
             debug = True
         else:
-            debug = False
+            debug = True
         if debug: print("START rdfclass.RdfClass._process_class_data ------\n")
         _pre_save_data = {}
         _save_data = {}
@@ -391,7 +400,9 @@ class RdfClass(object):
                     break
         subject_uri = _old_data.get("!!!!subjectUri", "<>")
         for prop in _class_obj_props:
-            #pp.pprint(prop.__dict__)
+            if debug: print("prop dict ----------------------\n",
+                            pp.pprint(prop.__dict__),
+                            "\n---------------------\n")
             _prop_uri = prop.kds_propUri
             if debug:
                 if _prop_uri == "schema_image":
@@ -622,7 +633,6 @@ class RdfClass(object):
                         fw_config().get("REPOSITORY_URL"),
                         data=_save_query,
         				headers={"Content-type": "text/turtle"})
-                    pp.pprint(repository_result)
                     object_value = repository_result.text
                 # if the subject uri exists send an update query to the
                 # repository
@@ -647,12 +657,18 @@ class RdfClass(object):
         # obj = propUri, prop, processedData, _pre_save_data
         # !!!!!!! the merge_prop function will need to be relooked for 
         # instances where we have multiple property entries i.e. a fieldList
+        if DEBUG:
+            debug = True
+        else:
+            debug = True
+        if debug: print("START RdfClass._process_prop -------------------\n")
         if len(make_list(obj['prop'])) > 1:
             obj = self.__merge_prop(obj)
         processors = obj['prop'].get("processors", [])
         _prop_uri = obj['propUri']
         # process properties that are not in the form
-        if isinstance(obj['prop'].get("new"), NotInFormClass):
+        if isinstance(obj['prop'].get("new"), NotInFormClass) and \
+                not is_not_null(obj['prop'].get("old")):
             # process required properties
             if obj['prop'].get("required"):
                 # run all processors: the processor determines how to
@@ -691,7 +707,7 @@ class RdfClass(object):
                                                        obj['prop'].get("new")
                     else:
                         obj['processedData'][_prop_uri] = obj['prop'].get("new")
-
+        if debug: print("END RdfClass._process_prop -------------------\n")
         return obj
         
     def __calculate_property(self, obj):
@@ -732,7 +748,11 @@ class RdfClass(object):
     def __format_data_for_save(self, processed_data, pre_save_data):
         ''' takes the processed data and formats the values for the sparql
             query '''
-        debug = False
+        if DEBUG:
+            debug = True
+        else:
+            debug = True
+        if debug: print("START RdfClass.__format_data_for_save -----------\n")
         _save_data = []
         #if "obi_recipient" in pre_save_data.keys():
         #    x=y
@@ -741,7 +761,9 @@ class RdfClass(object):
         # cycle throught the properties in the processed data    
         for _prop_uri, prop in processed_data.items():
             # if the property is maked for deletion add it to the save list
-            if isinstance(prop, DeleteProperty):
+            if isinstance(prop, NotInFormClass):
+                pass
+            elif isinstance(prop, DeleteProperty):
                 _save_data.append([_prop_uri, prop])
             # if the property is a file object send it to the repository and
             # add the new uri to the save data list
@@ -786,6 +808,7 @@ class RdfClass(object):
                         _item = str(item).encode('unicode_escape')
                         _save_data.append([_prop_uri, RdfDataType(\
                                 _data_type).sparql(str(item))])
+        if debug: print("END RdfClass.__format_data_for_save -----------\n")
         return _save_data
     
     def _select_class_query_data(self, old_data):

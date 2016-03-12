@@ -1,6 +1,8 @@
 {% set current_row = form.rdf_field_list[0].kds_formLayoutRow|float %}
 		<div class="row {{ form.rdf_instructions['rowCss'] }}">
+{% set first=True %}
 {% for fld in form.rdf_field_list %}
+	{% if first %}{% set first_fld=fld %}{% endif %}
 	{% set errorCss = '' %}
 	{% if fld.errors %}{% set errorCss = " has-error" %}{% endif %}
 	{% if fld.kds_formLayoutRow|float > current_row %}

@@ -90,7 +90,11 @@ obi:hasBadge a rdf:Property;
 			a	kdr:SelectField;
 			kds:selectQuery "SELECT * {?s a obi:BadgeClass . ?s schema:name ?name .}";
 			kds:selectBoundValue "?s";
-			kds:selectDisplay "?name" 
+			kds:selectDisplay "?name";
+			kds:hasButton [
+				kds:buttonLink "!--goToForm,obi:BadgeForm,kdr:NewForm";
+				kds:buttonText "New Badge"
+			]
 		];
 		kds:formInstance [
 			kds:formInstanceType kdr:EditForm;
@@ -98,6 +102,26 @@ obi:hasBadge a rdf:Property;
 		]
 	] .
 		
+obi:claimDate a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:date;
+	rdfs:comment "The date an openbadge has been claimed.";
+	kds:formDefault [
+		kds:formFieldName "claimbadge";
+		kds:formLabelName " ";
+		kds:formFieldHelp "Click to claim/resend your badge to Mozilla.";
+		kds:fieldType [
+			a	kdr:OpenBadgeSenderField;
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:RemoveFromForm
+		]
+	] .
 
 obi:issuedOn a rdf:Property;
 	rdfs:domain obi:Assertion;
@@ -807,6 +831,13 @@ obi:LoginForm a kds:FormClass;
 			kds:submitSuccessRedirect "!--source";
 			kds:submitFailRedirect "!--currentpage";
 			kds:instanceUrl "none";
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:LoginReset;
+			kds:formDescription "You are required to change your password!";
+			kds:submitSuccessRedirect "!--source";
+			kds:submitFailRedirect "!--currentpage";
+			kds:instanceUrl "reset";
 		]
 	];    
 	kds:hasProperty [
@@ -824,7 +855,14 @@ obi:LoginForm a kds:FormClass;
 		kds:fieldType [
 			a kdr:PasswordField;
 			kds:fieldMode kdr:LoginPassword
-		] 
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:LoginReset;
+			kds:fieldType [
+				a kdr:PasswordField;
+				kds:fieldMode kdr:ChangePassword
+			];
+		]
 	].
 
 obi:OrganizationForm a kds:FormClass;
@@ -1573,7 +1611,7 @@ obi:AssertionImageApi a kds:ApiClass;
 	];
 	kds:hasProperty [
 		kds:propUri schema:image;
-		kds:classUri schema:Assertion;
+		kds:classUri obi:Assertion;
 		kds:apiFieldName "image";
 	].	
 	
@@ -1730,6 +1768,7 @@ obi:PersonAwardsForm a kds:FormClass;
 		kds:lookupPropertyUri schema:email;
 		kds:submitSuccessRedirect kdr:DisplayForm;
 		kds:submitFailRedirect "!--currentpage";
+		kds:javascriptFiles "https://backpack.openbadges.org/issuer.js";
 		kds:formInstance [
 			kds:formInstanceType kdr:DisplayForm ;
 			kds:instanceUrl "none"
@@ -1778,16 +1817,14 @@ obi:PersonAssertions a kds:FormClass;
 		]
 	];
 	kds:hasProperty [
-		kds:propUri schema:email;
-		kds:classUri schema:Person;
-		kds:formFieldOrder 4;
+		kds:propUri obi:claimDate;
+		kds:classUri obi:Assertion;
+		kds:formFieldOrder 1.5;
 		kds:formLayoutRow 1;
-		kds:formInstance [
-			kds:formInstanceType kdr:NewForm;
-			kds:applicationAction kdr:LookupAddNewWorkFlow; 
-		];
+		kds:overrideCss "btn btn-primary btn-xs";
+		kds:apiRoute "badgeclaimer";
 		kds:fieldType [
-			a kdr:OpenBagdePusher;
+			a kdr:OpenBadgeSenderField;
 		];
 	];
 	kds:hasProperty [
@@ -1795,14 +1832,14 @@ obi:PersonAssertions a kds:FormClass;
 		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 1;
 		kds:formLayoutRow 1;
-		kds:formLabelName "Image"
+		kds:formLabelName "Badge"
 	];
 	kds:hasProperty [
 		kds:propUri schema:name;
 		kds:classUri obi:BadgeClass;
 		kds:formFieldOrder 2;
 		kds:formLayoutRow 2;
-		kds:formLabelName "Badge"
+		kds:formLabelName " "
 	];
 	kds:hasProperty [
 		kds:propUri schema:description;
@@ -1811,3 +1848,20 @@ obi:PersonAssertions a kds:FormClass;
 		kds:formLayoutRow 2;
 		kds:formLabelName "Description"
 	].
+	
+obi:AssertionClaimerApi a kds:ApiClass;
+	rdfs:label "Assertion Claimer API";
+	rdfs:comment "This api returns an open badge assertion image.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:apiMethod "POST";
+		kds:lookupClassUri obi:Assertion;
+		kds:subjectUriTransform kdr:UidToRepositoryUri;
+		kds:apiUrl "badgeclaimer";
+		kds:returnType "json"
+	];
+	kds:hasProperty [
+		kds:propUri obi:claimDate;
+		kds:classUri obi:Assertion;
+		kds:apiFieldName "claimdate";
+	].	

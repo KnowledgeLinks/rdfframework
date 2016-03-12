@@ -36,7 +36,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = True 
+        reset = False
         if not os.path.isdir(JSON_LOCATION):
             print("Cached JSON directory not found.\nCreating directory")
             reset = True
@@ -45,7 +45,7 @@ class RdfFramework(object):
             reset = True 
         # verify that the server core is up and running
         servers_up = True
-        servers_up = verify_server_core(240, 180)
+        servers_up = verify_server_core(600, 0)
         if not servers_up:
             print("Sever core not initialized --- Framework Not loaded")
         if servers_up:
@@ -60,14 +60,32 @@ class RdfFramework(object):
     def load_default_data(self):
         ''' reads default data in the fw_config and attempts to add it 
             to the server core i.e. inital users and organizations'''
-        data_list = make_list(fw_config().get('FRAMEWORK_DEFAULT'))
-        for data in data_list:
-            form_class = rdf_framework_form_factory(data['form_path'])
-            form_data = data['form_data']
-            form = form_class()
-            for prop in form.rdf_field_list:
-                prop.data = form_data.get(prop.name)
-            form.save() 
+        # test to see if the default data was already loaded
+        sparql = '''
+            SELECT ?default_loaded 
+            WHERE {
+                ?uri kds:defaultLoaded ?default_loaded .
+            }'''
+        result = requests.post(fw_config().get('TRIPLESTORE_URL'),
+                                 data={"query": self.get_prefix() + sparql,
+                                       "format": "json"})
+        value = result.json().get('results', {}).get('bindings', [])
+        if len(value) == 0:
+            # if not loaded save the data
+            data_list = make_list(fw_config().get('FRAMEWORK_DEFAULT'))
+            for data in data_list:
+                form_class = rdf_framework_form_factory(data['form_path'])
+                form_data = data['form_data']
+                form = form_class()
+                for prop in form.rdf_field_list:
+                    prop.data = form_data.get(prop.name)
+                form.save()
+            # tag the repositry that the data has been loaded
+            save_data = ' <> kds:defaultLoaded "true"^^xsd:string'
+            save_query = self.get_prefix("turtle") + save_data
+            responce = requests.post(fw_config().get("REPOSITORY_URL"),
+                           data=save_query,
+                           headers={"Content-type": "text/turtle"})
             
     def user_authentication(self, rdf_obj):
         ''' reads the object for authentication information and sets the
@@ -386,7 +404,11 @@ class RdfFramework(object):
                 _prop_uri = _prop.kds_propUri
                 _class_uri = _prop.kds_classUri
                 _data_value = None 
-                if "subform" in _prop.kds_fieldType.get("rdf_type",'').lower():
+                if not hasattr(_prop, 'kds_fieldType'):
+                    _field_type = {}
+                else:
+                    _field_type = _prop.kds_fieldType
+                if "subform" in _field_type.get("rdf_type",'').lower():
                     for i, _data in enumerate(make_list(\
                             _subform_data.get("obj_data"))):
                         for _key, _value in _data.items():
@@ -411,7 +433,7 @@ class RdfFramework(object):
                                       _prop, 
                                       processor_mode)
                         if debug: 
-                            if _prop.kds_propUri == "schema_image": x=y
+                            if _prop.kds_propUri == "schema_image": x=1
                     if _prop.kds_propUri == "kds_StaticValue":
                         _prop.processed_data = _prop.kds_returnValue
                         prop_old_data = _prop.kds_returnValue
@@ -435,6 +457,11 @@ class RdfFramework(object):
         else:
             _obj_data_dict = MultiDict()
         _obj_data = iris_to_strings(_obj_data)
+        if debug: print("**** return value: ---------------------------- \n")
+        if debug: pp.pprint({"obj_data":_obj_data_dict,
+                             "obj_json":_obj_data,
+                             "query_data":_query_data,
+                             "form_class_uri":_lookup_class_uri})
         if debug: print("END get_obj_data ---------------------------\n")
         return {"obj_data":_obj_data_dict,
                 "obj_json":_obj_data,
@@ -580,7 +607,6 @@ class RdfFramework(object):
             defined in the kl_app.ttl file'''
         print("\tLoading rdf class definitions")
         if reset:
-
             _sparql = render_without_request("jsonRDFclassDefinitions.rq",
                                              graph=fw_config().get(\
                                                     'RDF_DEFINITION_GRAPH'))
@@ -589,11 +615,11 @@ class RdfFramework(object):
             _raw_json = _class_list.json().get(\
                     'results').get('bindings')[0]['klClasses']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
-            _json_defs = json.loads(_string_defs) 
             with open(
                 os.path.join(JSON_LOCATION,"class_query.json"), 
                 "w") as file_obj:
                 file_obj.write( _string_defs )
+            _json_defs = json.loads(_string_defs) 
         else:
             with open(
                 os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
@@ -613,11 +639,12 @@ class RdfFramework(object):
             _raw_json = _form_list.json().get('results').get('bindings'\
                     )[0]['appForms']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
-            _json_defs = json.loads(_string_defs)
+            
             with open(
                 os.path.join(JSON_LOCATION, "form_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs)
+            _json_defs = json.loads(_string_defs)
         else:
             with open(
                 os.path.join(JSON_LOCATION, "form_query.json")) as file_obj:
