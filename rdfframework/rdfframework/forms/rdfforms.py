@@ -2,7 +2,7 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 import datetime
 import requests
-
+from urllib.parse import quote
 from rdfframework.validators import UniqueValue
 from .rdffields import add_field_attributes, calculate_default_value, \
         get_wtform_field, get_field_json
@@ -118,7 +118,8 @@ class Form(flask_wtf.Form):
         elif _url_instructions is not None:
             _form_url = rdfw().get_form_path(self.form_uri, _url_instructions)
             if _form_url is not None:
-                return "{}{}?id={}".format(self.base_url, _form_url, id_value)
+                return "{}{}?id={}".format(self.base_url, _form_url, 
+                        quote(id_value))
             else:
                 return _url_instructions
         else:

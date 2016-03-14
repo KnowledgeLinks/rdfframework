@@ -55,7 +55,7 @@ class RepeatingSubFormWidget(object):
 
     def __call__(self, field, **kwargs):
         if DEBUG:
-            debug = False
+            debug = True
         else:
             debug = False
         if debug: print("START RepeatingSubFormWidget.call ---------------\n")
@@ -169,8 +169,8 @@ class RepeatingSubFormTableJinga2Widget(object):
         return HTMLString(''.join(html))
         
 class ButtonActionWidget(object):
-    #def __init__(self, **kwargs):   
-    #    self.button_action = kwargs.get('button_action','')
+    ''' This widget will place a button on the page that will call a function
+        as passed in '''
         
     def __call__(self, field, **kwargs):
         if hasattr(field,'kds_buttonAction'):
@@ -185,10 +185,22 @@ class ButtonActionWidget(object):
             button_link = field.kds_buttonLink
         else:
             button_link = ''
+        if hasattr(field,'kds_buttonFalseCss'):
+            button_true_css = field.kds_buttonFalseCss
+        else:
+            button_true_css = 'btn-success'
+        if hasattr(field,'kds_buttonTrueCss'):
+            button_false_css = field.kds_buttonTrueCss
+        else:
+            button_false_css = 'btn-danger'
         button_action = kwargs.get('button_action', button_action)
         button_text = kwargs.get('button_text', button_text)
         button_link = kwargs.get('button_link', button_link)
         css = kwargs.pop('class', '') or kwargs.pop('class_', '')
+        if is_not_null(field.data):
+            css = "%s %s" % (css, button_true_css)
+        else:
+            css = "%s %s" % (css, button_false_css)
         if button_action[:-2] == "()":
             button_action = button_action[:-2]
         return_args = []
@@ -199,8 +211,9 @@ class ButtonActionWidget(object):
             button_text = button_text['false']
         if is_not_null(button_action):
             return_args.append("href='javascript:;' ")
-            return_args.append('onclick="%s(\'%s\',this)" ' % (button_action, \
-                    field.data))
+            return_args.append('onclick="%s(\'%s\',this,\'%s\',\'%s\')" ' % 
+                    (button_action, field.data, button_false_css, \
+                     button_true_css))
         else:
             return_args.append("href='%s' " % button_link)
         return_args.append("class='%s' " % css)

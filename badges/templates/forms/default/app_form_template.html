@@ -1,10 +1,15 @@
 {% extends 'index.html' %}
-
-{% block head_title %}{% if name %}{{ name }}{% endif %} User Classes{% endblock %}
+{% block view_title %}
+	{% if form.rdf_instructions['kds_formTitle'] %}
+		{{ form.rdf_instructions['kds_formTitle'] }} - 
+	{% endif %}
+{% endblock %}
+{% block head_title %}{{ form.rdf_instructions['kds_formTitle'] }}{% endblock %}
 
 {% block main %}
 {% if not debug %}{% set debug = False %}{% endif %}
 {% if not display_mode %}{% set display_mode = False %}{% endif %}
+{% include 'snippets/navbar.html' %}
 <div class="container">
 	<div class="row">
 		<section class="col-md-12">

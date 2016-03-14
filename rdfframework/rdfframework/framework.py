@@ -36,7 +36,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = False
+        reset = True
         if not os.path.isdir(JSON_LOCATION):
             print("Cached JSON directory not found.\nCreating directory")
             reset = True
@@ -53,7 +53,7 @@ class RdfFramework(object):
             self._load_rdf_data(reset)
             self._load_app(reset)
             self._generate_classes(reset)
-            self._generate_forms(reset)
+            self._generate_forms(reset) 
             self._generate_apis(reset)
             print("*** Framework Loaded ***")
         
@@ -548,10 +548,16 @@ class RdfFramework(object):
                                                                self.ns_obj)
             print("\t\t%s objects" % len(self.rdf_class_dict))
             self.class_initialized = True
+            kds_saveLocation = self.app.get("kds_saveLocation","triplestore")
+            kds_subjectPattern = self.app.get("kds_subjectPattern",
+                    "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid")
             for _rdf_class in self.rdf_class_dict:
                 setattr(self,
                         _rdf_class,
-                        RdfClass(self.rdf_class_dict[_rdf_class], _rdf_class))
+                        RdfClass(self.rdf_class_dict[_rdf_class],
+                                 _rdf_class,
+                                 kds_saveLocation=kds_saveLocation,
+                                 kds_subjectPattern=kds_subjectPattern))
 
     def _generate_forms(self, reset):
         ''' adds the dictionary of form definitions as an attribute of

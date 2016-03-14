@@ -69,7 +69,7 @@ def fedora_image_path():
 def test_rdf_class():
     """View for displaying a test RDF class"""
     f=rdfw() #This is an intentional error to cause a break in the code
-    #y=z
+    y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
 
  
@@ -308,7 +308,7 @@ def rdf_generic_api(class_uri, prop_uri):
     subject_uri = request.args.get("id")
     data = request.form.get("dataValue")
     subject_uri = request.form.get("id",subject_uri)
-    #if debug: print("REQUEST dict: \n", pp.pprint(request.__dict__))
+    if debug: print("REQUEST dict: \n", pp.pprint(request.__dict__))
     rdf_class = getattr(rdfw(), class_uri)
     prop_json = rdf_class.kds_properties.get(prop_uri)
     prop_json['kds_classUri'] = class_uri

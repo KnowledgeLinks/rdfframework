@@ -1,5 +1,5 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
-
+import re
 import json
 import requests
 
@@ -7,26 +7,59 @@ from werkzeug.datastructures import FileStorage
 from jinja2 import Template
 from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, \
     make_list, make_set, make_triple, remove_null, DeleteProperty, \
-    NotInFormClass, pp, uri, calculate_default_value
+    NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri
 
 from .getframework import get_framework as rdfw
 from rdfframework.rdfdatatype import RdfDataType
 from rdfframework.utilities.debug import dumpable_obj
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import save_file_to_repository
-
-DEBUG = False
+# setting DEBUG to False will turn all the debug printing off in the module
+DEBUG = True
 class RdfClass(object):
     '''RDF Class for an RDF Class object.
        Used for manipulating and validating an RDF Class subject'''
 
-    def __init__(self, json_obj, class_name):
+    def __init__(self, json_obj, class_name, **kwargs):
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("\nSTART RdfClass.init ---------------------------\n")
         self.class_name = None
         self.kds_properties = {}
         for _prop in json_obj:
             setattr(self, _prop, json_obj[_prop])
         setattr(self, "class_name", class_name)
-
+        # The below accounts for cases where we may be using more than one
+        # repository or triplestore
+        
+        # The 'kds_triplestoreConfigName' is the variable name in the 
+        # config file that specifies the URL of the triplestore
+        if not hasattr(self, "kds_triplestoreConfigName"):
+            self.kds_triplestoreConfigName = "TRIPLESTORE_URL"
+        if not hasattr(self, "kds_repositoryConfigName"):
+            self.kds_repositoryConfigName = "REPOSITORY_URL"
+        # The kds_saveLocation specifies where to save the data i.e.
+        # in the triplestore or the repository
+        if not hasattr(self, "kds_saveLocation"):
+            self.kds_saveLocation = kwargs.get("kds_saveLocation",
+                                               "triplestore")
+        # The kds_queryLocation specifies where to query for class data                                         
+        if not hasattr(self, "kds_queryLocation"):
+            self.kds_queryLocation = "triplestore"
+        # set the triplestore and repository urls for the class
+        self.triplestore_url = fw_config().get(self.kds_triplestoreConfigName)
+        self.repository_url = fw_config().get(self.kds_repositoryConfigName)
+        if not hasattr(self, "kds_subjectPattern"):
+            self.kds_subjectPattern = kwargs.get("kds_subjectPattern",
+                    "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid")
+        if not hasattr(self, "kds_baseUrl"):
+            self.kds_baseUrl = kwargs.get("kds_baseUrl", fw_config().get(\
+                "ORGANIZATION",{}).get("url", "NO_BASE_URL"))
+        if debug: pp.pprint(self.__dict__)
+        if debug: print("\nEND RdfClass.init ---------------------------\n")
+            
     def save(self, rdf_obj, validation_status=True):
         """Method validates and saves passed data for the class
 
@@ -41,10 +74,10 @@ class RdfClass(object):
             rdf_obj,
             old_form_data)"""
             
-        if DEBUG:
-            debug = True
+        if not DEBUG:
+            debug = False
         else:
-            debug = True
+            debug = False
         if debug: print("START RdfClass.save ---------------------------\n")
         if not validation_status:
             return self.validate_form_data(rdf_obj)
@@ -63,8 +96,68 @@ class RdfClass(object):
         generates a new URI
           -- for fedora generates the container and returns the URI
           -- for blazegraph process will need to be created'''
-       #print("generating new URI")
-
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START RdfClass.new_uri ---------------------------\n")
+        return_val = None
+        if self.kds_saveLocation == "triplestore":
+            # get a uuid by saving an empty record to the repo and then 
+            # delete the item.
+            repository_result = requests.post(
+                            self.repository_url,
+                            data="",
+            				headers={"Content-type": "text/turtle"})
+            object_value = repository_result.text
+            uid = re.sub(r'^(.*[#/])','',object_value)
+            requests.delete(object_value)
+            if debug: print("new uid: ", uid)
+            return_val = self.uri_patterner(uid)   
+        return return_val
+        if debug: print("END RdfClass.new_uri ---------------------------\n")
+    
+    def uri_patterner(self, uid, **kwargs):
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START RdfClass.uri_patterner ---------------------\n")
+        pattern = kwargs.get("kds_subjectPattern", self.kds_subjectPattern)
+        pattern_args = pattern.split(",")
+        new_args = []
+        for arg in pattern_args:
+            if arg.startswith("!--"):
+                if arg == "!--baseUrl":
+                    value = self.kds_baseUrl
+                elif arg == "!--classPrefix":
+                    value = uri_prefix(self.kds_classUri).lower()
+                elif arg == "!--className":
+                    value = nouri(self.kds_classUri)
+                elif arg == "!--uuid":
+                    value = uid
+                else:
+                    value = arg.replace("!--","")
+            else:
+                value = arg
+            new_args.append(value)
+        new_uri = "".join(new_args)
+        if new_uri.startswith("http://"):
+            temp_uri = new_uri.replace("http://","").replace("//","/")
+            if temp_uri[:1] == "/":
+                temp_uri = temp_uri[1:]
+            new_uri = "http://" + temp_uri
+        elif new_uri.startswith("https://"):
+            temp_uri = new_uri.replace("https://","").replace("//","/")
+            if temp_uri[:1] == "/":
+                temp_uri = temp_uri[1:]
+            new_uri = "https://" + temp_uri
+        if debug: print("pattern: %s\nuid: %s\nnew_uri: %s" %
+                    (pattern, uid, new_uri))
+        if debug: print("END RdfClass.uri_patterner -----------------------\n")
+        return new_uri    
+        
+        
     def validate_obj_data(self, rdf_obj, old_data):
         '''This method will validate whether the supplied object data
            meets the class requirements and returns the results'''
@@ -91,7 +184,12 @@ class RdfClass(object):
 
     def validate_primary_key(self, rdf_obj, old_data):
         '''query to see if PrimaryKey is Valid'''
-        debug = False
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START RdfClass.validate_primary_key --------------\n")
+            
         if old_data is None:
             old_data = {}
         _prop_name_list = []
@@ -104,6 +202,7 @@ class RdfClass(object):
             pkey = []
         if debug: print(self.kds_classUri, " PrimaryKeys: ", pkey, "\n")
         if len(pkey) < 1:
+            if debug: print("END RdfClass.validate_primary_key -NO pKey----\n")
             return ["valid"]
         else:
             _calculated_props = self._get_calculated_properties()
@@ -144,6 +243,8 @@ class RdfClass(object):
                     # return valid. *** The object value does not exist and 
                     #                   will be generated when another class 
                     #                   is saved
+                    if debug: print(\
+                        "END RdfClass.validate_primary_key - NO data-------\n")
                     return ["valid"]
                 # if the old_data is not equel to the newData re-evaluate
                 # the primaryKey
@@ -177,7 +278,7 @@ class RdfClass(object):
                 if debug: print("----------- PrimaryKey query:\n", sparql)
                 _key_test_results =\
                         requests.post(\
-                                fw_config().get('TRIPLESTORE_URL'),
+                                self.triplestore_url,
                                 data={"query": sparql, "format": "json"})
                 if debug: print("_key_test_results: ", _key_test_results.json())
                 _key_test = _key_test_results.json().get('results').get( \
@@ -191,6 +292,8 @@ class RdfClass(object):
 
                 
                 if not _key_test:
+                    if debug: print(\
+                        "END RdfClass.validate_primary_key - Key Passed --\n")
                     return ["valid"]
                 else:
                     error_msg = "This {} aleady exists.".format(
@@ -207,11 +310,9 @@ class RdfClass(object):
                              "formErrorMessage": error_msg,
                              "errorData":{"class": self.kds_classUri,
                                           "propUri": pkey}}]
+            if debug: print(\
+                "START RdfClass.validate_primary_key - Skipped Everything--\n")
             return ["valid"]
-        '''except:
-            return ["valid"]
-        else:
-            return ["valid"]'''
 
     def list_required(self):
         '''Returns a set of the required properties for the class'''
@@ -377,8 +478,8 @@ class RdfClass(object):
     def _process_class_data(self, rdf_obj):
         '''Reads through the processors in the defination and processes the
             data for saving'''
-        if DEBUG:
-            debug = True
+        if not DEBUG:
+            debug = False
         else:
             debug = True
         if debug: print("START rdfclass.RdfClass._process_class_data ------\n")
@@ -542,8 +643,8 @@ class RdfClass(object):
         return _save_data
 
     def _generate_save_query(self, save_data_obj, subject_uri=None):
-        if DEBUG:
-            debug = True
+        if not DEBUG:
+            debug = False
         else:
             debug = False
         if debug: print("START RdfClass._generate_save_query -------------\n")
@@ -557,6 +658,10 @@ class RdfClass(object):
             _save_type = "blanknode"
         else:
             _save_type = "object"
+        new_status = False
+        if self.kds_saveLocation == "triplestore" and subject_uri == "<>":
+            subject_uri = iri(self.new_uri())
+            new_status = True
         _bn_insert_clause = []
         _insert_clause = ""
         _delete_clause = ""
@@ -575,7 +680,7 @@ class RdfClass(object):
                     _insert_clause += "{}\n".format(\
                                         make_triple(subject_uri, _prop_iri, _obj_val))
                     _bn_insert_clause.append("\t{} {}".format(_prop_iri, _obj_val))
-            if subject_uri != '<>':
+            if subject_uri != '<>' and not new_status:
                 for prop in _prop_set:
                     _prop_iri = iri(uri(prop))
                     _delete_clause += "{}\n".format(\
@@ -591,7 +696,7 @@ class RdfClass(object):
             if _save_type == "blanknode":
                 _save_query = "[\n{}\n]".format(";\n".join(_bn_insert_clause))
             else:
-                if subject_uri != '<>':
+                if subject_uri != '<>' and not new_status:
                     save_query_template = Template("""{{ prefix }}
                                     DELETE \n{
                                     {{ _delete_clause }} }
@@ -610,16 +715,24 @@ class RdfClass(object):
                         _insert_clause)
             if debug: print(_save_query)
             if debug: print("END RdfClass._generate_save_query -------------\n")
-            return {"query":_save_query, "subjectUri":subject_uri}
+            return {"query":_save_query, "subjectUri":subject_uri, 
+                    "new_status":new_status}
         else:
             if debug: print("END RdfClass._generate_save_query -------------\n")
             return {"subjectUri":subject_uri}
 
     def _run_save_query(self, save_query_obj, subject_uri=None):
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
         _save_query = save_query_obj.get("query")
+        if debug: print("START RdfClass._run_save_query -------------------\n")
+        if debug: print("triplestore: ", self.triplestore_url)
+        if debug: print("repository: ", self.repository_url)
         if not subject_uri:
             subject_uri = save_query_obj.get("subjectUri")
-
+        if debug: print("_save_query:\n", _save_query)
         if _save_query:
             # a "[" at the start of the save query denotes a blanknode
             # return the blanknode as the query result
@@ -628,25 +741,70 @@ class RdfClass(object):
             else:
                 # if there is no subject_uri create a new entry in the
                 # repository
-                if subject_uri == "<>":
-                    repository_result = requests.post(
-                        fw_config().get("REPOSITORY_URL"),
-                        data=_save_query,
-        				headers={"Content-type": "text/turtle"})
-                    object_value = repository_result.text
-                # if the subject uri exists send an update query to the
-                # repository
+                if subject_uri == "<>" or save_query_obj.get("new_status"):
+                    if debug: print("Enter New")
+                    if self.kds_saveLocation == "repository":
+                        repository_result = requests.post(
+                                self.repository_url,
+                                data=_save_query,
+                                headers={"Content-type": "text/turtle"})
+                        if debug: print("repository_result: ",
+            	                        repository_result,
+            	                        " ",
+            	                        repository_result.text)
+                        object_value = repository_result.text
+                    elif self.kds_saveLocation == "triplestore":
+                        triplestore_result = requests.post(
+                                url=self.triplestore_url,
+                                headers={"Content-Type": 
+                                         "text/turtle"},
+                                data=_save_query)
+                        if debug: print("triplestore_result: ",
+                                        triplestore_result,
+                                        " ",
+                                        triplestore_result.text)
+                        object_value = subject_uri
+                    elif self.kds_saveLocation == "elasticsearch":
+                            print ("**************** ES Connection NOT Built")
+                    elif self.kds_saveLocation == "sql_database":
+                            print ("**************** SQL Connection NOT Built")
+                # if the subject uri exists send an update query to the 
+                # specified datastore
                 else:
-                    _headers = {"Content-type":"application/sparql-update"}
-                    _url = clean_iri(subject_uri)
-                    repository_result = requests.patch(_url, data=_save_query,
-        				                                     headers=_headers)
-                    object_value = iri(subject_uri)
+                    if debug: print("Enter Update")
+                    if self.kds_saveLocation == "repository":
+                        _headers = {"Content-type":
+                                    "application/sparql-update"}
+                        _url = clean_iri(subject_uri)
+                        repository_result = \
+                                requests.patch(_url, data=_save_query,
+            				                   headers=_headers)
+                        if debug: print("repository_result: ",
+            	                        repository_result,
+            	                        " ",
+            	                        repository_result.text)
+                        object_value = iri(subject_uri)
+                    elif self.kds_saveLocation == "triplestore":
+                        _url = self.triplestore_url
+                        triplestore_result = requests.post(_url,
+                                data={"update":_save_query})
+                        if debug: print("triplestore_result: ",
+                                        triplestore_result,
+                                        " ",
+                                        triplestore_result.text)
+                        object_value = iri(subject_uri)
+                    elif self.kds_saveLocation == "elasticsearch":
+                        print ("**************** ES Connection NOT Built")
+                    elif self.kds_saveLocation == "sql_database":
+                        print ("**************** SQL Connection NOT Built")
+            if debug: print("END RdfClass._run_save_query ----------------\n")
             return {"status": "success",
                     "lastSave": {
                         "objectValue": object_value}
                    }
         else:
+            if debug: print("Enter No Data to Save")
+            if debug: print("END RdfClass._run_save_query ---NO DATA-------\n")
             return {"status": "success",
                     "lastSave": {
                         "objectValue": iri(subject_uri),
@@ -657,10 +815,10 @@ class RdfClass(object):
         # obj = propUri, prop, processedData, _pre_save_data
         # !!!!!!! the merge_prop function will need to be relooked for 
         # instances where we have multiple property entries i.e. a fieldList
-        if DEBUG:
-            debug = True
+        if not DEBUG:
+            debug = False
         else:
-            debug = True
+            debug = False
         if debug: print("START RdfClass._process_prop -------------------\n")
         if len(make_list(obj['prop'])) > 1:
             obj = self.__merge_prop(obj)
@@ -748,8 +906,8 @@ class RdfClass(object):
     def __format_data_for_save(self, processed_data, pre_save_data):
         ''' takes the processed data and formats the values for the sparql
             query '''
-        if DEBUG:
-            debug = True
+        if not DEBUG:
+            debug = False
         else:
             debug = True
         if debug: print("START RdfClass.__format_data_for_save -----------\n")

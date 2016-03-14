@@ -1316,7 +1316,9 @@ obi:application a kds:Application;
 	kds:appNameSpace [
 		kds:prefix "obi";
 		kds:nameSpaceUri "https://w3id.org/openbadges#"
-	] .
+	];
+	kds:saveLocation "triplestore";
+	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid".
 
 kdr:UserGroupForm a kds:FormClass;
 	rdfs:label "Usergroup form";
@@ -1499,7 +1501,25 @@ obi:BadgeImageApi a kds:ApiClass;
 		kds:classUri obi:BadgeClass;
 		kds:apiFieldName "image";
 	].
-
+	
+obi:BadgeImageApiSvg a kds:ApiClass;
+	rdfs:label "Badge Definition";
+	rdfs:comment "This api returns an open badge image.";
+	kds:apiInstructions [
+		kds:apiMethod "GET";
+		kds:lookupClassUri obi:BadgeClass;
+		kds:lookupPropertyUri schema:alternativeName;
+		kds:apiUrl "badge";
+		kds:apiUrlExtension "svg";
+		kds:returnType "file";
+		kds:mimeType "image/svg"
+	];
+	kds:hasProperty [
+		kds:propUri schema:image;
+		kds:classUri obi:BadgeClass;
+		kds:apiFieldName "image";
+	].
+	
 obi:IssuerApi a kds:ApiClass;
 	rdfs:label "Badge Definition";
 	rdfs:comment "This api returns an issuer definition.";
@@ -1552,7 +1572,7 @@ obi:IssuerApi a kds:ApiClass;
 			a kdr:CalculationProcessor;
 			kds:calculationType kdr:Concat;
 			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.png"
+			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.,<<schema:image|!--mimeType>>"
 		] ;
 		kds:apiFieldName "image";
 		
@@ -1821,10 +1841,12 @@ obi:PersonAssertions a kds:FormClass;
 		kds:classUri obi:Assertion;
 		kds:formFieldOrder 1.5;
 		kds:formLayoutRow 1;
-		kds:overrideCss "btn btn-primary btn-xs";
+		kds:overrideCss "btn btn-xs";
 		kds:apiRoute "badgeclaimer";
 		kds:fieldType [
 			a kdr:OpenBadgeSenderField;
+			kds:buttonTrueCss "btn-success";
+			kds:buttonFalseCss "btn-danger"
 		];
 	];
 	kds:hasProperty [
@@ -1849,19 +1871,3 @@ obi:PersonAssertions a kds:FormClass;
 		kds:formLabelName "Description"
 	].
 	
-obi:AssertionClaimerApi a kds:ApiClass;
-	rdfs:label "Assertion Claimer API";
-	rdfs:comment "This api returns an open badge assertion image.";
-	kds:apiInstructions [
-		kds:apiMethod "GET";
-		kds:apiMethod "POST";
-		kds:lookupClassUri obi:Assertion;
-		kds:subjectUriTransform kdr:UidToRepositoryUri;
-		kds:apiUrl "badgeclaimer";
-		kds:returnType "json"
-	];
-	kds:hasProperty [
-		kds:propUri obi:claimDate;
-		kds:classUri obi:Assertion;
-		kds:apiFieldName "claimdate";
-	].	

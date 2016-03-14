@@ -3,7 +3,7 @@ import copy
 from rdfframework import get_framework as rdfw
 from rdfframework.utilities import fw_config, make_triple, iri, uri,\
         is_not_null, render_without_request, make_list, pp, uid_to_repo_uri
-DEBUG = False
+DEBUG = True
 
 def get_data(obj, **kwargs):
     ''' queries that datastore for the based on the supplied arguments '''
@@ -25,10 +25,10 @@ def run_sparql_query(sparql, **kwargs):
     
 def create_data_sparql_query(obj, **kwargs):
     ''' generates the sparql query for getting an object's data '''
-    if DEBUG:
-        debug = True
-    else:
+    if not DEBUG:
         debug = False
+    else:
+        debug = True
     if debug: print("START create_data_sparql_query -----------------------\n")
     from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)

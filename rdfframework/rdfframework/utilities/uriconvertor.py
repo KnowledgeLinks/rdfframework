@@ -3,7 +3,7 @@ import re
 __author__ = "Mike Stabile"
 
 NS_OBJ = None
-
+DEBUG = True
 def convert_to_ns(value, ns_obj=None):
     ''' converts a value to the prefixed rdf ns equivalent. If not found
         returns the value as is '''
@@ -121,7 +121,35 @@ def nouri(value):
         return re.sub(r"^(.*[#/])", "", str(_uri))
     else:
         return value
-        
+
+def uri_prefix(value):
+    ''' Takes a uri and returns the prefix for that uri '''
+    if not DEBUG:
+        debug = False
+    else:
+        debug = False
+    if debug: print("START uri_prefix() uriconvertor.py -------------------\n")
+    global NS_OBJ
+    if NS_OBJ is None:
+        from rdfframework import get_framework
+        NS_OBJ=get_framework().ns_obj
+    _uri = None
+    if not str(value).startswith("http"):
+        _uri = convert_to_uri(value, NS_OBJ)
+    else:
+        _uri = value
+    _ns_uri = _uri.replace(re.sub(r"^(.*[#/])", "", str(_uri)),"")
+    if debug: print("_uri: ", _uri)
+    if debug: print("_ns_uri: ", _ns_uri)
+    if _uri:
+        for prefix, uri in NS_OBJ.items():
+            if debug: print("uri: ", uri, " prefix: ", prefix)
+            if _ns_uri == uri:
+                value = prefix
+                break
+    if debug: print("END uri_prefix() uriconvertor.py -------------------\n")
+    return value
+       
 def uri(value): 
     global NS_OBJ
     if NS_OBJ is None:
