@@ -100,7 +100,7 @@ class Api(object):
         if save_action == "kdr_AuthenticateUser":
             rdfw().user_authentication(self)
         else:
-            rdfw().save_obj(self)
+            return rdfw().save_obj(self)
     
     def redirect_url(self, id_value=None, **kwargs):
         ''' formats the redirect url for the form in its current state '''

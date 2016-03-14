@@ -13,6 +13,7 @@ from flask import Flask, abort, Blueprint, jsonify, render_template, Response, r
 from flask import redirect, url_for, send_file, current_app
 from flask_negotiate import produces
 from flask.ext.login import login_required, login_user, current_user
+from flask_wtf import CsrfProtect
 
 from . import new_badge_class, issue_badge
 from rdfframework import RdfProperty, get_framework as rdfw
@@ -22,7 +23,7 @@ from rdfframework.utilities import render_without_request, code_timer, \
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory, Api
 from rdfframework.security import User
-DEBUG = False
+DEBUG = True
 open_badge = Blueprint("open_badge", __name__,
                        template_folder="templates")
 open_badge.config = {}
@@ -39,8 +40,6 @@ def record_params(setup_state):
     open_badge.config = dict(
         [(key, value) for (key, value) in app.config.items()]
     )
-    # initialize the rdfframework
-    
 
 
 @open_badge.route("/")
@@ -171,9 +170,10 @@ def rdf_api(api_name, id_value=None, ext=None):
         api_data = rdfw().get_obj_data(api, id_value=id_value)
         #pp.pprint(api_data['form_data'])
         if not (len(api_data['query_data']) > 0):
-            return render_template(
+            '''return render_template(
                 "error_page_template.html",
-                error_message="The item does not exist") 
+                error_message="The item does not exist") '''
+            return abort(400)
         else:
             return_type = api.rdf_instructions.get("kds_returnType")
             if return_type == "file":
@@ -184,8 +184,8 @@ def rdf_api(api_name, id_value=None, ext=None):
                      attachment_filename="%s.%s" % (id_value, ext),
                      mimetype=api.rdf_instructions.get("kds_mimeType"))
             else:
-                return "<pre>{}</pre>".format(json.dumps(api_data['obj_json'],indent=4)) 
-
+                #return "<pre>{}</pre>".format(json.dumps(api_data['obj_json'],indent=4)) 
+                return jsonify(api_data['obj_json'])
         
 @open_badge.route("/<form_name>.html", methods=["POST", "GET"])
 @open_badge.route("/<form_name>", methods=["POST", "GET"])
@@ -300,15 +300,20 @@ def rdf_class_forms(form_name, form_instance=None):
 @open_badge.route("/api/form_generic_prop/<class_uri>/<prop_uri>",
                   methods=["POST", "GET"])
 def rdf_generic_api(class_uri, prop_uri):
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
-        debug = True
+        debug = False
     if debug: print("START rdf_generic_api ----------------------------\n")
+    if prop_uri == "obi_claimDate" and class_uri == "obi_Assertion":
+        if hasattr(request, "form"):
+            csrf = request.form.get("csrf")
+    else:
+        return 400  
     subject_uri = request.args.get("id")
     data = request.form.get("dataValue")
     subject_uri = request.form.get("id",subject_uri)
-    if debug: print("REQUEST dict: \n", pp.pprint(request.__dict__))
+    if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
     rdf_class = getattr(rdfw(), class_uri)
     prop_json = rdf_class.kds_properties.get(prop_uri)
     prop_json['kds_classUri'] = class_uri
@@ -340,9 +345,9 @@ def rdf_generic_api(class_uri, prop_uri):
                   api_url=api_url)
     if request.method == "POST":
         save_result = rdf_obj.save()
-        if debug: print("\t**** save_result:\n",save_result)
+        if debug: print("**** save_result:\n",pp.pformat(save_result.__dict__))
         if debug: print("END rdf_generic_api POST -------------------------\n")
-        return save_result
+        return jsonify(save_result.save_results[0])
     else:
         api_data = rdfw().get_obj_data(rdf_obj)
         if debug: print("\t**** api_data:\n",pp.pprint(api_data))

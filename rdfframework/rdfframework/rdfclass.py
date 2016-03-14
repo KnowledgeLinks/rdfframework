@@ -481,7 +481,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = True
+            debug = False
         if debug: print("START rdfclass.RdfClass._process_class_data ------\n")
         _pre_save_data = {}
         _save_data = {}
@@ -909,7 +909,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = True
+            debug = False
         if debug: print("START RdfClass.__format_data_for_save -----------\n")
         _save_data = []
         #if "obi_recipient" in pre_save_data.keys():

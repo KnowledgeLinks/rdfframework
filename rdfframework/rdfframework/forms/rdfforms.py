@@ -11,7 +11,7 @@ from wtforms.fields import StringField, FormField, FieldList, HiddenField
 import flask_wtf
 from rdfframework.utilities import cbool, make_list, make_set, code_timer, \
         fw_config, iri, is_not_null, convert_spo_to_dict, uri, pp, \
-        convert_obj_to_rdf_namespace, copy_obj
+        convert_obj_to_rdf_namespace, copy_obj, nz
 from rdfframework import get_framework as rdfw
 from rdfframework.forms.widgets import BsGridTableWidget, RepeatingSubFormWidget
 from rdfframework.sparql import query_select_options, get_data
@@ -61,11 +61,11 @@ class Form(flask_wtf.Form):
             self.edit_path = "{}{}?id={}".format(\
                     self.base_url,
                     edit_path,
-                    self.data_subject_uri)
+                    quote(nz(self.data_subject_uri,'')))
         self.display_path = "{}{}?id={}".format(\
                 self.base_url,
                 rdfw().get_form_path(self.form_uri, "kdr_DisplayForm"),
-                self.data_subject_uri)     
+                quote(nz(self.data_subject_uri,'')))     
         self.data_class_uri = self.data_class_uri
         self.has_subobj = self.has_subobj
         self.is_subobj = self.is_subobj                        
@@ -119,7 +119,7 @@ class Form(flask_wtf.Form):
             _form_url = rdfw().get_form_path(self.form_uri, _url_instructions)
             if _form_url is not None:
                 return "{}{}?id={}".format(self.base_url, _form_url, 
-                        quote(id_value))
+                        quote(nz(id_value,'')))
             else:
                 return _url_instructions
         else:

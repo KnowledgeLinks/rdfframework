@@ -5,12 +5,15 @@
 	{% endif %}
 {% endblock %}
 {% block head_title %}{{ form.rdf_instructions['kds_formTitle'] }}{% endblock %}
-
+{% block more_css %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-datepicker3.min.css') }}">
+{% endblock %}
 {% block main %}
 {% if not debug %}{% set debug = False %}{% endif %}
 {% if not display_mode %}{% set display_mode = False %}{% endif %}
-{% include 'snippets/navbar.html' %}
+
 <div class="container">
+	{% include 'snippets/navbar.html' %}
 	<div class="row">
 		<section class="col-md-12">
 			{% include "/forms/default/form_panel.html" %}
