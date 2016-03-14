@@ -1,22 +1,23 @@
-__author__ = "Jeremy Nelson"
+__author__ = ",".join([ "Jeremy Nelson", "Mike Stabile"])
 __license__ = "GPLv3"
-__version_info__ = ('0', '1', '0')
+__version_info__ = ('0', '8', '0')
 __version__ = '.'.join(__version_info__)
 
 from setuptools import find_packages, setup
 
 setup(
-    name='IslandoraOpenBadges',
+    name='rdfframework',
     version= __version__,
     author=__author__,
-    author_email='jermnelson@gmail.com',
-    description="Islandora REST API for issuing OpenBadges",
+    author_email= ','.join(['jermnelson@gmail.com', 
+                             'mstabile75@gmail.com']),
+    description="RDFFramework for issuing OpenBadges",
     long_description="",
     packages=find_packages(),
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'falcon',
+        'flask',
         'rdflib',
         'requests'
     ],

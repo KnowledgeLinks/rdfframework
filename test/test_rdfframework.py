@@ -10,7 +10,7 @@ import unittest
 PROJECT_DIR = os.path.abspath(os.curdir)
 sys.path.append(PROJECT_DIR)
 
-from ..rdfframework import *
+from rdfframework import *
 
 class TestIri(unittest.TestCase):
 
