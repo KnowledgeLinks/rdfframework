@@ -28,8 +28,10 @@ def create_data_sparql_query(obj, **kwargs):
     if not DEBUG:
         debug = False
     else:
-        debug = True
+        debug = False
     if debug: print("START create_data_sparql_query -----------------------\n")
+    if debug: print("*** kwargs ***: \n%s \n*** obj ***:\n%s" % 
+            (pp.pformat(kwargs), pp.pformat(obj.__dict__)))
     from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)
     _class_uri = kwargs.get("class_uri", obj.data_class_uri)
@@ -40,10 +42,17 @@ def create_data_sparql_query(obj, **kwargs):
                 "kdr_UidToRepositoryUri":
             id_value = kwargs.get("id_value") 
             if kwargs.get("id_value"):
-                id_value = kwargs.get("id_value")
                 _subject_uri = uid_to_repo_uri(id_value)
                 subject_uri = _subject_uri
                 obj.data_subject_uri = _subject_uri
+        elif obj.rdf_instructions.get("kds_subjectUriTransform") == \
+                "kdr_UidToTriplestoreUri":
+            id_value = kwargs.get("id_value") 
+            if kwargs.get("id_value"):
+                rdf_class = getattr(rdfw(), obj.data_class_uri)
+                subject_uri = rdf_class.uri_patterner(id_value)
+                obj.data_subject_uri = subject_uri
+                    
     elif kwargs.get("id_value") or obj.rdf_instructions.get("kds_lookupPropertyUri"):
         # find the details for formating the sparql query for the supplied
         # id_value or lookup via a property Value

@@ -1623,7 +1623,7 @@ obi:AssertionImageApi a kds:ApiClass;
 	kds:apiInstructions [
 		kds:apiMethod "GET";
 		kds:lookupClassUri obi:Assertion;
-		kds:subjectUriTransform kdr:UidToRepositoryUri;
+		kds:subjectUriTransform kdr:UidToTriplestoreUri;
 		kds:apiUrl "assertion";
 		kds:apiUrlExtension "png";
 		kds:returnType "file";
@@ -1641,7 +1641,7 @@ obi:AssertionApi a kds:ApiClass;
 	kds:apiInstructions [
 		kds:apiMethod "GET";
 		kds:lookupClassUri obi:Assertion;
-		kds:subjectUriTransform kdr:UidToRepositoryUri;
+		kds:subjectUriTransform kdr:UidToTriplestoreUri;
 		kds:apiUrl "assertion";
 		kds:apiUrlExtension "json";
 		kds:returnType "json"
@@ -1733,17 +1733,17 @@ obi:AssertionApi a kds:ApiClass;
 		] ;
 		kds:apiFieldName "recipient";
 	];
-	kds:hasProperty [
-		kds:propUri schema:alternativeName;
-		kds:classUri obi:Assertion;
-		kds:propertyProcessing [
-			a kdr:CalculationProcessor;
-			kds:calculationType kdr:Concat;
-			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,assertion/,kds:calculationType|kdr:UriTruncation||kds:calculationField|!--subjectUri||kds:calculation|!--afterLastSlash,.png"
-		] ;
-		kds:apiFieldName "image";
-	];
+	#kds:hasProperty [
+	#	kds:propUri schema:alternativeName;
+	#	kds:classUri obi:Assertion;
+	#	kds:propertyProcessing [
+	#		a kdr:CalculationProcessor;
+	#		kds:calculationType kdr:Concat;
+	#		kds:calculationSeparator ",";
+	#		kds:calculation "!--base_api_url,assertion/,kds:calculationType|kdr:UriTruncation||kds:calculationField|!--subjectUri||kds:calculation|!--afterLastSlash,.png"
+	#	] ;
+	#	kds:apiFieldName "image";
+	#];
 	kds:hasProperty [
 		kds:propUri schema:alternativeName;
 		kds:classUri obi:BadgeClass;

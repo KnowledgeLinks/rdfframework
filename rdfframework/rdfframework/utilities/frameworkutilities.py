@@ -29,7 +29,40 @@ ENV = Environment(loader=FileSystemLoader(
     [os.path.join(FRAMEWORK_BASE, "sparql"),
      os.path.join(FRAMEWORK_BASE, "turtle")]))
 
-
+def nz(value, none_value, strict=True):
+    ''' This function is named after an old VBA function. It returns a default
+        value if the passed in value is None. If strict is False it will
+        treat an empty string as None as well.
+        
+        example:
+        x = None
+        nz(x,"hello")
+        --> "hello"
+        nz(x,"")
+        --> ""
+        y = ""   
+        nz(y,"hello")
+        --> ""
+        nz(y,"hello", False)
+        --> "hello" '''
+    if not DEBUG:
+        debug = False
+    else:
+        debug = False
+    if debug: print("START nz frameworkutilities.py ----------------------\n")
+    if value is None and strict:
+        return_val = none_value
+    elif strict and value is not None:
+        return_val = value
+    elif not strict and not is_not_null(value):
+        return_val = none_value
+    else:
+        return_val = value
+    if debug: print("value: %s | none_value: %s | return_val: %s" %
+            (value, none_value, return_val))
+    if debug: print("END nz frameworkutilities.py ----------------------\n")
+    return return_val    
+    
 def render_without_request(template_name, **template_vars):
     """
     Usage is the same as flask.render_template:
