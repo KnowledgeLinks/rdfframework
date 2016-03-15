@@ -18,7 +18,7 @@ from flask_wtf import CsrfProtect
 from . import new_badge_class, issue_badge
 from rdfframework import RdfProperty, get_framework as rdfw
 from rdfframework.utilities import render_without_request, code_timer, \
-        remove_null, pp, clean_iri, uid_to_repo_uri, cbool
+        remove_null, pp, clean_iri, uid_to_repo_uri, cbool, make_list
 
 from rdfframework.forms import rdf_framework_form_factory 
 from rdfframework.api import rdf_framework_api_factory, Api
@@ -353,3 +353,86 @@ def rdf_generic_api(class_uri, prop_uri):
         if debug: print("\t**** api_data:\n",pp.pprint(api_data))
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) 
+        
+@open_badge.route("/api/form_lookup/<class_uri>/<prop_uri>",
+                  methods=["GET"])
+def rdf_lookup_api(class_uri, prop_uri):
+    if not DEBUG:
+        debug = False
+    else:
+        debug = True
+    if debug: print("START rdf_lookup_api ----------------------------\n")
+    return abort(400)
+    referer = request.environ.get("HTTP_REFERER")
+    form_function_path = url_for("open_badge.rdf_class_forms",
+                                 form_name="form_name",
+                                 form_instance="form_instance")
+    base_form_path = \
+            form_function_path.replace("form_name/form_instance.html", "")
+    form_path = referer[referer.find(base_form_path)+len(base_form_path):\
+            ].replace('.html','')
+    form_exists = rdfw().form_exists(form_path)
+    if not form_exists:
+        return abort(400)
+    form_class = rdf_framework_form_factory(form_path)() 
+    if debug: print("form_path: ",form_path)
+    if debug: print("Source Form: ", referer)
+    #if debug: print("form dict:\n", pp.pformat(form_class.__dict__))
+    related_fields = []
+    for fld in form_class.rdf_field_list:
+        print(fld.__dict__,"\n")
+        if fld.kds_classUri == class_uri:
+            related_fields.append(fld)
+        for _range in make_list(fld.rdfs_range):
+            if _range.get("rangeClass") == class_uri:
+                related_fields.append(fld)
+        if fld.type == "FieldList":
+            if fld.entries[0].type == "FormField":
+                for _fld in fld.entries[0].rdf_field_list:
+                    if class_uri == _fld.kds_classUri:
+                        related_fields.append(_fld)
+    for fld in related_fields:
+        print("field: ",fld.name)
+    subject_uri = request.args.get("id")
+    data = request.args.get("dataValue")
+    subject_uri = request.form.get("id",subject_uri)
+    if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
+    rdf_class = getattr(rdfw(), class_uri)
+    '''prop_json = rdf_class.kds_properties.get(prop_uri)
+    prop_json['kds_classUri'] = class_uri
+    prop_json['kds_apiFieldName'] = prop_uri
+    prop = RdfProperty(prop_json, data, subject_uri)
+    base_url = "%s%s" % (request.url_root[:-1], url_for("open_badge.base_path")) 
+    current_url = request.url
+    base_api_url = "%s%sapi/form_generic_prop/" % (request.url_root[:-1],
+                                   url_for("open_badge.base_path"))
+    if debug:
+        print('subject_uri: ', subject_uri)
+        print('data: ', data)
+        print('rdf_class: ', rdf_class)
+        print('prop_json: ', prop_json)
+        print('prop: ', prop)
+        print('base_url: ', base_url)
+        print('current_url: ', current_url)
+        print('base_api_url: ', base_api_url)
+
+    api_url = request.base_url
+    rdf_obj = Api(subject_uri=subject_uri,
+                  data_class_uri=class_uri,
+                  data_prop_uri=prop_uri,
+                  rdf_field_list=[prop_json],
+                  prop_list = [prop],
+                  base_url=base_url, 
+                  current_url=current_url,
+                  base_api_url=base_api_url,
+                  api_url=api_url)
+    if request.method == "POST":
+        save_result = rdf_obj.save()
+        if debug: print("**** save_result:\n",pp.pformat(save_result.__dict__))
+        if debug: print("END rdf_generic_api POST -------------------------\n")
+        return jsonify(save_result.save_results[0])
+    else:
+        api_data = rdfw().get_obj_data(rdf_obj)
+        if debug: print("\t**** api_data:\n",pp.pprint(api_data))
+        if debug: print("END rdf_generic_api GET --------------------------\n")
+        return json.dumps(api_data['obj_json'], indent=4) '''
