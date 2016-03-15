@@ -2,13 +2,13 @@
 __author__ = "Jeremy Nelson, Mike Stabile"
 
 import time
-import urllib
 import base64
 import re
 import io
 import json
 import requests
 import falcon
+from urllib.request import urlopen
 from flask import Flask, abort, Blueprint, jsonify, render_template, Response, request
 from flask import redirect, url_for, send_file, current_app
 from flask_negotiate import produces
@@ -50,7 +50,7 @@ def base_path():
 def image_path(image_id):
     ''' view passes the specified fedora image based on the uuid'''
     _repo_image_uri = uid_to_repo_uri(image_id)
-    repo_image_link = urllib.request.urlopen(_repo_image_uri)
+    repo_image_link = urlopen(_repo_image_uri)
     image = repo_image_link.read()  
     return send_file(io.BytesIO(image),
                      attachment_filename='img.png',
@@ -178,7 +178,7 @@ def rdf_api(api_name, id_value=None, ext=None):
             return_type = api.rdf_instructions.get("kds_returnType")
             if return_type == "file":
                 repo_uri = clean_iri(list(api_data['obj_json'].values())[0])
-                repo_link = urllib.request.urlopen(repo_uri)
+                repo_link = urlopen(repo_uri)
                 repo_file = repo_link.read()  
                 return send_file(io.BytesIO(repo_file),
                      attachment_filename="%s.%s" % (id_value, ext),
