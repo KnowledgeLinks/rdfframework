@@ -49,11 +49,20 @@ def base_path():
 @open_badge.route("/image/<image_id>", methods=["GET"])
 def image_path(image_id):
     ''' view passes the specified fedora image based on the uuid'''
+    if not DEBUG:
+        debug = False
+    else:
+        debug = True
+    if debug: print("START image_path - blueprint.py ----------------------\n")
+    if debug: print("\timage_id: ", image_id)
     _repo_image_uri = uid_to_repo_uri(image_id)
+    if debug: print("\t_repo_image_uri: ", _repo_image_uri)
     repo_image_link = urlopen(_repo_image_uri)
     image = repo_image_link.read()  
+    if debug: print("\tlen(image): ", len(image))
+    if debug: print("END image_path - blueprint.py ------------------------\n")
     return send_file(io.BytesIO(image),
-                     attachment_filename='img.png',
+                     attachment_filename='%s.png' % image_id,
                      mimetype='image/png')
 
 @open_badge.route("/fedora_image", methods=["GET"])
