@@ -150,6 +150,11 @@ def rdf_api(api_name, id_value=None, ext=None):
     params:
         id -- the item to lookup 
     """
+    if not DEBUG:
+        debug = False
+    else:
+        debug = False
+    if debug: print("START rdf_api blueprint.py ---------------------------\n")
     api_repsonder = falcon.API()
     _api_path = "|".join(remove_null([api_name, ext]))
     _api_exists = rdfw().api_exists(_api_path)
@@ -179,6 +184,7 @@ def rdf_api(api_name, id_value=None, ext=None):
             # if validated save the form 
             api.save()
             if api.save_state == "success":
+                if debug: print("END rdf_api blueprint.py ---POST--------\n")
                 return api.return_message
     # if not POST, check the args and api instance/extension
     else:
@@ -195,13 +201,21 @@ def rdf_api(api_name, id_value=None, ext=None):
             if return_type == "file":
                 repo_uri = clean_iri(list(api_data['obj_json'].values())[0])
                 repo_link = urlopen(repo_uri)
-                repo_file = repo_link.read()  
+                repo_file = repo_link.read() 
+                if debug: print("\t wsgi.file_wrapper pre: ",\
+                        request.environ.get('wsgi.file_wrapper'))
+                if request.environ.get('wsgi.file_wrapper') is not None:
+                    del(request.environ['wsgi.file_wrapper'])
+                if debug: print("\t wsgi.file_wrapper post: ",\
+                        request.environ.get('wsgi.file_wrapper')) 
+                if debug: print("END rdf_api blueprint.py --- file send ---\n")
                 return send_file(io.BytesIO(repo_file),
                 #return send_file(repo_link,
                      attachment_filename="%s.%s" % (id_value, ext),
                      mimetype=api.rdf_instructions.get("kds_mimeType"))
             else:
                 #return "<pre>{}</pre>".format(json.dumps(api_data['obj_json'],indent=4)) 
+                if debug: print("END rdf_api blueprint.py --- json --------\n")
                 return jsonify(api_data['obj_json'])
         
 @open_badge.route("/<form_name>.html", methods=["POST", "GET"])
