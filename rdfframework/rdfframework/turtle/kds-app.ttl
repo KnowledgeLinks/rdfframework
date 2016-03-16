@@ -1556,6 +1556,11 @@ obi:IssuerApi a kds:ApiClass;
 		kds:apiFieldName "description";
 	];
 	kds:hasProperty [
+		kds:propUri schema:url;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "url";
+	];
+	kds:hasProperty [
 		kds:propUri schema:alternativeName;
 		kds:classUri schema:Organization;
 		kds:propertyProcessing [
