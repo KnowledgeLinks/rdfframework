@@ -1574,7 +1574,7 @@ obi:IssuerApi a kds:ApiClass;
 			a kdr:CalculationProcessor;
 			kds:calculationType kdr:Concat;
 			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.,<<schema:image|!--mimeType>>"
+			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.,png"; #<<schema:image|!--mimeType>>"
 		] ;
 		kds:apiFieldName "image";
 		
