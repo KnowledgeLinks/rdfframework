@@ -53,7 +53,7 @@ class RdfClass(object):
         self.repository_url = fw_config().get(self.kds_repositoryConfigName)
         if not hasattr(self, "kds_subjectPattern"):
             self.kds_subjectPattern = kwargs.get("kds_subjectPattern",
-                    "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid")
+                    "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid")
         if not hasattr(self, "kds_baseUrl"):
             self.kds_baseUrl = kwargs.get("kds_baseUrl", fw_config().get(\
                 "ORGANIZATION",{}).get("url", "NO_BASE_URL"))
@@ -187,9 +187,9 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.validate_primary_key --------------\n")
-            
+        if debug: print("old_data:\n",json.dumps(old_data,indent=4)) 
         if old_data is None:
             old_data = {}
         _prop_name_list = []
@@ -725,7 +725,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         _save_query = save_query_obj.get("query")
         if debug: print("START RdfClass._run_save_query -------------------\n")
         if debug: print("triplestore: ", self.triplestore_url)

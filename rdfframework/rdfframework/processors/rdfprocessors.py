@@ -41,6 +41,9 @@ def run_processor(processor, obj, prop=None, mode="save"):
     
     elif processor_type == "kdr_ImageProcessor":
         return image_processor(processor, obj, prop, mode)
+        
+    elif processor_type == "kdr_MultiPropertyToArray":
+        return prop_to_array_processor(processor, obj, prop, mode)
     else:
         if mode == "load":
             return prop.query_data
@@ -475,3 +478,28 @@ def calculator_uir_truncation(processor, obj, prop, mode, return_type="prop"):
         return return_val
         
     if debug: print("END calculator_uir_truncation ----------------------\n\n")
+        
+def prop_to_array_processor(processor, obj, prop, mode):
+    ''' This will take a property data and convert it to an array '''
+    if DEBUG:
+        debug = True
+    else:
+        debug = True
+    if debug: print("START prop_to_array_processor - rdfprocessors.py-----\n")
+    if debug: print(prop.kds_propUri)
+    return_val = obj
+    # get the data value
+    value = calculate_value("<<%s|%s>>" % (prop.kds_propUri, prop.kds_classUri),
+                            obj, prop)
+    if mode == "save":
+        return_val = obj
+    elif mode == "load":
+        if value is not None:
+            prop.processed_data = make_list(value)
+            return_val = make_list(value)
+        else:
+            prop.processed_data = []
+            return_val = []
+    if debug: print("return_val: ", return_val)
+    if debug: print("\nEND prop_to_array_processor - rdfprocessors.py-----\n")
+    return return_val

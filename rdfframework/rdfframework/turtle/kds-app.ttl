@@ -470,6 +470,7 @@ obi:criteria a rdf:Property;
 	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "Criteria for earning the Badge.";	
+	kds:requiredByDomain obi:BadgeClass;
 	kds:jsonDefault [
 		kds:jsonObjName "criteria";
 		kds:jsonValFormat "urlSub";
@@ -1318,7 +1319,7 @@ obi:application a kds:Application;
 		kds:nameSpaceUri "https://w3id.org/openbadges#"
 	];
 	kds:saveLocation "triplestore";
-	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid".
+	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid".
 
 kdr:UserGroupForm a kds:FormClass;
 	rdfs:label "Usergroup form";
@@ -1453,14 +1454,15 @@ obi:BadgeApi a kds:ApiClass;
 		
 	];
 	kds:hasProperty [
-		kds:propUri schema:alternativeName;
+		kds:propUri obi:criteria;
+		#kds:propUri schema:alternativeName;
 		kds:classUri obi:BadgeClass;
-		kds:propertyProcessing [
-			a kdr:CalculationProcessor;
-			kds:calculationType kdr:Concat;
-			kds:calculationSeparator ",";
-			kds:calculation "!--base_url,badge/DisplayForm.html?name=,<<schema:alternativeName>>"
-		] ;
+		#kds:propertyProcessing [
+		#	a kdr:CalculationProcessor;
+		#	kds:calculationType kdr:Concat;
+		#	kds:calculationSeparator ",";
+		#	kds:calculation "!--base_url,badge/DisplayForm.html?name=,<<schema:alternativeName>>"
+		#] ;
 		kds:apiFieldName "criteria";
 	];
 	kds:hasProperty [
