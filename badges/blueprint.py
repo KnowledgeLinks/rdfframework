@@ -59,6 +59,12 @@ def image_path(image_id):
     _repo_image_uri = uid_to_repo_uri(image_id)
     if debug: print("\t_repo_image_uri: ", _repo_image_uri)
     repo_image_link = urlopen(_repo_image_uri)
+    if debug: print("\t wsgi.file_wrapper pre: ",\
+            request.environ.get('wsgi.file_wrapper'))
+    if request.environ.get('wsgi.file_wrapper') is not None:
+        del(request.environ['wsgi.file_wrapper'])
+    if debug: print("\t wsgi.file_wrapper post: ",\
+            request.environ.get('wsgi.file_wrapper'))
     image = repo_image_link.read() 
     if debug: print("\tlen(image): ", len(image))
     if debug: print("END image_path - blueprint.py ------------------------\n")
