@@ -1,7 +1,7 @@
 __author__ = ",".join([ "Jeremy Nelson", "Mike Stabile"])
 __license__ = "GPLv3"
-__version_info__ = ('0', '8', '0')
-__version__ = '.'.join(__version_info__)
+with open('VERSION') as v_fo:
+     __version__ = v_fo.read()
 
 from setuptools import find_packages, setup
 
@@ -18,7 +18,9 @@ setup(
     platforms='any',
     install_requires=[
         'flask',
-        'rdflib',
+        'Flask-Login',
+        'Flask-WTF',
+        'passlib',
         'requests'
     ],
     classifiers=[

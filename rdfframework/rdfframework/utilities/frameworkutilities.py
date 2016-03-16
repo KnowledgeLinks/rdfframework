@@ -123,6 +123,7 @@ def make_list(value):
     the dictionay as an element in the list. i.e.
         x = {"first":1, "second":2}
         list(x) = ["first", "second"]
+        or use this [x,]  
         make_list(x) =[{"first":1, "second":2}]
     '''
     if not isinstance(value, list):
@@ -138,6 +139,7 @@ def make_set(value):
         x = 'setvalue'
         set(x) = {'t', 'a', 'e', 'v', 'u', 's', 'l'}
         make_set(x) = {'setvalue'}
+        or use set([x,]) by adding string as first item in list.
     '''
     _return_set = set()
     if isinstance(value, list):
