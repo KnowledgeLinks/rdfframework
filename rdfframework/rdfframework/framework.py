@@ -1,9 +1,9 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 import re
-import json
 import os
-import requests
 import time
+import operator
+import requests
 from wtforms import ValidationError
 from werkzeug.datastructures import MultiDict
 from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
@@ -14,7 +14,7 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from .rdfproperty import RdfProperty
-from flask import current_app
+from flask import current_app, json
 from flask.ext.login import login_user, current_user
 from rdfframework.security import User
 from rdfframework.forms import rdf_framework_form_factory
@@ -36,7 +36,7 @@ class RdfFramework(object):
     apis_initialized = False
 
     def __init__(self):
-        reset = True
+        reset = False
         if not os.path.isdir(JSON_LOCATION):
             print("JSON cache directory not found.\nCreating directory")
             reset = True
@@ -497,10 +497,12 @@ class RdfFramework(object):
         ''' creates an indexed dictionary of available forms and attaches
             it to the Framework as form_list attribute'''
         _form_list = {}
+        _link_list = {}
         for _form, _details in self.rdf_form_dict.items():
-            _form_url = _details.get('kds_formInstructions',{}).get(\
+            _form_instr = _details.get('kds_formInstructions',{})
+            _form_url = _form_instr.get(\
                     "kds_formUrl",nouri(_form)) 
-            _instance_list = _details.get('kds_formInstructions',{}).get(\
+            _instance_list = _form_instr.get(\
                     'kds_formInstance',{})    
             for _instance in make_list(_instance_list):
                 _instance_url = _instance.get(\
@@ -510,9 +512,19 @@ class RdfFramework(object):
                     _key = _form_url
                 else:
                     _key = "{}/{}".format(_form_url, _instance_url)
+                _form_title = _instance.get('kds_formTitle',
+                        _form_instr.get("kds_formTitle",nouri(_form)))
+                _instance_name = nouri(_instance.get('kds_formInstanceType'))
+                _name_list = [_form_title]
+                if _instance_name:
+                    _name_list.append(_instance_name)
                 _form_list[_key] = {\
                         'form_uri':_form, 
-                        'instance_uri':_instance.get('kds_formInstanceType','')}
+                        'instance_uri':_instance.get('kds_formInstanceType',''),
+                        'form_title':"-".join(_name_list)}
+                _link_list["-".join(_name_list)] = _key
+        self.link_list = sorted(_link_list.items(), key=operator.itemgetter(0))
+        #print(self.link_list)
         self.form_list = _form_list
     
     def _make_api_list(self):

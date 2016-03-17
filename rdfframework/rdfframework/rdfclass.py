@@ -224,7 +224,6 @@ class RdfClass(object):
                     _key_props.append(prop)
         
             for key in pkey:
-
                 _object_val = None
                 #get the _data_value to test against
                 _data_value = _new_class_data.get(key, _old_class_data.get(key))
@@ -248,8 +247,16 @@ class RdfClass(object):
                     return ["valid"]
                 # if the old_data is not equel to the newData re-evaluate
                 # the primaryKey
-                if (_old_class_data.get(key) != _new_class_data.get(key))\
-                        and (key not in _calculated_props):
+                
+                # if the old value is not equal to the new value need to test 
+                # the key
+                # if the new value is to be calculated, i.e. a dependant class
+                # generating a value then we don't need to test the key.
+                # however if there is a supplied value and it is listed as a 
+                # calculated property we need to test. 
+                if (_old_class_data.get(key) != _new_class_data.get(key)) and \
+                        ((key not in _calculated_props) or \
+                        _new_class_data.get(key) is not None):
                     _key_changed = True
                     if _object_val:
                         _query_args.append(make_triple("?uri", iri(uri(key)), \
