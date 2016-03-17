@@ -210,7 +210,7 @@ def rdf_class_forms(form_name, form_instance=None):
         if not auth:
             current_app.login_manager.login_message = \
                     "Please log in to access this page"
-            #return current_app.login_manager.unauthorized()        
+            return current_app.login_manager.unauthorized()        
     # if request method is post 
     if request.method == "POST":
         # let form load with post data
@@ -287,17 +287,18 @@ def rdf_generic_api(class_uri, prop_uri):
     if not DEBUG:
         debug = False
     else:
-        debug = False
+        debug = True
     if debug: print("START rdf_generic_api ----------------------------\n")
     if prop_uri == "obi_claimDate" and class_uri == "obi_Assertion":
         if hasattr(request, "form"):
             csrf = request.form.get("csrf")
     else:
-        return 400  
+        if debug: print("aborting **************")
+        return abort(400)  
     subject_uri = request.args.get("id")
     data = request.form.get("dataValue")
     subject_uri = request.form.get("id",subject_uri)
-    if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
+    #if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
     rdf_class = getattr(rdfw(), class_uri)
     prop_json = rdf_class.kds_properties.get(prop_uri)
     prop_json['kds_classUri'] = class_uri

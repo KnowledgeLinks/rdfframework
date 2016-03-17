@@ -187,7 +187,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = True
+            debug = False
         if debug: print("START RdfClass.validate_primary_key --------------\n")
         if debug: print("old_data:\n",json.dumps(old_data,indent=4)) 
         if old_data is None:

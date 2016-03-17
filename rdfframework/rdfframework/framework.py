@@ -382,8 +382,8 @@ class RdfFramework(object):
         subject_uri: the URI for the subject
         class_uri: the rdf class of the subject
         '''
-        if DEBUG:
-            debug = True
+        if not DEBUG:
+            debug = False
         else:
             debug = False
         if debug: print("START get_obj_data ---------------------------\n")
