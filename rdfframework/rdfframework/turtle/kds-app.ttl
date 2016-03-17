@@ -533,10 +533,6 @@ obi:tags a rdf:Property;
 		kds:formFieldHelp "Add tags seperated by commas.";
 		kds:fieldType [
 			a	kdr:TextField; 
-		];
-		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
-			kds:applicationAction kdr:NotEditable
 		]
 	] .
 	

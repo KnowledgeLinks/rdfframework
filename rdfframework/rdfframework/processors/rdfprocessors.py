@@ -72,9 +72,13 @@ def csv_to_multi_prop_processor(processor, obj, prop=None, mode="save"):
         obj['prop']['calcValue'] = True
         return obj
     elif mode == "load":
-        if prop.query_data is not None:
-            prop.processed_data = ", ".join(prop.query_data)
-            return ", ".join(prop.query_data)
+        prop_val = calculate_value("<<%s|%s>>" % \
+                               (prop.kds_propUri, prop.kds_classUri),
+                               obj,
+                               prop)
+        if prop_val is not None:
+            prop.processed_data = ", ".join(make_list(prop_val))
+            return ", ".join(make_list(prop_val))
         else:
             return ""
     return obj
