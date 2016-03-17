@@ -90,7 +90,7 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _new_field['kds_processors'] += make_list(field.get('kds_propertyProcessing', []))
     if debug:
         if field['kds_propUri'] == "schema_image":
-            x=y
+            x=1
     # get required state
     _required = False
     _field_req_var = cbool(field.get('kds_requiredField'))
@@ -150,6 +150,7 @@ def get_wtform_field(field, instance='', **kwargs):
         field['kds_call_in_display'] = True
         field['kds_buttonAction']="mozillaBackpackSender"
         field['kds_buttonText']={'true':"Resend",'false':'Claim now'}
+        field['kds_errorLogPropUri']="kds_errorLog"
         #x=y
     elif _field_type == 'kdr_ServerField':
         _form_field = None

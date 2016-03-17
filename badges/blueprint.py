@@ -53,7 +53,7 @@ def image_path(image_id):
     if not DEBUG:
         debug = False
     else:
-        debug = True
+        debug = False
     if debug: print("START image_path - blueprint.py ----------------------\n")
     if debug: print("\timage_id: ", image_id)
     _repo_image_uri = uid_to_repo_uri(image_id)
@@ -289,13 +289,19 @@ def rdf_generic_api(class_uri, prop_uri):
     else:
         debug = True
     if debug: print("START rdf_generic_api ----------------------------\n")
-    if prop_uri == "obi_claimDate" and class_uri == "obi_Assertion":
+    subject_uri = request.args.get("id")
+    data = request.form.get("dataValue")
+    subject_uri = request.form.get("id",subject_uri)
+    if debug: print("class_uri: %s  prop_uri: %s" % (class_uri, prop_uri))
+    if debug: print('subject_uri: ', subject_uri)
+    if debug: print('data: ', data)
+    if prop_uri in ["obi_claimDate","kds_errorLog"] and class_uri == "obi_Assertion":
         if hasattr(request, "form"):
             csrf = request.form.get("csrf")
     else:
         if debug: print("aborting **************")
         return abort(400)  
-    subject_uri = request.args.get("id")
+    subject_uri = request.args.get("id") 
     data = request.form.get("dataValue")
     subject_uri = request.form.get("id",subject_uri)
     #if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
@@ -309,8 +315,6 @@ def rdf_generic_api(class_uri, prop_uri):
     base_api_url = "%s%sapi/form_generic_prop/" % (request.url_root[:-1],
                                    url_for("open_badge.base_path"))
     if debug:
-        print('subject_uri: ', subject_uri)
-        print('data: ', data)
         print('rdf_class: ', rdf_class)
         print('prop_json: ', prop_json)
         print('prop: ', prop)

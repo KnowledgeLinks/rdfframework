@@ -123,6 +123,11 @@ obi:claimDate a rdf:Property;
 		]
 	] .
 
+kds:errorLog a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:string;
+	rdfs:comment "an error message".
+
 obi:issuedOn a rdf:Property;
 	rdfs:domain obi:Assertion;
 	rdfs:range xsd:date;
@@ -1042,6 +1047,24 @@ obi:AssertionPerson a kds:FormClass;
 		kds:propUri obi:issuedOn;
 		kds:formFieldOrder 4;
 		kds:formLayoutRow 1;
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+	];
+	kds:hasProperty [
+		kds:propUri obi:claimDate;
+		kds:formFieldOrder 4.5;
+		kds:formLayoutRow 1;
+		kds:fieldType [
+			a kds:DateField;
+		];
+		kds:formLabelName "Claim Date";
+		kds:formFieldName "claimdate";
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
 		kds:formInstance [
 			kds:formInstanceType kdr:NewForm;
 			kds:applicationAction kdr:RemoveFromForm
