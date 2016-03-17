@@ -1573,7 +1573,7 @@ obi:IssuerApi a kds:ApiClass;
 		
 	];
 	kds:hasProperty [
-		kds:propUri schema:alternativeName;
+		kds:propUri schema:image;
 		kds:classUri schema:Organization;
 		kds:propertyProcessing [
 			a kdr:CalculationProcessor;
@@ -1585,7 +1585,7 @@ obi:IssuerApi a kds:ApiClass;
 		
 	];
 	kds:hasProperty [
-		kds:propUri schema:URL;
+		kds:propUri schema:url;
 		kds:classUri schema:Organization;
 		kds:apiFieldName "url";
 	];

@@ -19,6 +19,22 @@ def convert_to_ns(value, ns_obj=None):
             return value.replace(_ns_uri, _prefix + "_").replace(\
                     "<","").replace(">","")
     return value
+
+def convert_to_ttl(value, ns_obj=None):
+    ''' converts a value to the prefixed rdf ns equivalent. If not found
+        returns the value as is '''
+    if ns_obj is None:
+        from rdfframework import get_framework
+        ns_obj = get_framework().ns_obj
+    for _prefix, _ns_uri in ns_obj.items():
+        if str(value).startswith(_prefix + "_") or \
+                str(value).startswith("<%s_" % _prefix):
+            return value.replace(_prefix + "_", _prefix + ":").replace(\
+                    "<","").replace(">","")
+        if str(value).startswith(_ns_uri) or str(value).startswith("<"+_ns_uri):
+            return value.replace(_ns_uri, _prefix + ":").replace(\
+                    "<","").replace(">","")
+    return value    
     
 def convert_to_uri(value, ns_obj=None, strip_iri=False):
     ''' converts a prefixed rdf ns equivalent value to its uri form. 
@@ -35,6 +51,13 @@ def convert_to_uri(value, ns_obj=None, strip_iri=False):
                         "<","").replace(">","")
             else:
                 return value.replace("%s_" % _prefix, _ns_uri)
+        if str(value).startswith(_prefix + ":") or \
+                str(value).startswith("<%s:" % _prefix):
+            if strip_iri:
+                return value.replace("%s:" % _prefix, _ns_uri).replace(\
+                        "<","").replace(">","")
+            else:
+                return value.replace("%s:" % _prefix, _ns_uri)
     if str(value).lower() == "none":
         return ""
     else:
@@ -106,6 +129,19 @@ def pyuri(value):
         return convert_to_ns(value, NS_OBJ)
     else:
         return convert_to_ns(convert_to_uri(value, NS_OBJ), NS_OBJ)
+
+def ttluri(value):
+    ''' converts an iri to the app defined rdf namespaces in the framework 
+        in a turtle accessable format. i.e. schema_name or 
+        http:schema.org/name  --> schema:name '''
+    global NS_OBJ
+    if NS_OBJ is None:
+        from rdfframework import get_framework
+        NS_OBJ=get_framework().ns_obj
+    if str(value).startswith("http"):
+        return convert_to_ttl(value, NS_OBJ)
+    else:
+        return convert_to_ttl(convert_to_uri(value, NS_OBJ), NS_OBJ)
     
 def nouri(value):
     global NS_OBJ

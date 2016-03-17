@@ -6,7 +6,7 @@ from base64 import b64encode
 from dateutil.parser import parse as parse_date
 from passlib.hash import sha256_crypt
 from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
-        slugify, clean_iri, iri, cbool, remove_null, pp
+        slugify, clean_iri, iri, cbool, remove_null, pp, ttluri, get_attr
 from rdfframework import get_framework
 from .imageprocessor import image_processor
 
@@ -330,14 +330,23 @@ def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
     if DEBUG:
         debug = True
     else:
-        debug = False
+        debug = True
     if debug: print("START calculator_concat ---------------------\n")
     if debug: print(prop.kds_propUri)
     
     _seperator = processor.get("kds_calculationSeparator",",")
     _calc_string = processor.get("kds_calculation")
     _concat_list = make_list(_calc_string.split(_seperator))
-
+    prop_val = calculate_value("<<%s|%s>>" % \
+                               (prop.kds_propUri, prop.kds_classUri),
+                               obj,
+                               prop)
+    if prop_val is None:
+        prop.processed_data = None
+        return None
+        
+    if debug: print(get_attr(prop, "kds_apiFieldName", \
+                get_attr(prop, "kds_formFieldName")),": ", prop_val) 
     for i, _item in enumerate(_concat_list):
         item_val = ""
         if "||" in _item:
