@@ -1593,18 +1593,18 @@ obi:IssuerApi a kds:ApiClass;
 		kds:propUri schema:email;
 		kds:classUri schema:Organization;
 		kds:apiFieldName "email";
-	];
-	kds:hasProperty [
-		kds:propUri schema:alternativeName;
-		kds:classUri schema:Organization;
-		kds:propertyProcessing [
-			a kdr:CalculationProcessor;
-			kds:calculationType kdr:Concat;
-			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,revoked.json"
-		] ;
-		kds:apiFieldName "revocationList";
 	].
+	#kds:hasProperty [
+	#	kds:propUri schema:alternativeName;
+	#	kds:classUri schema:Organization;
+	#	kds:propertyProcessing [
+	#		a kdr:CalculationProcessor;
+	#		kds:calculationType kdr:Concat;
+	#		kds:calculationSeparator ",";
+	#		kds:calculation "!--base_api_url,revoked.json"
+	#	] ;
+	#	kds:apiFieldName "revocationList";
+	#].
 	
 obi:OrganizationImageApi a kds:ApiClass;
 	rdfs:label "Badge Definition";
