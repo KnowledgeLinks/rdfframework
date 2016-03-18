@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-rdfframework 
+RdfFramework Documentation
 **************************
 *Developed by KnowledgeLinks.io*
 
@@ -11,21 +11,8 @@ rdfframework
 
 This application reads a RDF data file that describes a web application using the `knowledgelinks.io <http://knowledgelinks.io>`_ data-structures RDF Vocabulary. The current test web application is for issuing and hosting `Open Badges <http://openbadges.org/>`_.
 
-
-.. toctree::
-   :maxdepth: 4
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 RDF Namespaces
-==================
+==============
 +------------+----------------------------------------------+
 | **PREFIX** | **URI**                                      |
 +------------+----------------------------------------------+
@@ -35,7 +22,7 @@ RDF Namespaces
 +------------+----------------------------------------------+
 
 Introduction
-==================
+============
 The versitility of RDF allows a simple means for describing anything. Using our developed vocabulary for describing a web application we are building a framework for a highly customizable, secure and a fully RDF/bigdata integrated web application. 
 
 Since RDF databases do not have inherent forced data structures like SQL Databases (i.e. table defs, primary keys, etc) they have great flexibility. However, with the increased flexibility comes other challenges:
@@ -47,24 +34,21 @@ Since RDF databases do not have inherent forced data structures like SQL Databas
 
 To solve this problem the kds vocabulary completely integrates with the any other RDF vocabulary (i.e. schema, FOAF, etc.) by augmenting those vocabularies with how they are to be used in the specific application. 
 
-RdfFramework - *Main Application Controller*
-=========================
+Contents
+========
+.. toctree::
+   :maxdepth: 1
+   
+   keyconcepts
+   rdfframeworkclass
+   rdfclass
+   rdfproperty
+   rdfdatatype
+   
 
-.. automodule:: rdfframework.framework
-    :members:
-    
-RdfClass - *Contoller for a rdf:Class*
-=========================
-    
-.. automodule:: rdfframework.rdfclass
-    :members:
-    
-RdfProperty - *Class for controlling a rdf:Property*
-=========================
-.. automodule:: rdfframework.rdffproperty
-    :members:
-    
-RdfDataType - *Class for formating an Object of a triple*
-=========================
-.. automodule:: rdfframework.rdfdatatype
-    :members:
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
