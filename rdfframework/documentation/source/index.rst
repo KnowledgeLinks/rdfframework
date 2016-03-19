@@ -40,6 +40,7 @@ Contents
    :maxdepth: 1
    
    keyconcepts
+   rdfdatasetup
    rdfframeworkclass
    rdfclass
    rdfproperty
