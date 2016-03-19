@@ -8,6 +8,7 @@ The RDF application files define the application using RDF triples. The vocabula
    essentialrdfconcepts
    definingclasses
    definingprops
+   applicationrdf
 
 * :ref:`genindex`
 * :ref:`modindex`
