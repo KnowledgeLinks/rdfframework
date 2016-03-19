@@ -6,7 +6,8 @@ Contents
 .. toctree::
    :maxdepth: 1
    
-   definingclassesandprops
+   definingclasses
+   definingprops
    
 Essential RDF concepts
 ======================
