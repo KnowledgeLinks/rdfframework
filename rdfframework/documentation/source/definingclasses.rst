@@ -1,5 +1,5 @@
 Defining RDF Classes in the Framework
-*************************************
+=====================================
 After you have decided what rdf:Classes that you will be using in the application it is now time to start specifying them. 
 
 .. note:

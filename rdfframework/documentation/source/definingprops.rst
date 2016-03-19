@@ -1,5 +1,5 @@
 RDF Properties in the Framework
-****************************************
+===============================
 Now we will define the properties to be used in the application and which classes that use them. 
 
 .. warning::
@@ -35,7 +35,7 @@ Steps
 
     Since we only added a **kds:requiredByDomain** tag for the **schema:Person** class, the **schema:Organization**, which also uses the property will not require the property. To make it a required property for the **schema:Organization** class as well add::
     
-    schema:email kds:requiredByDomain schema:Organization. 
+        schema:email kds:requiredByDomain schema:Organization. 
     
 .. warning::
 
@@ -122,7 +122,7 @@ Steps
           		kds:formLabelName "Email Address";
           		kds:formFieldHelp "Enter a valid email address.";
           		kds:fieldType [
-          			a	kdr:TextField
+          			a	kdr:TextField 
           		]
           	] .
         
