@@ -1,4 +1,4 @@
-Defining RDF Properties in the Framework
+RDF Properties in the Framework
 ****************************************
 Now we will define the properties to be used in the application and which classes that use them. 
 
@@ -14,63 +14,73 @@ Steps
         rdfs:label "Person";
         rdfs:comment "A person (alive, dead, undead, or fictional).".
         
-3. Tag the class with **kds:ControlledClass**. This tells the Framework that you will be using the class in the application::
+3. Add a rdfs:domain tag for each class that uses the property::
 
-    schema:Person a kds:ControlledClass .
+    schema:email rdfs:domain schema:Person,
+                             schema:Organization .
+                       
+.. note::
+
+    The two **rdfs:domain** statements listed above state that the **schema:email** property will be used in both the **schema:Person** and **schema:Organization** rdf:Classes.
    
-4. Now tell specify how the class should be stored. Options are "object" or "blanknode". This tells the Framework whether to create a new URI or store it as the blanknode in the object position of a triple::
+4. Next specify the **rdfs:range** for the property. Remember this tells the framework which type of value should be in the **object** position of a triple::
 
-    schema:Person kds:storageType "object" .
+    schema:email rdfs:range xsd:string .
     
-5. Next determine if there is a **Primary Key** for the class. This tells the framework that when adding a new instance of the class to the database that the specified properties must be unique or the combination of properties must be unique::
+5. Now we need to specify more specific rules for the property. If we want to make it a required property for a **rdf:Class** we can add a **kds:requiredByDomain** tag. ::
 
-    schema:Person kds:primaryKey schema:email.
+    schema:email kds:requiredByDomain schema:Person .
     
 .. note::
 
-    To make the primary key a combination of properties like this::
+    Since we only added a **kds:requiredByDomain** tag for the **schema:Person** class, the **schema:Organization**, which also uses the property will not require the property. To make it a required property for the **schema:Organization** class as well add::
     
-    schema:Peson kds:primaryKey [
-        kds:keyCombo schema:givenName;
-        kds:keyCombo schema:familyName
-    ] .
+    schema:email kds:requiredByDomain schema:Organization. 
     
-6. Lastly we need to define the security rules for the class::
+.. warning::
 
-    schema:Person kds:classSecurity [
+    If the property was specified as a **Primary Key** in the **rdf:Class** definition it is not necessary to make it a **required property** in the property definition. **Primary Keys** are required by definition. It will **NOT** cause a problem if a primary key is also specified as a required property.
+    
+6. Define any security rules for the property::
+
+    schema:email kds:propertySecurity [
+    		**kds:appliesTo schema:Person**
     		acl:agent kdr:Admin-SG;
-    		acl:mode acl:Read, acl:Write
+    		acl:mode acl:Read
     ] ;
-    
-This means that anyone in the **kds:Admin-SG** has read and write prevledges to the class.
 
 .. note::
 
-    To add more permission repeat the above information.
+    The **kds:appliesTo** tag specifies which rdf:Class to apply the security setting. In this case adding the above means that the schema:email property when used in the **schema:Person** class can only be seen by the kdr:Admin-SG. However, when it is used in the **schema:Organization** class no such rules apply.
     
-7. Putting it all together would look like this::
+7. The next major component is to tell the framework how to validate the property. This way we have consistancy when saving data::
 
-    schema:email a rdf:Property;	
-      	rdfs:domain	schema:Person;	
-      	rdfs:domain schema:Organization;
-      	rdfs:range	xsd:string;	
-      	rdfs:comment "email address.";
-      	kds:requiredByDomain schema:Person;
-      	kds:propertyProcessing [
-      		a kdr:EmailVerificationProcessor
-      	];                   
-      	kds:propertyValidation [
+    schema:email **kds:propertyValidation** [
       		a kdr:EmailValidator
-      	];
-      	kds:propertySecurity [
-      		acl:agent kdr:Self-SG;
-      		acl:mode acl:Read, acl:Write
-      	] ;
-      	kds:jsonDefault [
-      		kds:jsonObjName "email";
-      		kds:jsonValFormat "objectValue"
-      	] ;
-      	kds:formDefault [
+      	] .
+
+.. seealso::
+
+    For a full listing of validators see the Validator section
+    
+8. Now state how the application should process the data for the property. There are wide variety of actions that can be performed::
+
+    schema:email kds:propertyProcessing [
+      kds:appliesTo schema:Person ;
+      a kdr:EmailVerificationProcessor
+    ] .           
+    
+.. note::
+
+    We are appling an email verification action only to the schema:Person class. If we wanted to apply it to all rdf:Classes that use the property we would leave that line out.
+    
+.. seealso::
+
+    The processor section lists all available processors and their specifications.
+    
+9. Lastly, we can define a default pattern for how the property will appear in forms::   
+
+    schema:email kds:formDefault [
       		kds:formFieldName "emailaddr";
       		kds:formLabelName "Email Address";
       		kds:formFieldHelp "Enter a valid email address.";
@@ -78,8 +88,45 @@ This means that anyone in the **kds:Admin-SG** has read and write prevledges to 
       			a	kdr:TextField
       		]
       	] .
+
+.. note::
+
+    These can be overridden in the actual form specification. Defining a default here allows for easy insertion of the property into many forms without having to specify the basics about the field each time.
+    
+.. seealso::
+
+    For a detailed explanation and options see the Forms section
+    
+10. Putting it all together would look like this::    	
+
+        schema:email a rdf:Property;	
+          	rdfs:domain	schema:Person;	
+          	rdfs:domain schema:Organization;
+          	rdfs:range	xsd:string;	
+          	rdfs:comment "email address.";
+          	kds:requiredByDomain schema:Person;
+          	kds:propertyProcessing [
+          	  kds:appliesTo schema:Person;
+          		a kdr:EmailVerificationProcessor
+          	];                   
+          	kds:propertyValidation [
+          		a kdr:EmailValidator
+          	];
+          	kds:propertySecurity [
+          	  kds:appliesTo schema:Person;
+          		acl:agent kdr:Self-SG;
+          		acl:mode acl:Read, acl:Write
+          	] ;
+          	kds:formDefault [
+          		kds:formFieldName "emailaddr";
+          		kds:formLabelName "Email Address";
+          		kds:formFieldHelp "Enter a valid email address.";
+          		kds:fieldType [
+          			a	kdr:TextField
+          		]
+          	] .
         
-Next define your rdf:Properties!
+Next define the application settings!
 
 
 * :ref:`genindex`
