@@ -1,9 +1,6 @@
 Application wide RDF specification
 ==================================
-After you have decided what rdf:Classes that you will be using in the application it is now time to start specifying them. 
-
-.. note:
-    Don't worry if you are unsure about all the classes that you want to use. To add additional classes later you will just need to update the the definition file and restart the application. 
+Now we will specify some specific rules and information pertaining application wide.
     
 Steps
 -----
