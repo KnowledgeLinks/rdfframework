@@ -9,7 +9,8 @@ The RDF application files define the application using RDF triples. The vocabula
    definingclasses
    definingprops
    applicationrdf
-
+   formspecification
+   
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
