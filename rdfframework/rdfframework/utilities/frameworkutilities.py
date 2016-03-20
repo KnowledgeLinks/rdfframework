@@ -513,3 +513,14 @@ def copy_obj(obj):
         return_obj = copy.copy(obj)
     return return_obj
                 
+               
+def get_attr(item, name, default=None):
+    ''' similar to getattr and get but will test for class or dict '''
+    if isinstance(item, dict):
+        return_val = item.get(name, default)
+    else:
+        if hasattr(item, name):
+            return_val = getattr(item, name)
+        else:
+            return_val = default
+    return return_val

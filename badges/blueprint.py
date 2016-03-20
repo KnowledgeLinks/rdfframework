@@ -53,12 +53,14 @@ def image_path(image_id):
     if not DEBUG:
         debug = False
     else:
-        debug = True
+        debug = False
     if debug: print("START image_path - blueprint.py ----------------------\n")
     if debug: print("\timage_id: ", image_id)
     _repo_image_uri = uid_to_repo_uri(image_id)
     if debug: print("\t_repo_image_uri: ", _repo_image_uri)
     repo_image_link = urlopen(_repo_image_uri)
+    # The File wrapper is causing issues in the live environment
+    # need to delete before sending byte stream
     if debug: print("\t wsgi.file_wrapper pre: ",\
             request.environ.get('wsgi.file_wrapper'))
     if request.environ.get('wsgi.file_wrapper') is not None:
@@ -86,57 +88,6 @@ def test_rdf_class():
     f=rdfw() #This is an intentional error to cause a break in the code
     y=z
     return "<pre>{}</pre>".format(json.dumps({"message": "test rdf class"}))
-
- 
-@open_badge.route("/rdfjson/", methods=["POST", "GET"])
-def form_rdf_class():
-    """View displays the RDF json"""
-    form_dict = rdfw().rdf_form_dict
-    class_dict = rdfw().rdf_class_dict
-    app_dict = rdfw().rdf_app_dict
-    api_dict = rdfw().rdf_api_dict
-    table_template = '''
-    <style>
-        table.fixed {{ 
-            table-layout:fixed;
-            width: 2000px
-        }}
-        table.fixed td {{ 
-            overflow: hidden;
-            vertical-align:top; 
-        }}
-    </style>
-    <table class="fixed">
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <col width="20%" />
-        <tr>
-            <td><h1>Application JSON</h1></td>
-            <td><h1>Class JSON</h1></td>
-            <td><h1>Form Paths</h1></td>
-        	<td><h1>Form Json</h1></td>
-        	<td><h1>API List</h1></td>
-        	<td><h1>API Json</h1></td>     	
-        </tr>
-        <tr>
-            <td><pre>{0}</pre></td>
-            <td><pre>{2}</pre></td>
-            <td><pre>{1}</pre></td>
-        	<td><pre>{3}</pre></td>
-        	<td><pre>{5}</pre></td>
-        	<td><pre>{4}</pre></td>
-        </tr>
-    </table>'''
-    return table_template.format(
-        json.dumps(app_dict, indent=2),
-        json.dumps(rdfw().form_list, indent=2), 
-        json.dumps(class_dict, indent=2),
-        json.dumps(form_dict, indent=2),
-        json.dumps(api_dict, indent=2),
-        json.dumps(rdfw().api_list, indent=2))
 
 @open_badge.route("/api/<api_name>/<id_value>.<ext>", methods=["POST", "GET"])
 @open_badge.route("/api/<api_name>", methods=["POST", "GET"])
@@ -202,6 +153,8 @@ def rdf_api(api_name, id_value=None, ext=None):
                 repo_uri = clean_iri(list(api_data['obj_json'].values())[0])
                 repo_link = urlopen(repo_uri)
                 repo_file = repo_link.read() 
+                # The File wrapper is causing issues in the live environment
+                # need to delete before sending byte stream
                 if debug: print("\t wsgi.file_wrapper pre: ",\
                         request.environ.get('wsgi.file_wrapper'))
                 if request.environ.get('wsgi.file_wrapper') is not None:
@@ -334,17 +287,24 @@ def rdf_generic_api(class_uri, prop_uri):
     if not DEBUG:
         debug = False
     else:
-        debug = False
+        debug = True
     if debug: print("START rdf_generic_api ----------------------------\n")
-    if prop_uri == "obi_claimDate" and class_uri == "obi_Assertion":
-        if hasattr(request, "form"):
-            csrf = request.form.get("csrf")
-    else:
-        return 400  
     subject_uri = request.args.get("id")
     data = request.form.get("dataValue")
     subject_uri = request.form.get("id",subject_uri)
-    if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
+    if debug: print("class_uri: %s  prop_uri: %s" % (class_uri, prop_uri))
+    if debug: print('subject_uri: ', subject_uri)
+    if debug: print('data: ', data)
+    if prop_uri in ["obi_claimDate","kds_errorLog"] and class_uri == "obi_Assertion":
+        if hasattr(request, "form"):
+            csrf = request.form.get("csrf")
+    else:
+        if debug: print("aborting **************")
+        return abort(400)  
+    subject_uri = request.args.get("id") 
+    data = request.form.get("dataValue")
+    subject_uri = request.form.get("id",subject_uri)
+    #if debug: print("REQUEST dict: \n", pp.pformat(request.__dict__))
     rdf_class = getattr(rdfw(), class_uri)
     prop_json = rdf_class.kds_properties.get(prop_uri)
     prop_json['kds_classUri'] = class_uri
@@ -355,8 +315,6 @@ def rdf_generic_api(class_uri, prop_uri):
     base_api_url = "%s%sapi/form_generic_prop/" % (request.url_root[:-1],
                                    url_for("open_badge.base_path"))
     if debug:
-        print('subject_uri: ', subject_uri)
-        print('data: ', data)
         print('rdf_class: ', rdf_class)
         print('prop_json: ', prop_json)
         print('prop: ', prop)
@@ -467,3 +425,53 @@ def rdf_lookup_api(class_uri, prop_uri):
         if debug: print("\t**** api_data:\n",pp.pprint(api_data))
         if debug: print("END rdf_generic_api GET --------------------------\n")
         return json.dumps(api_data['obj_json'], indent=4) '''
+        
+@open_badge.route("/rdfjson/", methods=["POST", "GET"])
+def form_rdf_class():
+    """View displays the RDF json"""
+    form_dict = rdfw().rdf_form_dict
+    class_dict = rdfw().rdf_class_dict
+    app_dict = rdfw().rdf_app_dict
+    api_dict = rdfw().rdf_api_dict
+    table_template = '''
+    <style>
+        table.fixed {{ 
+            table-layout:fixed;
+            width: 2000px
+        }}
+        table.fixed td {{ 
+            overflow: hidden;
+            vertical-align:top; 
+        }}
+    </style>
+    <table class="fixed">
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <col width="20%" />
+        <tr>
+            <td><h1>Application JSON</h1></td>
+            <td><h1>Class JSON</h1></td>
+            <td><h1>Form Paths</h1></td>
+        	<td><h1>Form Json</h1></td>
+        	<td><h1>API List</h1></td>
+        	<td><h1>API Json</h1></td>     	
+        </tr>
+        <tr>
+            <td><pre>{0}</pre></td>
+            <td><pre>{2}</pre></td>
+            <td><pre>{1}</pre></td>
+        	<td><pre>{3}</pre></td>
+        	<td><pre>{5}</pre></td>
+        	<td><pre>{4}</pre></td>
+        </tr>
+    </table>'''
+    return table_template.format(
+        json.dumps(app_dict, indent=2),
+        json.dumps(rdfw().form_list, indent=2), 
+        json.dumps(class_dict, indent=2),
+        json.dumps(form_dict, indent=2),
+        json.dumps(api_dict, indent=2),
+        json.dumps(rdfw().api_list, indent=2))

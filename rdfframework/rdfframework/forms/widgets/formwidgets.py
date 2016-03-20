@@ -219,6 +219,8 @@ class ButtonActionWidget(object):
         return_args.append("class='%s' " % css)
         return_args.append("kds_propUri='%s' " % field.kds_propUri)
         return_args.append("kds_classUri='%s' " % field.kds_classUri)
+        return_args.append("kds_errorLogPropUri='%s' " % \
+                           field.kds_errorLogPropUri)
         return_args.append("data=\"%s\" " % field.data)
         return_args.append("id='%s' " % field.name)
         return_args.append(">%s</a>" % button_text)

@@ -123,6 +123,11 @@ obi:claimDate a rdf:Property;
 		]
 	] .
 
+kds:errorLog a rdf:Property;
+	rdfs:domain obi:Assertion;
+	rdfs:range xsd:string;
+	rdfs:comment "an error message".
+
 obi:issuedOn a rdf:Property;
 	rdfs:domain obi:Assertion;
 	rdfs:range xsd:date;
@@ -470,6 +475,7 @@ obi:criteria a rdf:Property;
 	rdfs:domain	obi:BadgeClass;	
 	rdfs:range	xsd:string;	
 	rdfs:comment "Criteria for earning the Badge.";	
+	kds:requiredByDomain obi:BadgeClass;
 	kds:jsonDefault [
 		kds:jsonObjName "criteria";
 		kds:jsonValFormat "urlSub";
@@ -532,10 +538,6 @@ obi:tags a rdf:Property;
 		kds:formFieldHelp "Add tags seperated by commas.";
 		kds:fieldType [
 			a	kdr:TextField; 
-		];
-		kds:formInstance [
-			kds:formInstanceType kdr:EditForm;
-			kds:applicationAction kdr:NotEditable
 		]
 	] .
 	
@@ -1051,6 +1053,24 @@ obi:AssertionPerson a kds:FormClass;
 		];
 	];
 	kds:hasProperty [
+		kds:propUri obi:claimDate;
+		kds:formFieldOrder 4.5;
+		kds:formLayoutRow 1;
+		kds:fieldType [
+			a kds:DateField;
+		];
+		kds:formLabelName "Claim Date";
+		kds:formFieldName "claimdate";
+		kds:formInstance [
+			kds:formInstanceType kdr:EditForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+		kds:formInstance [
+			kds:formInstanceType kdr:NewForm;
+			kds:applicationAction kdr:RemoveFromForm
+		];
+	];
+	kds:hasProperty [
 		kds:propUri obi:recipient;
 		kds:formFieldOrder 5;
 		kds:formLayoutRow 1;
@@ -1318,7 +1338,7 @@ obi:application a kds:Application;
 		kds:nameSpaceUri "https://w3id.org/openbadges#"
 	];
 	kds:saveLocation "triplestore";
-	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid".
+	kds:subjectPattern "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid".
 
 kdr:UserGroupForm a kds:FormClass;
 	rdfs:label "Usergroup form";
@@ -1453,14 +1473,15 @@ obi:BadgeApi a kds:ApiClass;
 		
 	];
 	kds:hasProperty [
-		kds:propUri schema:alternativeName;
+		kds:propUri obi:criteria;
+		#kds:propUri schema:alternativeName;
 		kds:classUri obi:BadgeClass;
-		kds:propertyProcessing [
-			a kdr:CalculationProcessor;
-			kds:calculationType kdr:Concat;
-			kds:calculationSeparator ",";
-			kds:calculation "!--base_url,badge/DisplayForm.html?name=,<<schema:alternativeName>>"
-		] ;
+		#kds:propertyProcessing [
+		#	a kdr:CalculationProcessor;
+		#	kds:calculationType kdr:Concat;
+		#	kds:calculationSeparator ",";
+		#	kds:calculation "!--base_url,badge/DisplayForm.html?name=,<<schema:alternativeName>>"
+		#] ;
 		kds:apiFieldName "criteria";
 	];
 	kds:hasProperty [
@@ -1554,6 +1575,11 @@ obi:IssuerApi a kds:ApiClass;
 		kds:apiFieldName "description";
 	];
 	kds:hasProperty [
+		kds:propUri schema:url;
+		kds:classUri schema:Organization;
+		kds:apiFieldName "url";
+	];
+	kds:hasProperty [
 		kds:propUri schema:alternativeName;
 		kds:classUri schema:Organization;
 		kds:propertyProcessing [
@@ -1566,19 +1592,19 @@ obi:IssuerApi a kds:ApiClass;
 		
 	];
 	kds:hasProperty [
-		kds:propUri schema:alternativeName;
+		kds:propUri schema:image;
 		kds:classUri schema:Organization;
 		kds:propertyProcessing [
 			a kdr:CalculationProcessor;
 			kds:calculationType kdr:Concat;
 			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.,<<schema:image|!--mimeType>>"
+			kds:calculation "!--base_api_url,issuer/,<<schema:alternativeName>>,.,png"; #<<schema:image|!--mimeType>>"
 		] ;
 		kds:apiFieldName "image";
 		
 	];
 	kds:hasProperty [
-		kds:propUri schema:URL;
+		kds:propUri schema:url;
 		kds:classUri schema:Organization;
 		kds:apiFieldName "url";
 	];
@@ -1586,18 +1612,18 @@ obi:IssuerApi a kds:ApiClass;
 		kds:propUri schema:email;
 		kds:classUri schema:Organization;
 		kds:apiFieldName "email";
-	];
-	kds:hasProperty [
-		kds:propUri schema:alternativeName;
-		kds:classUri schema:Organization;
-		kds:propertyProcessing [
-			a kdr:CalculationProcessor;
-			kds:calculationType kdr:Concat;
-			kds:calculationSeparator ",";
-			kds:calculation "!--base_api_url,revoked.json"
-		] ;
-		kds:apiFieldName "revocationList";
 	].
+	#kds:hasProperty [
+	#	kds:propUri schema:alternativeName;
+	#	kds:classUri schema:Organization;
+	#	kds:propertyProcessing [
+	#		a kdr:CalculationProcessor;
+	#		kds:calculationType kdr:Concat;
+	#		kds:calculationSeparator ",";
+	#		kds:calculation "!--base_api_url,revoked.json"
+	#	] ;
+	#	kds:apiFieldName "revocationList";
+	#].
 	
 obi:OrganizationImageApi a kds:ApiClass;
 	rdfs:label "Badge Definition";

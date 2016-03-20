@@ -6,7 +6,7 @@ from base64 import b64encode
 from dateutil.parser import parse as parse_date
 from passlib.hash import sha256_crypt
 from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
-        slugify, clean_iri, iri, cbool, remove_null, pp
+        slugify, clean_iri, iri, cbool, remove_null, pp, ttluri, get_attr
 from rdfframework import get_framework
 from .imageprocessor import image_processor
 
@@ -41,6 +41,9 @@ def run_processor(processor, obj, prop=None, mode="save"):
     
     elif processor_type == "kdr_ImageProcessor":
         return image_processor(processor, obj, prop, mode)
+        
+    elif processor_type == "kdr_MultiPropertyToArray":
+        return prop_to_array_processor(processor, obj, prop, mode)
     else:
         if mode == "load":
             return prop.query_data
@@ -69,9 +72,13 @@ def csv_to_multi_prop_processor(processor, obj, prop=None, mode="save"):
         obj['prop']['calcValue'] = True
         return obj
     elif mode == "load":
-        if prop.query_data is not None:
-            prop.processed_data = ", ".join(prop.query_data)
-            return ", ".join(prop.query_data)
+        prop_val = calculate_value("<<%s|%s>>" % \
+                               (prop.kds_propUri, prop.kds_classUri),
+                               obj,
+                               prop)
+        if prop_val is not None:
+            prop.processed_data = ", ".join(make_list(prop_val))
+            return ", ".join(make_list(prop_val))
         else:
             return ""
     return obj
@@ -327,14 +334,23 @@ def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
     if DEBUG:
         debug = True
     else:
-        debug = False
+        debug = True
     if debug: print("START calculator_concat ---------------------\n")
     if debug: print(prop.kds_propUri)
     
     _seperator = processor.get("kds_calculationSeparator",",")
     _calc_string = processor.get("kds_calculation")
     _concat_list = make_list(_calc_string.split(_seperator))
-
+    prop_val = calculate_value("<<%s|%s>>" % \
+                               (prop.kds_propUri, prop.kds_classUri),
+                               obj,
+                               prop)
+    if prop_val is None:
+        prop.processed_data = None
+        return None
+        
+    if debug: print(get_attr(prop, "kds_apiFieldName", \
+                get_attr(prop, "kds_formFieldName")),": ", prop_val) 
     for i, _item in enumerate(_concat_list):
         item_val = ""
         if "||" in _item:
@@ -475,3 +491,28 @@ def calculator_uir_truncation(processor, obj, prop, mode, return_type="prop"):
         return return_val
         
     if debug: print("END calculator_uir_truncation ----------------------\n\n")
+        
+def prop_to_array_processor(processor, obj, prop, mode):
+    ''' This will take a property data and convert it to an array '''
+    if DEBUG:
+        debug = True
+    else:
+        debug = True
+    if debug: print("START prop_to_array_processor - rdfprocessors.py-----\n")
+    if debug: print(prop.kds_propUri)
+    return_val = obj
+    # get the data value
+    value = calculate_value("<<%s|%s>>" % (prop.kds_propUri, prop.kds_classUri),
+                            obj, prop)
+    if mode == "save":
+        return_val = obj
+    elif mode == "load":
+        if value is not None:
+            prop.processed_data = make_list(value)
+            return_val = make_list(value)
+        else:
+            prop.processed_data = []
+            return_val = []
+    if debug: print("return_val: ", return_val)
+    if debug: print("\nEND prop_to_array_processor - rdfprocessors.py-----\n")
+    return return_val

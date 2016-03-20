@@ -1,5 +1,5 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
-
+from flask import json
 from rdflib import RDF, RDFS, OWL, XSD
 
 from rdfframework.utilities import iri, uri, make_list, xsd_to_python
@@ -39,7 +39,7 @@ class RdfDataType(object):
         if self.name == "object":
             return iri(data_value)
         elif self.name == "literal":
-            return '"{}"'.format(data_value)
+            return '"{}"'.format(json.dumps(data_value))
         elif self.name == "boolean":
             return '"{}"^^{}'.format(str(data_value).lower(),
                                      self.prefix)
@@ -48,7 +48,7 @@ class RdfDataType(object):
                                           self.py_prefix, 
                                           "literal",
                                           "string")
-            return '"{}"^^{}'.format(data_value, self.prefix)
+            return '{}^^{}'.format(json.dumps(data_value), self.prefix)
 
     def _find_type(self, class_uri, prop_uri):
         '''find the data type based on class_uri and prop_uri'''

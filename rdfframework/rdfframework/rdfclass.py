@@ -53,7 +53,7 @@ class RdfClass(object):
         self.repository_url = fw_config().get(self.kds_repositoryConfigName)
         if not hasattr(self, "kds_subjectPattern"):
             self.kds_subjectPattern = kwargs.get("kds_subjectPattern",
-                    "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,#,!--uuid")
+                    "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid")
         if not hasattr(self, "kds_baseUrl"):
             self.kds_baseUrl = kwargs.get("kds_baseUrl", fw_config().get(\
                 "ORGANIZATION",{}).get("url", "NO_BASE_URL"))
@@ -189,7 +189,7 @@ class RdfClass(object):
         else:
             debug = False
         if debug: print("START RdfClass.validate_primary_key --------------\n")
-            
+        if debug: print("old_data:\n",json.dumps(old_data,indent=4)) 
         if old_data is None:
             old_data = {}
         _prop_name_list = []
@@ -224,7 +224,6 @@ class RdfClass(object):
                     _key_props.append(prop)
         
             for key in pkey:
-
                 _object_val = None
                 #get the _data_value to test against
                 _data_value = _new_class_data.get(key, _old_class_data.get(key))
@@ -248,8 +247,16 @@ class RdfClass(object):
                     return ["valid"]
                 # if the old_data is not equel to the newData re-evaluate
                 # the primaryKey
-                if (_old_class_data.get(key) != _new_class_data.get(key))\
-                        and (key not in _calculated_props):
+                
+                # if the old value is not equal to the new value need to test 
+                # the key
+                # if the new value is to be calculated, i.e. a dependant class
+                # generating a value then we don't need to test the key.
+                # however if there is a supplied value and it is listed as a 
+                # calculated property we need to test. 
+                if (_old_class_data.get(key) != _new_class_data.get(key)) and \
+                        ((key not in _calculated_props) or \
+                        _new_class_data.get(key) is not None):
                     _key_changed = True
                     if _object_val:
                         _query_args.append(make_triple("?uri", iri(uri(key)), \
@@ -725,7 +732,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         _save_query = save_query_obj.get("query")
         if debug: print("START RdfClass._run_save_query -------------------\n")
         if debug: print("triplestore: ", self.triplestore_url)

@@ -233,10 +233,15 @@ class Form(flask_wtf.Form):
         subject_uri: the URI for the subject
         class_uri: the rdf class of the subject
         '''
+        if not DEBUG:
+            debug = False
+        else:
+            debug = True
+        if debug: print("START Form.set_obj_data rdfforms.py --------------\n")
         _class_uri = kwargs.get("class_uri", self.data_class_uri)
         _lookup_class_uri = _class_uri
         subject_uri = kwargs.get("subject_uri", self.data_subject_uri)
-        if not is_not_null(subject_uri):
+        if not is_not_null(subject_uri) and not kwargs.get('query_data'):
             self.query_data = {}
             return None
         _subform_data = {}
@@ -281,7 +286,7 @@ class Form(flask_wtf.Form):
                     if _prop.data is None and _prop.old_data is not None:
                         _prop.data = _prop.old_data
                 #pp.pprint(_prop.__dict__)
-
+        if debug: print("END Form.set_obj_data rdfforms.py --------------\n")
     def _load_form_select_options(self):
         ''' queries the triplestore for the select options and loads the data
         '''
