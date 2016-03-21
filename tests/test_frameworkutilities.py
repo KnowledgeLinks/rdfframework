@@ -97,6 +97,3 @@ class Test_nz(unittest.TestCase):
         self.assertEqual(
             nz("", "a test", False),
             "a test")
-
-
-

@@ -21,8 +21,12 @@ import os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-sys.path.append(os.path.realpath('../../'))
-print("package path: ", os.path.realpath('../../'))
+sys.path.append(os.path.abspath('../../'))
+import rdfframework
+print(rdfframework)
+#sys.path.append(os.path.realpath('../../rdfframework'))
+
+print("package path: ", os.path.abspath('../../'))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

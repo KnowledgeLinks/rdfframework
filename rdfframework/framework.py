@@ -19,6 +19,7 @@ from flask.ext.login import login_user, current_user
 from rdfframework.security import User
 from rdfframework.forms import rdf_framework_form_factory
 DEBUG = True
+
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
         framework'''

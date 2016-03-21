@@ -41,11 +41,15 @@ Contents
    
    keyconcepts
    rdfdatasetup
-   rdfframeworkclass
-   rdfclass
-   rdfproperty
-   rdfdatatype
-   
+   rdfframework
+   rdfframework.apit
+   rdfframework.forms
+   rdfframework.forms.widgets
+   rdfframework.processors
+   rdfframework.security
+   rdfframework.sparql
+   rdfframework.utilities
+   rdfframework.validators
 
 Indices and tables
 ==================

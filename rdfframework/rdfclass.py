@@ -94,8 +94,8 @@ class RdfClass(object):
     def new_uri(self):
         '''*** to be written ***
         generates a new URI
-          -- for fedora generates the container and returns the URI
-          -- for blazegraph process will need to be created'''
+            -- for fedora generates the container and returns the URI
+            -- for blazegraph process will need to be created'''
         if not DEBUG:
             debug = False
         else:
