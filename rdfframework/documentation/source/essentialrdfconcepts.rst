@@ -26,11 +26,26 @@ RDF data is written in a triple pattern that has a specific order. The items in 
 | <http://.../john> | schema:telephone | "555-555-1235"^^xsd:string |
 +-------------------+------------------+----------------------------+
 
-The **subject**, SQL database terms, is a **uuid** (universal unique identifier) [No, necessarily. Blanks Nodes are not universally unique],
+The **subject**, in SQL/Relational database terms, is a **uuid** (universal unique identifier).
 
-The **predicate** is a RDF vocabulary term that is in the form of URI/IRI that describes the relationship between the **subject** and **object**
+.. note::
+    The **subject/IRI/URI** value itself may contain human readable information but it is not necessary that it does. Sometimes it causes confusion if it does! For example. If you look at **<http://.../Topic/Battle-of-Gettysburg>** it may lead one to think that we are refering to the **Battle of Gettysburg** as a **topic** to be used for categorization. However, the **Battle of Gettysburg** can a **calendar event**, a **battle**, a **historical event**, etc. It would be better to list it solely as **<http://.../Battle-of-Gettysburg>**. This will avoid creating multiple **URIs/IRIs** for one particular concept.
 
-The **object** is a either another IRI or a literal (a string, date, number etc)
+.. warning::
+
+    Blanknodes have a **subject** value that is a variable specific to the triplestore. Blanknode subjects will **NOT** function as **uuids**. Blanknodes are used to group properties together for a particular **subject** i.e. if you have the **subject/IRI/URI** **<http://.../john>** as above and you want to add an address for him you can group all the address properties in one blanknode as below::
+   
+        <http://.../john> schema:address [
+                schema:Country 	"USA";
+                schema:addressLocality	"Mountain View";
+                schema:addressRegion	"CA";
+                schema:postalCode	Text 	"94043";
+                schema:streetAddress	"1600 Amphitheatre Pkwy"
+           ] .
+
+The **predicate** is a RDF vocabulary term that is in the form of URI/IRI that describes the relationship between the **subject** and **object** 
+
+The **object** is a either another **IRI**, a  **blankenode** or a **literal** (a string, date, number etc)
 
 RDF classes
 -----------
