@@ -8,11 +8,11 @@ Now we will define the properties to be used in the application and which classe
     
 Steps
 -----
-1. Next add the basic information about a property you will be using::
+1.  Start by adding the basic information about a property you will be using::
     
     schema:email a rdf:Property;
-        rdfs:label "Person";
-        rdfs:comment "A person (alive, dead, undead, or fictional).".
+        rdfs:label "E-mail";
+        rdfs:comment "Electronic mail sent through a network to an individual" .
         
 3. Add a rdfs:domain tag for each class that uses the property::
 
@@ -21,19 +21,22 @@ Steps
                        
 .. note::
 
-    The two **rdfs:domain** statements listed above state that the **schema:email** property will be used in both the **schema:Person** and **schema:Organization** rdf:Classes.
+    The two **rdfs:domain** statements listed above state that the **schema:email** 
+    property will be used in both the **schema:Person** and **schema:Organization** rdf:Classes.
    
 4. Next specify the **rdfs:range** for the property. Remember this tells the framework which type of value should be in the **object** position of a triple::
 
     schema:email rdfs:range xsd:string .
     
-5. Now we need to specify more specific rules for the property. If we want to make it a required property for a **rdf:Class** we can add a **kds:requiredByDomain** tag. ::
+5. Now we need to specify more specific rules for the property. If we want to make it a required property 
+   for a **rdf:Class** we can add a **kds:requiredByDomain** tag. ::
 
     schema:email kds:requiredByDomain schema:Person .
     
 .. note::
 
-    Since we only added a **kds:requiredByDomain** tag for the **schema:Person** class, the **schema:Organization**, which also uses the property will not require the property. To make it a required property for the **schema:Organization** class as well add::
+    Since we only added a **kds:requiredByDomain** tag for the **schema:Person** class, 
+    the **schema:Organization**, which also uses the property will not require the property. To make it a required property for the **schema:Organization** class as well add::
     
         schema:email kds:requiredByDomain schema:Organization. 
     

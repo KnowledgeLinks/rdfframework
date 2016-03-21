@@ -1,9 +1,11 @@
 Defining RDF Classes in the Framework
 =====================================
-After you have decided what rdf:Classes that you will be using in the application it is now time to start specifying them. 
+After deciding what rdf:Classes that you will be using in the application it is now time to 
+start specifying your classes in a RDF turtle formated file. 
 
 .. note:
-    Don't worry if you are unsure about all the classes that you want to use. To add additional classes later you will just need to update the the definition file and restart the application. 
+    Don't worry if you are unsure about all the classes that you want to use. To add additional classes 
+    later you will just need to update the definition file and restart the application. 
     
 Steps
 -----
@@ -20,21 +22,26 @@ Steps
     # Any addtional namespaces
     @prefix schema: <https://schema.org/> .
     
-2. Next add the basic information about the first class you will be using::
+2. Next add the basic information about the first class::
     
     schema:Person a rdf:Class;
         rdfs:label "Person";
         rdfs:comment "A person (alive, dead, undead, or fictional).".
         
-3. Tag the class with **kds:ControlledClass**. This tells the Framework that you will be using the class in the application::
+3. Tag the class with **kds:ControlledClass**. This tells the Framework what are the classes 
+   in the application::
 
     schema:Person a kds:ControlledClass .
    
-4. Now tell specify how the class should be stored. Options are "object" or "blanknode". This tells the Framework whether to create a new URI or store it as the blanknode in the object position of a triple::
+4. Now specify how the class instance data should be stored. Options are "object" or "blanknode". 
+   This tells the Framework whether to create a new URI or store it as the blanknode in the 
+   object position of a triple::
 
     schema:Person kds:storageType "object" .
     
-5. Next determine if there is a **Primary Key** for the class. This tells the framework that when adding a new instance of the class to the database that the specified properties must be unique or the combination of properties must be unique::
+5. Next determine if there is a **Primary Key** for the class. The **Primary Key** tells the framework 
+   that when adding a new instance of the class to the database that the specified properties must be 
+   unique or some combination of the properties must be unique::
 
     schema:Person kds:primaryKey schema:email.
     
@@ -54,7 +61,7 @@ Steps
     		acl:mode acl:Read, acl:Write
     ] ;
     
-This means that anyone in the **kds:Admin-SG** has read and write privaledges to the class.
+This means that anyone in the **kds:Admin-SG** has read and write privileges to the class.
 
 .. note::
 
