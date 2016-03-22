@@ -48,6 +48,13 @@ class TestIri(unittest.TestCase):
         self.assertEqual(iri(""),
                          "<>")
 
+    def test_iri_question(self):
+        self.assertTrue(iri("?"))
+
+    def test_iri_square_bracket(self):
+        self.assertTrue(iri("["))
+
+
 class Test_is_not_null(unittest.TestCase):
 
     def test_is_not_null(self):
@@ -75,6 +82,27 @@ class Test_make_list(unittest.TestCase):
         self.assertEqual(make_list(test_str),
                          [test_str,])
 
+class Test_make_set(unittest.TestCase):
+
+    def test_make_set_str(self):
+        test_str = "this is a test"
+        self.assertEqual(make_set(test_str),
+                         set([test_str,]))
+
+    def test_make_set_list(self):
+        test_list = ["ab", "cd"]
+        self.assertEqual(make_set(test_list),
+                         set(test_list))
+
+    def test_make_set_set(self):
+        test_set = set(range(0,5))
+        self.assertEqual(make_set(test_set),
+                         test_set)
+
+class Test_uid_to_repo_uri(unittest.TestCase):
+
+    def setUp(self):
+        self.fedora_local_uri = ""
 
 class Test_nz(unittest.TestCase):
 
@@ -97,3 +125,17 @@ class Test_nz(unittest.TestCase):
         self.assertEqual(
             nz("", "a test", False),
             "a test")
+
+class Test_render_without_request(unittest.TestCase):
+
+   def test_template_1(self):
+        result = render_without_request(
+                     "jsonApiQueryTemplate.rq")
+        self.assertTrue(len(result) > 0)
+
+   def test_nonexistent_template(self):
+        from jinja2.exceptions import TemplateNotFound
+        self.assertRaises(
+                TemplateNotFound,
+                render_without_request,
+                "test.html")
