@@ -12,12 +12,12 @@ def get_framework(**kwargs):
     _reset = kwargs.get("reset")
     if _reset:
         from .framework import RdfFramework
-        RDF_GLOBAL = RdfFramework()
+        RDF_GLOBAL = RdfFramework(reset=_reset)
     try:    
         RDF_GLOBAL
     except NameError:
         RDF_GLOBAL = None
     if RDF_GLOBAL is None:
         from .framework import RdfFramework
-        RDF_GLOBAL = RdfFramework()
+        RDF_GLOBAL = RdfFramework(reset=_reset)
     return RDF_GLOBAL
