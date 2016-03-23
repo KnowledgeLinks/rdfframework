@@ -36,8 +36,12 @@ class RdfFramework(object):
     value_processors = []
     apis_initialized = False
 
-    def __init__(self, **kwargs):
-        if kwargs.get('reset',True):
+    def __init__(self, root_file_path, **kwargs):
+        self.root_file_path = root_file_path
+        self._set_rdf_def_filelist()
+        # if the the definition files have been modified since the last json
+        # files were saved reload the definition files
+        if kwargs.get('reset',False) or self.last_def_mod > self.last_json_mod:
             reset = True
         else:
             reset = False
@@ -632,6 +636,7 @@ class RdfFramework(object):
         if reset:
             _sparql = render_without_request(
                 "jsonApplicationDefaults.rq",
+                None,
                 graph=fw_config().get('RDF_DEFINITION_GRAPH'))
             _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                        data={"query": _sparql, 
@@ -792,16 +797,18 @@ class RdfFramework(object):
             # render the extensions with the base URL
             # must use a ***NON FLASK*** routing since flask is not completely
             # initiated
-            rdf_resource_templates = [
-                "kds-app.ttl",
-                "kds-vocab.ttl",
-                "kds-resources.ttl"]
+            rdf_resource_templates = []
             rdf_data = []
-            for template in rdf_resource_templates:
-                rdf_data.append(
-                    render_without_request(
-                        template,
-                        base_url=base_url))
+            for path, files in self.def_files.items():
+                for template in files:
+                    rdf_data.append(
+                        render_without_request(
+                            template,
+                            path,
+                            base_url=base_url))
+                    rdf_resource_templates.append({template:path})
+                        
+            print
             # load the extensions in the triplestore
             context_uri = "http://knowledgelinks.io/ns/application-framework/" 
             for i, data in enumerate(rdf_data):
@@ -815,7 +822,29 @@ class RdfFramework(object):
                         rdf_resource_templates[i], triplestore_url))
                 else:
                     print("\t%s file loaded" % rdf_resource_templates[i])
-                      
+    
+    def _set_rdf_def_filelist(self):
+        ''' does a directory search for rdf application definition files '''
+        def_files = {}
+        latest_mod = 0
+        for root, dirnames, filenames in os.walk(self.root_file_path):
+            if "rdfw-definitions" in root:
+                def_files[root] = filenames 
+                for def_file in filenames:
+                    file_mod = os.path.getmtime(os.path.join(root,def_file))
+                    if file_mod > latest_mod:
+                        latest_mod = file_mod
+        self.last_def_mod = latest_mod
+        self.def_files = def_files 
+        json_mod = 0
+        if os.path.isdir(JSON_LOCATION):
+            for root, dirnames, filenames in os.walk(JSON_LOCATION):
+                for json_file in filenames:
+                    file_mod = os.path.getmtime(os.path.join(root,json_file))
+                    if file_mod > json_mod:
+                        json_mod = file_mod 
+        self.last_json_mod = json_mod 
+                                        
     # possible deletion: no longer in use. Commented out till certian                
     """def get_form_data(self, rdf_form, **kwargs):
         ''' returns the data for the current form paramters

@@ -63,13 +63,17 @@ def nz(value, none_value, strict=True):
     if debug: print("END nz frameworkutilities.py ----------------------\n")
     return return_val    
     
-def render_without_request(template_name, **template_vars):
+def render_without_request(template_name, template_path=None, **template_vars):
     """
     Usage is the same as flask.render_template:
 
     render_without_request('my_template.html', var1='foo', var2='bar')
     """
-    template = ENV.get_template(template_name)
+    if template_path:
+        env = Environment(loader=FileSystemLoader([template_path]))
+    else:
+        env = ENV
+    template = env.get_template(template_name)
     return template.render(**template_vars)
     
 
