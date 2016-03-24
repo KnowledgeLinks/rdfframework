@@ -33,6 +33,24 @@ class Test_cbool(unittest.TestCase):
         self.assertFalse(cbool('n'))
         self.assertFalse(cbool('no'))
 
+class Test_clean_iri(unittest.TestCase):
+
+    def test_clean_iri(self):
+        self.assertEqual(
+            clean_iri("<http://example.info/test>"),
+            "http://example.info/test")
+
+    def test_clean_iri_fail(self):
+        self.assertEqual(
+            clean_iri("<http://example.info"),
+            "<http://example.info")
+
+class TestDeletePropertyClass(unittest.TestCase):
+
+    def test_delete_property(self):
+        delete_property = DeleteProperty()
+        self.assertTrue(delete_property.delete)
+
 
 
 class TestIri(unittest.TestCase):
@@ -98,6 +116,43 @@ class Test_make_set(unittest.TestCase):
         test_set = set(range(0,5))
         self.assertEqual(make_set(test_set),
                          test_set)
+
+class TestNotInFormClass(unittest.TestCase):
+
+    def test_notinform(self):
+        notInForm = NotInFormClass()
+        self.assertTrue(notInForm.notInForm)
+
+class Test_remove_null(unittest.TestCase):
+
+    def test_remove_null_list(self):
+        self.assertEqual(remove_null([1, None, 2]),
+            [1,2])
+
+    def test_remove_null_set(self):
+        self.assertEqual(remove_null(set([None, 1])),
+            set([1,]))
+
+    def test_remove_null_no_null(self):
+        self.assertEqual(remove_null([1,2]),
+            [1,2])
+                 
+class Test_slugify(unittest.TestCase):
+
+    def test_str_1(self):
+        self.assertEqual(
+            slugify("Hello Moon"),
+            "hello-moon")
+ 
+    def test_num(self):
+        self.assertEqual(
+            slugify("12 Person"),
+            "12-person")
+
+    def test_non_alphanum(self):
+        self.assertEqual(
+            slugify("N$ one"),
+            "n-one")
 
 class Test_uid_to_repo_uri(unittest.TestCase):
 
