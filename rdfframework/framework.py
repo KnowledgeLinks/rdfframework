@@ -123,8 +123,9 @@ class RdfFramework(object):
             if person_info:
                 user_obj = {'username': _username.data,
                             'email': person_info['schema_email'], 
-                            'full_name': person_info['schema_givenName'] +
-                                         person_info['schema_familyName'],
+                            'full_name': "%s %s" % (\
+                                    person_info['schema_givenName'],
+                                         person_info['schema_familyName']),
                             'user_uri': user_uri}      
             new_user = User(user_obj)
             #login_user(new_user)

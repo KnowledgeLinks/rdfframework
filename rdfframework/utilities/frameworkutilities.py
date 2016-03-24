@@ -528,3 +528,10 @@ def get_attr(item, name, default=None):
         else:
             return_val = default
     return return_val
+
+def separate_props(obj):
+    ''' will return a obj with the kds_properties as a seprate obj '''
+    copied_obj = copy.deepcopy(obj)
+    props = copied_obj.get("kds_properties")
+    del copied_obj["kds_properties"]
+    return({"obj": copied_obj, "kds_properties":props})
