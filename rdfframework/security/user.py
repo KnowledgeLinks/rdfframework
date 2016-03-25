@@ -22,7 +22,7 @@ class User(UserMixin):
             return self.loaded_users[user_id]
         else:
             return None
-            
+           
     def del_user_obj(self, user_id):
         if user_id in self.loaded_users.keys():
             del self.loaded_users[user_id]
