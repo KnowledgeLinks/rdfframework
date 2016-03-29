@@ -1,16 +1,21 @@
+"""frameworkutilities.py
+
+Module of helper functions used in the RDF Framework.
+
+"""
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-import os
-import re
-import copy
 from base64 import b64encode
-import datetime
-import requests
 from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
 from dateutil.parser import parse
 
+import copy
+import datetime
+import os
+import re
+import requests
 
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
@@ -33,14 +38,14 @@ def nz(value, none_value, strict=True):
     ''' This function is named after an old VBA function. It returns a default
         value if the passed in value is None. If strict is False it will
         treat an empty string as None as well.
-        
+
         example:
         x = None
         nz(x,"hello")
         --> "hello"
         nz(x,"")
         --> ""
-        y = ""   
+        y = ""
         nz(y,"hello")
         --> ""
         nz(y,"hello", False)
@@ -59,10 +64,10 @@ def nz(value, none_value, strict=True):
     else:
         return_val = value
     if debug: print("value: %s | none_value: %s | return_val: %s" %
-            (value, none_value, return_val))
+        (value, none_value, return_val))
     if debug: print("END nz frameworkutilities.py ----------------------\n")
     return return_val    
-    
+
 def render_without_request(template_name, template_path=None, **template_vars):
     """
     Usage is the same as flask.render_template:
@@ -75,7 +80,7 @@ def render_without_request(template_name, template_path=None, **template_vars):
         env = ENV
     template = env.get_template(template_name)
     return template.render(**template_vars)
-    
+
 
 def cbool(value, strict=True):
     ''' converts a value to true or false. Python's default bool() function
@@ -127,7 +132,7 @@ def make_list(value):
     the dictionay as an element in the list. i.e.
         x = {"first":1, "second":2}
         list(x) = ["first", "second"]
-        or use this [x,]  
+        or use this [x,]
         make_list(x) =[{"first":1, "second":2}]
     '''
     if not isinstance(value, list):
