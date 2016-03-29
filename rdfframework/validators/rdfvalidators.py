@@ -4,10 +4,10 @@ from wtforms.validators import InputRequired, Email, URL, Length, EqualTo, \
 from wtforms import ValidationError
 from rdfframework import RdfDataType, get_framework as rdfw
 from rdfframework.utilities import make_triple, iri, clean_iri, fw_config,\
-    make_list, uri
+    make_list, uri, get_attr, is_not_null
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-
+DEBUG = True
 def get_wtform_validators(field):
     ''' reads the list of validators for the field and returns the wtforms
         validator list'''
@@ -63,7 +63,11 @@ class UniqueValue(object):
 
     def __call__(self, form, field):
         # get the test query
-        debug = True
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START UniqueValue.call rdfvalidators.py ----------\n")
         _sparql = self._make_unique_value_qry(form, field)
         if debug: print(_sparql)
         # run the test query
@@ -79,6 +83,7 @@ class UniqueValue(object):
                     'uniqueValueViolation', {}).get('value', False)
         else:
             _unique_test = False
+        if debug: print("END UniqueValue.call rdfvalidators.py ----------\n")
         if _unique_test:
             raise ValidationError(self.message)
 
@@ -154,3 +159,39 @@ class UniqueValue(object):
         return '''{}\nSELECT (COUNT(?uri)>0 AS ?uniqueValueViolation)
 {{\n{}\n}}\nGROUP BY ?uri'''.format(rdfw().get_prefix(),
                                     "\n\t".join(_sparql_args))
+
+class OldPasswordValidator(object):
+    ''' a custom validator for use with wtforms
+        * checks to see if the value already exists in the triplestore'''
+    
+    def __init__(self, message=None, **kwargs):
+        if kwargs.get("tied_field_name"):
+            self.tied_field_name = kwargs.get("tied_field_name")
+        else:
+            self.tied_field_name = None
+        if not message:
+            message = u'You did not enter the correct password!'
+        self.message = message
+
+    def __call__(self, form, field):
+        # get the test query
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START OldPasswordValidator.call rdfvalidators.py --n")
+
+        if not is_not_null(field.data):
+            if self.tied_field_name:
+                tied_field = get_attr(form, self.tied_field_name)
+                data = get_attr(tied_field, "data")
+                if is_not_null(data):
+                    raise ValidationError(self.message)
+        else:
+            query_data = rdfw().get_obj_data(form,
+                                             lookup_related=True,
+                                             processor_mode="verify")
+                                             
+            if not field.password_verified:
+                raise ValidationError(self.message)
+

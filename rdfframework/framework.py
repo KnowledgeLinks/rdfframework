@@ -53,7 +53,10 @@ class RdfFramework(object):
             reset = True 
         # verify that the server core is up and running
         servers_up = True
-        servers_up = verify_server_core(600, 0)
+        if kwargs.get('server_check', True):
+            servers_up = verify_server_core(600, 0)
+        else:
+            print("server check skipped")
         if not servers_up:
             print("Sever core not initialized --- Framework Not loaded")
         if servers_up:
@@ -118,15 +121,20 @@ class RdfFramework(object):
             for subject, value in query_data['query_data'].items():
                 if "<schema_Person>" in make_list(value.get("rdf_type")):
                     person_info = value
+                    person_uri = subject
+                if "<kds_UserClass>" in make_list(value.get("rdf_type")):
+                    user_info = value
                     user_uri = subject
-                    break
             if person_info:
                 user_obj = {'username': _username.data,
                             'email': person_info['schema_email'], 
                             'full_name': "%s %s" % (\
                                     person_info['schema_givenName'],
                                          person_info['schema_familyName']),
-                            'user_uri': user_uri}      
+                            'person_uri': person_uri,
+                            'change_password': \
+                                    user_info['kds_changePasswordRequired'],
+                            'user_uri': user_uri}
             new_user = User(user_obj)
             #login_user(new_user)
             #print(current_user.is_authenticated())

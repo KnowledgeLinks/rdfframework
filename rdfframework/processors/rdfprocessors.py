@@ -11,7 +11,7 @@ from rdfframework import get_framework
 from .imageprocessor import image_processor
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-DEBUG = False
+DEBUG = True
 def run_processor(processor, obj, prop=None, mode="save"):
     '''runs the passed in processor and returns the saveData'''
     if isinstance(processor, dict):
@@ -96,15 +96,14 @@ def password_processor(processor, obj, prop, mode="save"):
     Returns:
         modified passed in obj
     """
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = False
     if debug: print("START password_processor --------------------------\n")
     salt_url = "kdr_SaltProcessor"
     if mode == "save":
         # find the salt property
-        
         _class_uri = obj['prop'].get("classUri")
         _class_properties = getattr(get_framework(), _class_uri).kds_properties
         salt_property = None
@@ -119,7 +118,7 @@ def password_processor(processor, obj, prop, mode="save"):
         # if in save mode create a hashed password
         if mode == "save":
             # if the there is not a new password in the data return the obj
-            if is_not_null(obj['prop']['new']) or obj['prop']['new'] != 'None':
+            if is_not_null(obj['prop']['new']) and obj['prop']['new'] != 'None':
                 # if a salt has not been created call the salt processor
                 if not obj['processedData'].get(salt_property):
                     obj = salt_processor(salt_processor_dict,
@@ -133,12 +132,20 @@ def password_processor(processor, obj, prop, mode="save"):
                 obj['processedData'][obj['propUri']] = _hash_value
                 obj['prop']['calcValue'] = True
                 if debug: print("END password_processor  mode = save-------\n")
+            else:
+                #del obj['preSaveData'][obj['propUri']]
+                if obj['preSaveData'].get(salt_property):
+                    obj['preSaveData'][salt_property]['doNotSave'] = True
+                if obj['processedData'].get(salt_property):
+                    del obj['processedData'][salt_property]
+                obj['prop']['doNotSave'] = True
             return obj
     elif mode == "verify":
         # verify the supplied password matches the saved password
         if not len(obj.query_data) > 0:
             setattr(prop, "password_verified", False)
             return obj    
+        if debug: print(prop.kds_formFieldName)
         _class_uri = prop.kds_classUri
         _class_properties = getattr(get_framework(), _class_uri).kds_properties
         salt_property = None
@@ -158,6 +165,8 @@ def password_processor(processor, obj, prop, mode="save"):
                 hashed_password = props.get(prop.kds_propUri)
                 break
         if debug: print(salt_value, " - ", hashed_password, " - ", prop.data)
+        if debug: print("password_verified ", \
+            sha256_crypt.verify(prop.data + salt_value, hashed_password))
         setattr(prop, "password_verified", \
             sha256_crypt.verify(prop.data + salt_value, hashed_password)) 
         if debug: print("END password_processor  mode = verify -------\n")
@@ -212,8 +221,8 @@ def salt_processor(processor, obj, prop, mode="save", **kwargs):
 def calculation_processor(processor, obj, prop, mode="save", return_type="prop"):
     ''' Application should proccess the property according to the rules listed
         in the kds:calulation property.'''
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = False
     if debug: print("START calculation_processor ------------------------\n")
@@ -254,7 +263,10 @@ def calculation_processor(processor, obj, prop, mode="save", return_type="prop")
 def clean_processors(processor_list_of_list, _class_uri=None):
     ''' some of the processors are stored as objects and need to retrun
         them as a list of string names'''
-    debug = False
+    if not DEBUG:
+        debug = False
+    else:
+        debug = False
     _return_obj = {}
     # cycle through the each list of list of processors
     for processor_list in processor_list_of_list:
@@ -292,8 +304,8 @@ def clean_processors(processor_list_of_list, _class_uri=None):
     return _return_obj
 
 def calculate_value(value, obj, prop):
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = False
     if value.startswith("<<"):
@@ -328,11 +340,11 @@ def calculate_value(value, obj, prop):
         return return_val
     else:
         return cbool(value, False)
-           
+
 def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
     ''' Does a concatition based on the the provided args and kwargs '''
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = True
     if debug: print("START calculator_concat ---------------------\n")
@@ -375,12 +387,11 @@ def calculator_concat(processor, obj, prop, mode="save", return_type="prop"):
         #S    prop.processed_data = "adfadsf"
     else:
         return "".join(remove_null(_concat_list))
-     
-   
+
 def calculator_object_generator(processor, obj, prop, mode, return_type="prop"):   
     ''' returns and object of calculated values '''
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = False
         
@@ -417,7 +428,7 @@ def calculator_value_hasher(value, obj, prop):
                 salt_value = salt
         return 'sha256$' + hashlib.sha256(value_to_hash.encode('utf-8') + \
                 salt.encode('utf-8')).hexdigest()
-        
+
 def find_salt_prop(obj, prop):
     ''' finds the property that stores the salt '''
 
@@ -441,10 +452,10 @@ def find_salt_prop(obj, prop):
         if salt_uri:
             salt_list.append(salt_uri)
     return salt_list
-            
+
 def calculator_date_convertor(processor, obj, prop, mode, return_type="prop"):
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = False
     if debug: print("START calculator_date_convertor ---------------------\n")
@@ -468,12 +479,10 @@ def calculator_date_convertor(processor, obj, prop, mode, return_type="prop"):
         prop.processed_data = return_val
     else:
         return return_val
-        
-     
-        
+       
 def calculator_uir_truncation(processor, obj, prop, mode, return_type="prop"):
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = False
     if debug: print("START calculator_uir_truncation ---------------------\n")
@@ -494,8 +503,8 @@ def calculator_uir_truncation(processor, obj, prop, mode, return_type="prop"):
         
 def prop_to_array_processor(processor, obj, prop, mode):
     ''' This will take a property data and convert it to an array '''
-    if DEBUG:
-        debug = True
+    if not DEBUG:
+        debug = False
     else:
         debug = True
     if debug: print("START prop_to_array_processor - rdfprocessors.py-----\n")

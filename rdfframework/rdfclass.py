@@ -79,6 +79,7 @@ class RdfClass(object):
         else:
             debug = False
         if debug: print("START RdfClass.save ---------------------------\n")
+        if debug: print("kds_classUri: ", self.kds_classUri, "  ************")
         if not validation_status:
             return self.validate_form_data(rdf_obj)
 
@@ -89,7 +90,6 @@ class RdfClass(object):
         if debug: print("END RdfClass.save ---------------------------\n")
         return self._run_save_query(save_query)
         #return None
-
 
     def new_uri(self):
         '''*** to be written ***
@@ -156,7 +156,6 @@ class RdfClass(object):
                     (pattern, uid, new_uri))
         if debug: print("END RdfClass.uri_patterner -----------------------\n")
         return new_uri    
-        
         
     def validate_obj_data(self, rdf_obj, old_data):
         '''This method will validate whether the supplied object data
@@ -508,9 +507,9 @@ class RdfClass(object):
                     break
         subject_uri = _old_data.get("!!!!subjectUri", "<>")
         for prop in _class_obj_props:
-            if debug: print("prop dict ----------------------\n",
+            '''if debug: print("prop dict ----------------------\n",
                             pp.pprint(prop.__dict__),
-                            "\n---------------------\n")
+                            "\n---------------------\n")'''
             _prop_uri = prop.kds_propUri
             if debug:
                 if _prop_uri == "schema_image":
@@ -732,7 +731,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = True
+            debug = False
         _save_query = save_query_obj.get("query")
         if debug: print("START RdfClass._run_save_query -------------------\n")
         if debug: print("triplestore: ", self.triplestore_url)
@@ -853,15 +852,17 @@ class RdfClass(object):
         # if the property is editable process the data
         elif obj['prop'].get("editable"):
             # if the old and new data are different
-            #print(obj['prop'].get("new"), " != ", obj['prop'].get("old"))
             if clean_iri(obj['prop'].get("new")) != \
                                     clean_iri(obj['prop'].get("old")):
-                #print("true")
                 # if the new data is null and the property is not
-                # required mark property for deletion
+                # required run the processors first then mark property for 
+                # deletion if it is still should be deleted
                 if not is_not_null(obj['prop'].get("new")) and not \
                                                 obj['prop'].get("required"):
-                    obj['processedData'][_prop_uri] = DeleteProperty()
+                    for processor in processors.values():
+                            obj = run_processor(processor, obj)
+                    if not obj['prop']['doNotSave']:         
+                        obj['processedData'][_prop_uri] = DeleteProperty()
                 # if the property has new data
                 elif is_not_null(obj['prop'].get("new")):
                     if len(processors) > 0:
@@ -923,6 +924,8 @@ class RdfClass(object):
         #    x=y
         if debug: print("format data***********\n")
         if debug: pp.pprint(processed_data)
+        if not processed_data:
+            processed_data = {}
         # cycle throught the properties in the processed data    
         for _prop_uri, prop in processed_data.items():
             # if the property is maked for deletion add it to the save list

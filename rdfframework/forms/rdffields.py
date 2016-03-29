@@ -6,7 +6,7 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, \
 from wtforms.validators import InputRequired, Optional, URL
 from rdfframework import get_framework as rdfw
 from rdfframework.processors import clean_processors
-from rdfframework.validators import get_wtform_validators
+from rdfframework.validators import get_wtform_validators, OldPasswordValidator
 from rdfframework.utilities import make_list, make_set, cbool, \
         calculate_default_value #, code_timer, \
 #        fw_config, iri, is_not_null
@@ -93,7 +93,10 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
             x=1
     # get required state
     _required = False
-    _field_req_var = cbool(field.get('kds_requiredField'))
+    _field_req_var = cbool(_new_field['kds_fieldType'].get(\
+            'kds_requiredField', cbool(field.get('kds_requiredField'))))
+    if field.get('kds_propUri') == 'kds_password':
+        x=1
     if (field.get('kds_propUri') in make_list(field.get('kds_classInfo', {}).get(\
             'kds_primaryKey', []))) or _field_req_var:
         _required = True
@@ -175,12 +178,19 @@ def get_wtform_field(field, instance='', **kwargs):
                             "doNotSave":True}]
 
         elif _field_mode == "kdr_ChangePassword":
-            
+            print(_field_validators)
+            if field['kds_required']:
+                pw_old_validators = [InputRequired(),OldPasswordValidator(\
+                        tied_field_name=_field_name)]
+            else: 
+                pw_old_validators = [OldPasswordValidator(\
+                        tied_field_name=_field_name)]
             _form_field = [{"kds_fieldName":_field_name + "_old",
-                            "kds_field":PasswordField("Current"),
+                            "kds_field":PasswordField("Current",
+                                    pw_old_validators),
                             "doNotSave":True},
                            {"kds_fieldName":_field_name,
-                            "kds_field":PasswordField("New"),
+                            "kds_field":PasswordField("New", _field_validators),
                             "kds_formLayoutRow":_field_row + .01},
                            {"kds_fieldName":_field_name + "_confirm",
                             "kds_field":PasswordField("Re-enter"),
