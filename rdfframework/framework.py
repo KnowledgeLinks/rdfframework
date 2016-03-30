@@ -205,7 +205,7 @@ class RdfFramework(object):
                                      person_info['schema_familyName']),
                         'person_uri': person_uri,
                         'change_password': \
-                                user_info['kds_changePasswordRequired'],
+                                user_info.get('kds_changePasswordRequired',True),
                         'user_uri': user_uri}
         return user_obj  
                                       
