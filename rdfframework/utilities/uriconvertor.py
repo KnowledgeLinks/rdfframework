@@ -34,12 +34,12 @@ def convert_to_ttl(value, ns_obj=None):
         if str(value).startswith(_ns_uri) or str(value).startswith("<"+_ns_uri):
             return value.replace(_ns_uri, _prefix + ":").replace(\
                     "<","").replace(">","")
-    return value    
-    
+    return value
+
 def convert_to_uri(value, ns_obj=None, strip_iri=False):
-    ''' converts a prefixed rdf ns equivalent value to its uri form. 
+    ''' converts a prefixed rdf ns equivalent value to its uri form.
         If not found returns the value as is '''
-    
+
     if ns_obj is None:
         from rdfframework import get_framework
         ns_obj=get_framework().ns_obj
@@ -62,7 +62,7 @@ def convert_to_uri(value, ns_obj=None, strip_iri=False):
         return ""
     else:
         return value
-    
+
 def create_namespace_obj(obj):
     ''' takes initial rdf application definitions and reads the namespaces '''
     global NS_OBJ
@@ -77,8 +77,8 @@ def create_namespace_obj(obj):
                     break
         except AttributeError:
             pass
-    return_obj = {}  
-    # cylce through the namespace section and add to the return obj 
+    return_obj = {}
+    # cylce through the namespace section and add to the return obj
     for _ns in _ns_obj:
         _prefix_key = "http://knowledgelinks.io/ns/data-structures/prefix"
         _ns_key = 'http://knowledgelinks.io/ns/data-structures/nameSpaceUri'
@@ -88,11 +88,11 @@ def create_namespace_obj(obj):
 
 def convert_obj_to_rdf_namespace(obj, ns_obj=None):
     ''' This function takes rdf json definitions and converts all of the
-        uri strings to a ns_value format ''' 
+        uri strings to a ns_value format '''
     if ns_obj is None:
         from rdfframework import get_framework
-        ns_obj = get_framework().ns_obj    
-    
+        ns_obj = get_framework().ns_obj
+
     if isinstance(obj, list):
         _return_list = []
         for item in obj:
@@ -116,10 +116,10 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None):
         return _return_obj
     else:
         return convert_to_ns(obj, ns_obj)
-        
+
 def pyuri(value):
-    ''' converts an iri to the app defined rdf namespaces in the framework 
-        in a python accessable format. i.e. schema:name or 
+    ''' converts an iri to the app defined rdf namespaces in the framework
+        in a python accessable format. i.e. schema:name or
         http:schema.org/name  --> schema_name '''
     global NS_OBJ
     if NS_OBJ is None:
@@ -131,8 +131,8 @@ def pyuri(value):
         return convert_to_ns(convert_to_uri(value, NS_OBJ), NS_OBJ)
 
 def ttluri(value):
-    ''' converts an iri to the app defined rdf namespaces in the framework 
-        in a turtle accessable format. i.e. schema_name or 
+    ''' converts an iri to the app defined rdf namespaces in the framework
+        in a turtle accessable format. i.e. schema_name or
         http:schema.org/name  --> schema:name '''
     global NS_OBJ
     if NS_OBJ is None:
@@ -142,7 +142,7 @@ def ttluri(value):
         return convert_to_ttl(value, NS_OBJ)
     else:
         return convert_to_ttl(convert_to_uri(value, NS_OBJ), NS_OBJ)
-    
+
 def nouri(value):
     global NS_OBJ
     if NS_OBJ is None:
@@ -185,8 +185,8 @@ def uri_prefix(value):
                 break
     if debug: print("END uri_prefix() uriconvertor.py -------------------\n")
     return value
-       
-def uri(value): 
+
+def uri(value):
     global NS_OBJ
     if NS_OBJ is None:
         from rdfframework import get_framework
@@ -195,12 +195,12 @@ def uri(value):
         return value
     else:
         return convert_to_uri(value)
-     
+
 def iris_to_strings(obj, ns_obj=None):
     if ns_obj is None:
         from rdfframework import get_framework
-        ns_obj = get_framework().ns_obj    
-    
+        ns_obj = get_framework().ns_obj
+
     if isinstance(obj, list):
         _return_list = []
         for item in obj:

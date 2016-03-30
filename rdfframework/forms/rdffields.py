@@ -126,7 +126,7 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     #print("field_json:\n", json.dumps(_new_field, indent=4))
 
     return _new_field
-    
+
 def get_wtform_field(field, instance='', **kwargs):
     ''' return a wtform field '''
     _form_field = None
@@ -182,7 +182,7 @@ def get_wtform_field(field, instance='', **kwargs):
             if field['kds_required']:
                 pw_old_validators = [InputRequired(),OldPasswordValidator(\
                         tied_field_name=_field_name)]
-            else: 
+            else:
                 pw_old_validators = [OldPasswordValidator(\
                         tied_field_name=_field_name)]
             _form_field = [{"kds_fieldName":_field_name + "_old",
@@ -248,7 +248,7 @@ def get_wtform_field(field, instance='', **kwargs):
             _form_field = StringField(_field_label,
                     description=field.get('kds_formFieldHelp', ''))
             field['kds_formFieldName'] = field['kds_formFieldName'] + "_image"
-            
+
             print(" image count ")
         else:
             _form_field = [{"kds_fieldName":_field_name +"_image",
@@ -260,7 +260,7 @@ def get_wtform_field(field, instance='', **kwargs):
         _sub_form_instance = _field_type_obj.get('kds_subFormInstance',\
                                                  'kdr_LinkWithParent')
         if _sub_form_instance == 'kdr_LinkWithParent':
-            _sub_form_instance = instance    
+            _sub_form_instance = instance
         _form_path = rdfw().get_form_path(\
                 _field_type_obj.get('kds_subFormUri'), instance)
         kwargs['is_subobj'] = True
@@ -273,21 +273,21 @@ def get_wtform_field(field, instance='', **kwargs):
             setattr(_form_field,"frameworkField","RepeatingSubForm")
         else:
             _form_field = _sub_form
-            setattr(_form_field,"frameworkField","subForm")        
+            setattr(_form_field,"frameworkField","subForm")
     elif _field_type == 'kdr_FieldList':
         _field_json = dict.copy(field)
         _field_type_obj['rdf_type'] = _field_type_obj['kds_listFieldType']
         _field_json['kds_fieldType'] = _field_type_obj
         list_field = get_wtform_field(_field_json, instance, **kwargs)['fld']
         _form_field = FieldList(list_field, _field_label, min_entries=1)
-            
+
     else:
         _form_field = StringField(_field_label,
                                   _field_validators,
                                   description=field.get('kds_formFieldHelp', ''))
     #print("--_form_field: ", _form_field)
     return {"fld": _form_field, "fld_json": field, "form_js": None}
-    
+
 def get_field_security_access(field, user_info, item_permissions=None):
     '''This function will return level security access allowed for the field'''
     if item_permissions is None:
@@ -330,9 +330,9 @@ def get_field_security_access(field, user_info, item_permissions=None):
         return _app_security
     else:
         return set()
-        
 
-    
+
+
 def add_field_attributes(wt_field, attributes):
     for attribute, value in attributes.items():
         setattr(wt_field, attribute, value)
@@ -340,7 +340,6 @@ def add_field_attributes(wt_field, attributes):
     setattr(wt_field, "processed_data", None)
     setattr(wt_field, "query_data", None)
     return wt_field
-    
+
 class ButtonActionField(StringField):
     widget =  ButtonActionWidget()
-    

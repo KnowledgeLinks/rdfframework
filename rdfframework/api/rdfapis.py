@@ -11,7 +11,7 @@ from rdfframework import get_framework as rdfw
 from rdfframework.sparql import query_select_options, get_data
 from rdfframework.processors import run_processor
 
-    
+
 class Api(object):
     ''' This class is used for a rdfframework API '''
 
@@ -33,7 +33,7 @@ class Api(object):
             current_url = self.current_url
         else:
             current_url = None
-        self.current_url = kwargs.get("current_url", current_url) 
+        self.current_url = kwargs.get("current_url", current_url)
         if hasattr(self, 'base_api_url' ):
             base_api_url = self.base_api_url
         else:
@@ -51,8 +51,8 @@ class Api(object):
             class_uri = self.data_class_uri
         else:
             class_uri = None
-        self.data_subject_uri = kwargs.get("subject_uri", class_uri) 
-            
+        self.data_subject_uri = kwargs.get("subject_uri", class_uri)
+
         if hasattr(self,'has_subobj'):
             has_subobj = self.has_subobj
         else:
@@ -72,27 +72,27 @@ class Api(object):
             rdf_instructions = self.rdf_instructions
         else:
             rdf_instructions = {}
-        self.rdf_instructions = kwargs.get('rdf_instructions', rdf_instructions)  
+        self.rdf_instructions = kwargs.get('rdf_instructions', rdf_instructions)
         if hasattr(self,'instance_uri'):
             instance_uri = self.instance_uri
         else:
             instance_uri = None
-        self.instance_uri = kwargs.get('instance_uri', instance_uri) 
+        self.instance_uri = kwargs.get('instance_uri', instance_uri)
         if hasattr(self,'data_class_uri'):
             data_class_uri = self.data_class_uri
         else:
             data_class_uri = None
-        self.data_class_uri = kwargs.get('data_class_uri', data_class_uri)           
+        self.data_class_uri = kwargs.get('data_class_uri', data_class_uri)
         if hasattr(self,'data_prop_uri'):
             data_prop_uri = self.data_prop_uri
         else:
             data_prop_uri = None
-        self.data_prop_uri = kwargs.get('data_prop_uri', data_prop_uri)                                
+        self.data_prop_uri = kwargs.get('data_prop_uri', data_prop_uri)
         self._set_class_links()
-        self._tie_fields_to_field_list()   
+        self._tie_fields_to_field_list()
         pretty_data = pp.pformat(self.__dict__)
         self.debug_data = pretty_data
-        
+
 
     def save(self):
         ''' sends the form to the framework for saving '''
@@ -101,7 +101,7 @@ class Api(object):
             rdfw().user_authentication(self)
         else:
             return rdfw().save_obj(self)
-    
+
     def redirect_url(self, id_value=None, **kwargs):
         ''' formats the redirect url for the form in its current state '''
         if id_value is None:
@@ -119,7 +119,7 @@ class Api(object):
         elif _url_instructions == "!--homepage":
             return "/"
         elif _url_instructions == "!--source":
-            return kwargs.get("params", {}).get("source","/")   
+            return kwargs.get("params", {}).get("source","/")
         elif _url_instructions is not None:
             _form_url = rdfw().get_form_path(self.form_uri, _url_instructions)
             if _form_url is not None:
@@ -128,7 +128,7 @@ class Api(object):
                 return _url_instructions
         else:
             return self.base_url
-            
+
     def remove_prop(self, prop):
         ''' removes a prop completely from the form '''
         self.form_changed = True
@@ -156,9 +156,9 @@ class Api(object):
             if isinstance(self.class_grouping[_current_class], list):
                 self.class_grouping[_current_class].append(_prop)
             else:
-                self.class_grouping[_current_class] = [_prop]    
+                self.class_grouping[_current_class] = [_prop]
         self._set_class_links()
-    
+
     def reset_fields(self):
         ''' fields are moved around during save process and if the validation
             fails this method will return the fields to their original
@@ -177,10 +177,10 @@ class Api(object):
                             api.reset_fields()
                 elif isinstance(fld, ApiField):
                             api.reset_fields()
-            self.api_changed = False 
-               
+            self.api_changed = False
+
     def _tie_fields_to_field_list(self):
-        ''' add the attributes to the wtforms fields and creates the 
+        ''' add the attributes to the wtforms fields and creates the
             rdf_field_list and the rdf class groupings '''
         self.class_grouping = {}
         _new_field_list = []
@@ -203,7 +203,7 @@ class Api(object):
         self.rdf_field_list = _new_field_list
         self.original_rdf_field_list = copy_obj(_new_field_list)
         self.original_class_grouping = copy_obj(self.class_grouping)
-            
+
     def _set_class_links(self):
         ''' reads the classes used in the form fields and determines the
             linkages between the classes and sets the the following
@@ -289,7 +289,7 @@ class Api(object):
                     if _prop.data is None and _prop.old_data is not None:
                         _prop.data = _prop.old_data
                 #pp.pprint(_prop.__dict__)
-    
+
 
 def get_api_instructions_json(instructions, instance):
     ''' This function will read through the RDF defined info and proccess the
@@ -333,10 +333,10 @@ def get_api_instructions_json(instructions, instance):
                                     instructions.get("kds_returnType", ""))
     _new_instr['kds_mimeType'] = \
             _api_instance_info.get('kds_mimeType',
-                                    instructions.get("kds_mimeType", ""))  
+                                    instructions.get("kds_mimeType", ""))
     _new_instr['kds_subjectUriTransform'] = \
             _api_instance_info.get('kds_subjectUriTransform',
-                                    instructions.get("kds_subjectUriTransform", ""))                                                                                               
+                                    instructions.get("kds_subjectUriTransform", ""))
     return _new_instr
 
 

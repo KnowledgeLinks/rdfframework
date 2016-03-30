@@ -32,19 +32,19 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
         _class_prop = {}
     # merge the class prop attributes with the api prop
 
-    #field = {**_class_prop, **field} 
+    #field = {**_class_prop, **field}
     temp_field = _class_prop.copy()
     temp_field.update(field)
     field = temp_field
 
     # Determine Security Access
     _new_field = {}
-    
+
     _access_level = get_field_security_access(field, user_info, item_permissions)
     if "acl_Read" not in _access_level:
         return None
     _new_field['accessLevel'] = _access_level
-    
+
     # get api instance info
     _api_instance_info = {}
     _api_field_instance_type_list = make_list(field.get('kds_apiInstance', field.get(\
@@ -76,7 +76,7 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
     _new_field['kds_apiLayoutRow'] = _api_instance_info.get('kds_apiLayoutRow', \
             field.get("kds_apiLayoutRow", field.get('kds_apiDefault', {}).get(\
             'kds_apiLayoutRow', "")))
-    
+
     _new_field['rdfs_range'] = field.get('rdfs_range')
     _new_field['kds_defaultVal'] = _api_instance_info.get('kds_defaultVal',\
             field.get('kds_defaultVal'))
@@ -106,7 +106,7 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
     _new_field['kds_processors'] = make_list(_api_instance_info.get('kds_apiProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_apiProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_propertyProcessing', []))
-    
+
     if debug:
         if field['kds_propUri'] == "schema_image":
             x=1
@@ -130,18 +130,18 @@ def get_api_field_json(field, instructions, instance, user_info, item_permission
         _new_field['editable'] = False
 
     return _new_field
-    
+
 def get_api_field(field, instance='', **kwargs):
     ''' return an API field '''
     if DEBUG: debug = True
     else: debug = False
     _api_field = RdfProperty(field)
     _api_field.default_value = calculate_default_value(field)
-    
+
     if debug: print("--_api_field: ", _api_field)
     return {"fld": _api_field, "fld_json": field, "api_js": None}
-    
 
-        
 
-    
+
+
+

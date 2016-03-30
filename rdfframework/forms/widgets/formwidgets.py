@@ -81,7 +81,7 @@ class RepeatingSubFormWidget(object):
                     </div>
                 </section>''' % (label, flag_str))
         html.append('</%s>' % (self.html_tag))
-        row = 0   
+        row = 0
         for subfield in field:
             html.append('<%s class="row subform-row">' % self.html_tag)
             html.append(subfield.form.hidden_tag())
@@ -160,18 +160,18 @@ class RepeatingSubFormTableJinga2Widget(object):
         for sub_subfield in field[0]:
             if sub_subfield.type != 'CSRFTokenField':
                 html.append('<div class="col-md-2">%s</div>' % sub_subfield.label)
-        html.append('</%s>' % (self.html_tag))    
+        html.append('</%s>' % (self.html_tag))
         for subfield in field:
             html.append('<%s class="row">%s</%s>' % (self.html_tag,
                                            #_params,
                                            subfield(),
                                            self.html_tag))
         return HTMLString(''.join(html))
-        
+
 class ButtonActionWidget(object):
     ''' This widget will place a button on the page that will call a function
         as passed in '''
-        
+
     def __call__(self, field, **kwargs):
         if hasattr(field,'kds_buttonAction'):
             button_action = field.kds_buttonAction
@@ -211,7 +211,7 @@ class ButtonActionWidget(object):
             button_text = button_text['false']
         if is_not_null(button_action):
             return_args.append("href='javascript:;' ")
-            return_args.append('onclick="%s(\'%s\',this,\'%s\',\'%s\')" ' % 
+            return_args.append('onclick="%s(\'%s\',this,\'%s\',\'%s\')" ' %
                     (button_action, field.data, button_false_css, \
                      button_true_css))
         else:

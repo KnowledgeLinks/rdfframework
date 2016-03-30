@@ -10,7 +10,7 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
         remove_null, clean_iri, make_triple, convert_spo_to_dict, \
         render_without_request, code_timer, create_namespace_obj, \
         convert_obj_to_rdf_namespace, pyuri, nouri, uri, pp, iris_to_strings, \
-        JSON_LOCATION 
+        JSON_LOCATION
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from rdfframework.validators import OldPasswordValidator
@@ -25,7 +25,7 @@ class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
         framework'''
 
-    rdf_class_dict = {}       # stores the Triplestore defined class defintions 
+    rdf_class_dict = {}       # stores the Triplestore defined class defintions
     class_initialized = False # used to state if the the class was properly
                               #     initialized with RDF definitions
     rdf_form_dict = {}        # stores the Triplestore defined form definitions
@@ -49,9 +49,9 @@ class RdfFramework(object):
         if not os.path.isdir(JSON_LOCATION):
             print("JSON cache directory not found.\nCreating directory")
             reset = True
-            os.makedirs(JSON_LOCATION) 
+            os.makedirs(JSON_LOCATION)
         if not os.path.exists(os.path.join(JSON_LOCATION, "app_query.json")):
-            reset = True 
+            reset = True
         # verify that the server core is up and running
         servers_up = True
         if kwargs.get('server_check', True):
@@ -65,16 +65,16 @@ class RdfFramework(object):
             self._load_rdf_data(reset)
             self._load_app(reset)
             self._generate_classes(reset)
-            self._generate_forms(reset) 
+            self._generate_forms(reset)
             self._generate_apis(reset)
             print("*** Framework Loaded ***")
-        
+
     def load_default_data(self):
-        ''' reads default data in the fw_config and attempts to add it 
+        ''' reads default data in the fw_config and attempts to add it
             to the server core i.e. inital users and organizations'''
         # test to see if the default data was already loaded
         sparql = '''
-            SELECT ?default_loaded 
+            SELECT ?default_loaded
             WHERE {
                 ?uri kds:defaultLoaded ?default_loaded .
             }'''
@@ -98,11 +98,11 @@ class RdfFramework(object):
             responce = requests.post(fw_config().get("REPOSITORY_URL"),
                            data=save_query,
                            headers={"Content-type": "text/turtle"})
-            
+
     def user_authentication(self, rdf_obj):
         ''' reads the object for authentication information and sets the
             flask userclass information '''
-            
+
         # find the username and password
         for fld in rdf_obj.rdf_field_list:
             if fld.kds_propUri == "kds_userName":
@@ -111,28 +111,28 @@ class RdfFramework(object):
                 _password = fld
         # get the stored information
         subject_lookup = _username
-        query_data = self.get_obj_data(rdf_obj, 
+        query_data = self.get_obj_data(rdf_obj,
                                        subject_lookup=_username,
                                        lookup_related=True,
                                        processor_mode="verify")
         if _password.password_verified:
             user_obj = self._make_user_obj(rdf_obj, query_data, _username)
-            
+
             #login_user(new_user)
             #print(current_user.is_authenticated())
             #print("framework ------------ ", current_user.is_authenticated)
             #pp.pprint(current_user.__dict__)
             #pp.pprint(current_app.__dict__)
-            
+
             #current_app.login_manager.login_user(new_user)
-            
+
             if user_obj.get("change_password") is True:
                 rdf_obj.save_state = "password_reset"
-            else:    
+            else:
                 rdf_obj.save_state = "success"
                 new_user = User(user_obj)
                 rdf_obj.save_results = new_user
-                
+
         else:
             error_msg = "The supplied credentials could not be verified"
             _username.errors.append(" ")
@@ -140,7 +140,7 @@ class RdfFramework(object):
             rdf_obj.save_state = "fail"
 
     def clear_password_reset(self, rdf_obj):
-        ''' reads through the rdf_obj fields/data and changes the 
+        ''' reads through the rdf_obj fields/data and changes the
             kds_changePasswordRequired property to false '''
         if not DEBUG:
             debug = False
@@ -157,7 +157,7 @@ class RdfFramework(object):
                         _password = fld
         # get the stored information
         subject_lookup = _username
-        query_data = self.get_obj_data(rdf_obj, 
+        query_data = self.get_obj_data(rdf_obj,
                                        subject_lookup=_username,
                                        lookup_related=True,
                                        processor_mode="verify")
@@ -166,7 +166,7 @@ class RdfFramework(object):
                 if iri(rdf_obj.data_class_uri) in \
                         make_list(value.get("rdf_type")):
                     rdf_obj.subject_uri = subject
-            req_fld = None    
+            req_fld = None
             for fld in rdf_obj.rdf_field_list:
                 if fld.kds_propUri == "kds_changePasswordRequired":
                     req_fld = fld
@@ -184,7 +184,7 @@ class RdfFramework(object):
             new_user = User(user_obj)
             rdf_obj.save_results = new_user
         if debug: print("END RdfFramework.clear_password_reset ----------\n")
-            
+
     def _make_user_obj(self, rdf_obj, query_data, username):
         person_info = None
         user_obj = {}
@@ -199,7 +199,7 @@ class RdfFramework(object):
                 user_uri = subject
         if person_info:
             user_obj = {'username': username.data,
-                        'email': person_info['schema_email'], 
+                        'email': person_info['schema_email'],
                         'full_name': "%s %s" % (\
                                 person_info['schema_givenName'],
                                      person_info['schema_familyName']),
@@ -207,15 +207,15 @@ class RdfFramework(object):
                         'change_password': \
                                 user_info.get('kds_changePasswordRequired',True),
                         'user_uri': user_uri}
-        return user_obj  
-                                      
+        return user_obj
+
     def form_exists(self, form_path):
         '''Tests to see if the form and instance is valid'''
         if form_path in self.form_list.keys():
             return self.form_list[form_path]
         else:
             return False
-            
+
     def api_exists(self, api_path):
         '''Tests to see if the form and instance is valid'''
         if api_path in self.api_list.keys():
@@ -228,32 +228,32 @@ class RdfFramework(object):
         for form_path, val in self.form_list.items():
             if val['form_uri'] == form_uri and val['instance_uri'] == instance:
                 return form_path
-    
+
     def get_api_path(self, api_uri, instance):
         ''' reads through the list of defined forms and returns the path '''
         for api_path, val in self.api_list.items():
             if val['api_uri'] == api_uri and val['instance_uri'] == instance:
                 return api_path
-                                
+
     def get_form_name(self, form_uri):
         '''returns the form name for a form '''
         if form_uri:
             return pyuri(form_uri)
         else:
             return None
-            
+
     def get_api_name(self, api_uri):
         '''returns the API name for an API '''
         if api_uri:
             return pyuri(api_uri)
         else:
-            return None   
-                 
+            return None
+
     def save_object_with_subobj(self, rdf_obj, old_data=None):
         ''' finds the subform field and appends the parent form attributes
            to the subform entries and individually sends the augmented
            subform to the main save_form property'''
-        debug = False   
+        debug = False
         _parent_fields = []
         _parent_field_list = {}
         result = []
@@ -285,7 +285,7 @@ class RdfFramework(object):
                             _entry.form.data_class_uri = \
                                     _entry.form.subjectUri.kds_classUri
                             _entry.form.remove_prop(_entry.form.subjectUri)
-                            
+
                             # ------------------------------------------
                             if debug:
                                 print("subjectUri: ",_entry.form.subjectUri.data)
@@ -294,15 +294,15 @@ class RdfFramework(object):
                                 for fld in _field.entries[2].form.rdf_field_list:
                                     print(fld.name, " - ", fld.data, " | ", fld)
                             # -------------------------------------------
-                            
+
                         _entry.form.add_props(_parent_fields)
                         save_result = self.save_obj(_entry.form, old_data)
                         rdf_obj.save_results.append(save_result)
                         if _entry.form.save_state is not "success":
                             rdf_obj.save_state = "fail"
         rdf_obj.save_subject_uri = rdf_obj.data_subject_uri
-        return {"success":True, "results":result} 
-            
+        return {"success":True, "results":result}
+
     def save_obj(self, rdf_obj, old_data=None):
         ''' Recieves RDF_formfactory form, validates and saves the data
 
@@ -326,11 +326,11 @@ class RdfFramework(object):
             rdf_obj.query_data = old_obj_data.get('query_data')
         else:
             old_obj_data = old_data
-        
+
         if rdf_obj.has_subobj:
             return self.save_object_with_subobj(rdf_obj, old_obj_data)
         if rdf_obj.is_subobj:
-            
+
             missing_data = {}
             for class_uri, dep_prop_list in rdf_obj.reverse_dependancies.items():
                 for dep_prop in dep_prop_list:
@@ -339,7 +339,7 @@ class RdfFramework(object):
                                 and class_uri != rdf_obj.data_class_uri:
                             if is_not_null(prop.data):
                                 new_data = self.get_obj_data(rdf_obj, subject_uri = \
-                                        prop.data, class_uri=class_uri) 
+                                        prop.data, class_uri=class_uri)
                                 q_data_list = make_list(new_data.get('query_data'))
                                 for q_data in q_data_list:
                                     if q_data and len(q_data)>0:
@@ -347,12 +347,12 @@ class RdfFramework(object):
                                             for sub, data in q_data.items():
                                                 if iri(class_uri) in make_list(data.get('rdf_type')):
                                                     missing_data.update({sub:data})
-            old_obj_data['query_data'].update(missing_data)       
+            old_obj_data['query_data'].update(missing_data)
         rdf_obj.set_obj_data(query_data=old_obj_data['query_data'])
         #print("~~~~~~~~~ _old_form_data: ", _old_form_data)
         # validate the form data for class requirements (required properties,
         # security, valid data types etc)
-        
+
         _validation = self._validate_obj_by_class_reqs(rdf_obj)
         if not _validation.get('success'):
             rdf_obj.reset_fields()
@@ -361,10 +361,10 @@ class RdfFramework(object):
         # determine class save order
         _form_by_classes = rdf_obj.class_grouping
         _class_save_order = self._get_save_order(rdf_obj)
-        
+
         if debug: print("class save order:\n",\
                 json.dumps(_class_save_order, indent=4))
-        
+
         _reverse_dependancies = rdf_obj.reverse_dependancies
         _id_class_uri = rdf_obj.data_class_uri
         # save class data
@@ -397,10 +397,10 @@ class RdfFramework(object):
                         prop_json['kds_classUri'] = _prop.get('kds_classUri')
                         data = _status.get("lastSave", {}).get("objectValue")
                         new_prop = RdfProperty(prop_json, data)
-                                    
+
                         _form_by_classes[_prop.get('kds_classUri')].append(\
                                 new_prop)
-        rdf_obj.save_state = "success"                        
+        rdf_obj.save_state = "success"
         rdf_obj.save_subject_uri = id_value
         rdf_obj.save_results = _data_results
         return  rdf_obj
@@ -450,7 +450,7 @@ class RdfFramework(object):
                 "indep_classes" : list(_independant_classes),
                 "dependancies" : _class_dependancies,
                 "reverse_dependancies" : _reverse_dependancies}
-    
+
     def get_obj_data(self, rdf_obj, **kwargs):
         ''' returns the data for the current form paramters
         **keyword arguments
@@ -477,7 +477,7 @@ class RdfFramework(object):
         # test to see if a subobj is in the form
         if rdf_obj.has_subobj:
             _sub_rdf_obj = None
-            # find the subform field 
+            # find the subform field
             for _field in rdf_obj.rdf_field_list:
                 if _field.type == 'FieldList':
                     for _entry in _field.entries:
@@ -497,14 +497,14 @@ class RdfFramework(object):
         if debug: pp.pprint(_query_data)
         # compare the return results with the form fields and generate a
         # formData object
-        
+
         _obj_data_list = []
         for _item in make_list(_query_data):
             _obj_data = {}
             for _prop in rdf_obj.rdf_field_list:
                 _prop_uri = _prop.kds_propUri
                 _class_uri = _prop.kds_classUri
-                _data_value = None 
+                _data_value = None
                 if not hasattr(_prop, 'kds_fieldType'):
                     _field_type = {}
                 else:
@@ -516,7 +516,7 @@ class RdfFramework(object):
                             _obj_key = "%s-%s-%s" % (_prop.kds_formFieldName,
                                                      i,
                                                     _key)
-                            _obj_data[_obj_key] = _value 
+                            _obj_data[_obj_key] = _value
                 else:
                     prop_query_data = None
                     if _class_uri not in [None, "kds_NoClass"]:
@@ -529,11 +529,11 @@ class RdfFramework(object):
                     for _processor in clean_processors(\
                             [make_list(_prop.kds_processors)],
                             _prop.kds_classUri).values():
-                        run_processor(_processor, 
-                                      rdf_obj, 
-                                      _prop, 
+                        run_processor(_processor,
+                                      rdf_obj,
+                                      _prop,
                                       processor_mode)
-                        if debug: 
+                        if debug:
                             if _prop.kds_propUri == "schema_image": x=1
                     if _prop.kds_propUri == "kds_StaticValue":
                         _prop.processed_data = _prop.kds_returnValue
@@ -546,10 +546,10 @@ class RdfFramework(object):
                         prop_old_data = prop_query_data
                     if prop_old_data is not None:
                         if hasattr(_prop,"kds_formFieldName"):
-                            _obj_data[_prop.kds_formFieldName] = prop_old_data 
+                            _obj_data[_prop.kds_formFieldName] = prop_old_data
                         elif hasattr(_prop,"kds_apiFieldName"):
                             _obj_data[_prop.kds_apiFieldName] = prop_old_data
-                            
+
             _obj_data_list.append(MultiDict(_obj_data))
         if len(_obj_data_list) == 1:
             _obj_data_dict = _obj_data_list[0]
@@ -568,7 +568,7 @@ class RdfFramework(object):
                 "obj_json":_obj_data,
                 "query_data":_query_data,
                 "form_class_uri":_lookup_class_uri}
-                    
+
     def _make_form_list(self):
         ''' creates an indexed dictionary of available forms and attaches
             it to the Framework as form_list attribute'''
@@ -577,9 +577,9 @@ class RdfFramework(object):
         for _form, _details in self.rdf_form_dict.items():
             _form_instr = _details.get('kds_formInstructions',{})
             _form_url = _form_instr.get(\
-                    "kds_formUrl",nouri(_form)) 
+                    "kds_formUrl",nouri(_form))
             _instance_list = _form_instr.get(\
-                    'kds_formInstance',{})    
+                    'kds_formInstance',{})
             for _instance in make_list(_instance_list):
                 _instance_url = _instance.get(\
                                 "kds_instanceUrl",
@@ -595,32 +595,32 @@ class RdfFramework(object):
                 if _instance_name:
                     _name_list.append(_instance_name)
                 _form_list[_key] = {\
-                        'form_uri':_form, 
+                        'form_uri':_form,
                         'instance_uri':_instance.get('kds_formInstanceType',''),
                         'form_title':"-".join(_name_list)}
                 _link_list["-".join(_name_list)] = _key
         self.link_list = sorted(_link_list.items(), key=operator.itemgetter(0))
         #print(self.link_list)
         self.form_list = _form_list
-    
+
     def _make_api_list(self):
         ''' creates an indexed dictionary of available APIs and attaches
             it to the Framework as api_list attribute'''
         _api_list = {}
         for _api, _details in self.rdf_api_dict.items():
             _api_url = _details.get('kds_apiInstructions',{}).get(\
-                    "kds_apiUrl",nouri(_api)) 
+                    "kds_apiUrl",nouri(_api))
             _extension = _details.get('kds_apiInstructions',{}).get(\
-                    'kds_apiUrlExtension')    
+                    'kds_apiUrlExtension')
             if not _extension:
                 _key = _api_url
             else:
                 _key = "{}|{}".format(_api_url, _extension)
             _api_list[_key] = {\
-                    'api_uri':_api, 
+                    'api_uri':_api,
                     'extension':_extension}
         self.api_list = _api_list
-        
+
     def _load_app(self, reset):
         ''' queries the rdf definitions and sets the framework attributes
             for the application defaults '''
@@ -683,7 +683,7 @@ class RdfFramework(object):
             print("\t\t%s objects" % len(self.rdf_form_dict))
             self._make_form_list()
             self.form_initialized = True
-    
+
     def _generate_apis(self, reset):
         ''' adds the dictionary of api definitions as an attribute of
             this class. The api python class uses this dictionary to
@@ -695,11 +695,11 @@ class RdfFramework(object):
             print("\t\t%s objects" % len(self.rdf_api_dict))
             self._make_api_list()
             self.apis_initialized = True
-    
+
     def _load_application_defaults(self, reset):
         ''' Queries the triplestore for settings defined for the application in
             the kl_app.ttl file'''
-        
+
         print("\tLoading application defaults")
         if reset:
             _sparql = render_without_request(
@@ -707,12 +707,12 @@ class RdfFramework(object):
                 None,
                 graph=fw_config().get('RDF_DEFINITION_GRAPH'))
             _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
-                                       data={"query": _sparql, 
+                                       data={"query": _sparql,
                                              "format": "json"})
             _string_defs = _form_list.json().get(\
                     'results').get('bindings')[0]['app']['value']
             with open(
-                os.path.join(JSON_LOCATION, "app_query.json"), 
+                os.path.join(JSON_LOCATION, "app_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs )
             _json_defs = json.loads(_string_defs)
@@ -721,7 +721,7 @@ class RdfFramework(object):
                 os.path.join(JSON_LOCATION, "app_query.json")) as file_obj:
                 _json_defs = json.loads(file_obj.read())
         return _json_defs
-            
+
     def _load_rdf_class_defintions(self, reset):
         ''' Queries the triplestore for list of classes used in the app as
             defined in the kl_app.ttl file'''
@@ -736,10 +736,10 @@ class RdfFramework(object):
                     'results').get('bindings')[0]['klClasses']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
             with open(
-                os.path.join(JSON_LOCATION,"class_query.json"), 
+                os.path.join(JSON_LOCATION,"class_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs )
-            _json_defs = json.loads(_string_defs) 
+            _json_defs = json.loads(_string_defs)
         else:
             with open(
                 os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
@@ -759,7 +759,7 @@ class RdfFramework(object):
             _raw_json = _form_list.json().get('results').get('bindings'\
                     )[0]['appForms']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
-            
+
             with open(
                 os.path.join(JSON_LOCATION, "form_query.json"),
                 "w") as file_obj:
@@ -794,7 +794,7 @@ class RdfFramework(object):
                 os.path.join(JSON_LOCATION, "api_query.json")) as file_obj:
                 _json_defs = json.loads(file_obj.read())
         return _json_defs
-        
+
     def _validate_obj_by_class_reqs(self, rdf_obj):
         '''This method will cycle thhrought the objects rdf classes and
            call the classes validate_form_data method and return the results'''
@@ -848,7 +848,7 @@ class RdfFramework(object):
             else:
                 _save_last.append(_rdf_class)
         return _save_order + _save_last
-    
+
     def _load_rdf_data(self, reset=False):
         ''' loads the RDF/turtle application data to the triplestore '''
         if reset:
@@ -875,10 +875,10 @@ class RdfFramework(object):
                             path,
                             base_url=base_url))
                     rdf_resource_templates.append({template:path})
-                        
+
             print
             # load the extensions in the triplestore
-            context_uri = "http://knowledgelinks.io/ns/application-framework/" 
+            context_uri = "http://knowledgelinks.io/ns/application-framework/"
             for i, data in enumerate(rdf_data):
                 result = requests.post(
                     url=triplestore_url,
@@ -890,30 +890,30 @@ class RdfFramework(object):
                         rdf_resource_templates[i], triplestore_url))
                 else:
                     print("\t%s file loaded" % rdf_resource_templates[i])
-    
+
     def _set_rdf_def_filelist(self):
         ''' does a directory search for rdf application definition files '''
         def_files = {}
         latest_mod = 0
         for root, dirnames, filenames in os.walk(self.root_file_path):
             if "rdfw-definitions" in root:
-                def_files[root] = filenames 
+                def_files[root] = filenames
                 for def_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,def_file))
                     if file_mod > latest_mod:
                         latest_mod = file_mod
         self.last_def_mod = latest_mod
-        self.def_files = def_files 
+        self.def_files = def_files
         json_mod = 0
         if os.path.isdir(JSON_LOCATION):
             for root, dirnames, filenames in os.walk(JSON_LOCATION):
                 for json_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,json_file))
                     if file_mod > json_mod:
-                        json_mod = file_mod 
-        self.last_json_mod = json_mod 
-                                        
-    # possible deletion: no longer in use. Commented out till certian                
+                        json_mod = file_mod
+        self.last_json_mod = json_mod
+
+    # possible deletion: no longer in use. Commented out till certian
     """def get_form_data(self, rdf_form, **kwargs):
         ''' returns the data for the current form paramters
 
@@ -933,7 +933,7 @@ class RdfFramework(object):
         # test to see if a subform is in the form
         if rdf_form.has_subform:
             _sub_rdf_form = None
-            # find the subform field 
+            # find the subform field
             for _field in rdf_form:
             #print(_field.__dict__,"\n********************\n")
                 if _field.type == 'FieldList':
@@ -949,7 +949,7 @@ class RdfFramework(object):
                                                    subject_uri=subject_uri,
                                                    class_uri=_lookup_class_uri,
                                                    data_list=True)
-        if DEBUG:      
+        if DEBUG:
             print("tttttt subform data\n",json.dumps(_subform_data, indent=4))
 
         _class_name = self.get_class_name(_class_uri)
@@ -1106,7 +1106,7 @@ class RdfFramework(object):
             _query_data = {}
         # compare the return results with the form fields and generate a
         # formData object
-        
+
         _form_data_list = []
         for _item in make_list(_query_data):
             _form_data = {}
@@ -1120,7 +1120,7 @@ class RdfFramework(object):
                     if "subform" in _prop.get("fieldType",{}).get("type",'').lower():
                         for i, _data in enumerate(_subform_data.get("formdata")):
                             for _key, _value in _data.items():
-                                _form_data["%s-%s-%s" % (_prop.get("formFieldName"),i,_key)] = _value   
+                                _form_data["%s-%s-%s" % (_prop.get("formFieldName"),i,_key)] = _value
                     else:
                         for _subject in _item:
                             if _class_uri in _item[_subject].get( \
@@ -1157,7 +1157,7 @@ class RdfFramework(object):
         return {"formdata":_form_data_dict,
                 "queryData":_query_data,
                 "formClassUri":_lookup_class_uri}"""
-    
+
     # possible deletion: no longer in use. Commented out till certian
     '''def _find_form_field_name(self, rdf_form, prop_uri):
         for _row in rdf_form.rdfFieldList:
@@ -1165,7 +1165,7 @@ class RdfFramework(object):
                 if _prop.get("propUri") == prop_uri:
                     return _prop.get("formFieldName")
         return None'''
-        
+
     # possible deletion: no longer in use. Commented out till certian
     """def get_class_name(self, class_uri):
         '''This method returns the rdf class name for the supplied Class URI'''
@@ -1175,7 +1175,7 @@ class RdfFramework(object):
             if _current_class_uri == class_uri:
                 return _rdf_class
         return ''"""
-        
+
     # possible deletion: no longer in use. Commented out till certian
     """def get_property(self, **kwargs):
         ''' Method returns a list of the property json objects where the
@@ -1212,8 +1212,8 @@ class RdfFramework(object):
                 if _current__class_prop:
                     _return_list.append(_current__class_prop)
         return _return_list"""
-    
-    # possible deletion: no longer in use. Commented out till certian    
+
+    # possible deletion: no longer in use. Commented out till certian
     """def _remove_field_from_json(self, rdf_field_json, field_name):
         ''' removes a field form the rdfFieldList form attribute '''
         for _row in rdf_field_json:
@@ -1227,8 +1227,8 @@ from rdfframework import RdfClass
 #from rdfframework import RdfDataType
 
 def verify_server_core(timeout=120, start_delay=90):
-    ''' checks to see if the server_core is running 
-        
+    ''' checks to see if the server_core is running
+
         args:
             delay: will cycle till core is up.
             timeout: number of seconds to wait
@@ -1251,7 +1251,7 @@ def verify_server_core(timeout=120, start_delay=90):
         while ((time.time()-last_check) > 10) and server_down:
             print("Checking status of servers at %ss" % \
                     int((time.time()-timestamp)))
-            last_check = time.time()  
+            last_check = time.time()
             try:
                 repo = requests.get(fw_config().get('REPOSITORY_URL'))
                 repo_code = repo.status_code
@@ -1268,6 +1268,6 @@ def verify_server_core(timeout=120, start_delay=90):
                 print("**** Servers up at %ss" % \
                     int((time.time()-timestamp)))
                 break
-    return return_val            
-            
-               
+    return return_val
+
+

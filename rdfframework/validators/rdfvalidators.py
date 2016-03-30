@@ -55,7 +55,7 @@ def get_wtform_validators(field):
 class UniqueValue(object):
     ''' a custom validator for use with wtforms
         * checks to see if the value already exists in the triplestore'''
-    
+
     def __init__(self, message=None):
         if not message:
             message = u'The field must be a unique value'
@@ -107,7 +107,7 @@ class UniqueValue(object):
                                             _data_value))
         # see if the form is based on a set of triplestore data. if it is
         # remove that triple from consideration in the query
-        
+
         if hasattr(form, "data_subject_uri"):
             _subject_uri = form.data_subject_uri
             _lookup_class_uri = form.data_class_uri
@@ -163,7 +163,7 @@ class UniqueValue(object):
 class OldPasswordValidator(object):
     ''' a custom validator for use with wtforms
         * checks to see if the value already exists in the triplestore'''
-    
+
     def __init__(self, message=None, **kwargs):
         if kwargs.get("tied_field_name"):
             self.tied_field_name = kwargs.get("tied_field_name")
@@ -195,10 +195,10 @@ class OldPasswordValidator(object):
                                              lookup_related=True,
                                              processor_mode="verify")
             if len(query_data.get('query_data')) == 0:
-                query_data = rdfw().get_obj_data(form, 
+                query_data = rdfw().get_obj_data(form,
                                                subject_lookup=_username,
                                                lookup_related=True,
-                                               processor_mode="verify")                                     
+                                               processor_mode="verify")
             if not field.password_verified:
                 if hasattr(_username, "errors"):
                     _username.errors.append(" ")

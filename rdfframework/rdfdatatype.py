@@ -44,8 +44,8 @@ class RdfDataType(object):
             return '"{}"^^{}'.format(str(data_value).lower(),
                                      self.prefix)
         else:
-            formated_data = xsd_to_python(data_value, 
-                                          self.py_prefix, 
+            formated_data = xsd_to_python(data_value,
+                                          self.py_prefix,
                                           "literal",
                                           "string")
             return '{}^^{}'.format(json.dumps(data_value), self.prefix)

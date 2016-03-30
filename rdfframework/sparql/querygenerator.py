@@ -10,7 +10,7 @@ def get_data(obj, **kwargs):
     _sparql = create_data_sparql_query(obj, **kwargs)
     data = run_sparql_query(_sparql, **kwargs)
     return data
-    
+
 def run_sparql_query(sparql, **kwargs):
     ''' run the passed in sparql query and returns the results '''
     _prefix = rdfw().get_prefix()
@@ -22,7 +22,7 @@ def run_sparql_query(sparql, **kwargs):
         return _results.json().get('results', {}).get('bindings', [])
     else:
         return None
-    
+
 def create_data_sparql_query(obj, **kwargs):
     ''' generates the sparql query for getting an object's data '''
     if not DEBUG:
@@ -30,7 +30,7 @@ def create_data_sparql_query(obj, **kwargs):
     else:
         debug = False
     if debug: print("START create_data_sparql_query -----------------------\n")
-    if debug: print("*** kwargs ***: \n%s \n*** obj ***:\n%s" % 
+    if debug: print("*** kwargs ***: \n%s \n*** obj ***:\n%s" %
             (pp.pformat(kwargs), pp.pformat(obj.__dict__)))
     from rdfframework import RdfDataType
     subject_uri = kwargs.get("subject_uri", obj.data_subject_uri)
@@ -40,19 +40,19 @@ def create_data_sparql_query(obj, **kwargs):
     if obj.rdf_instructions.get("kds_subjectUriTransform"):
         if obj.rdf_instructions.get("kds_subjectUriTransform") == \
                 "kdr_UidToRepositoryUri":
-            id_value = kwargs.get("id_value") 
+            id_value = kwargs.get("id_value")
             if kwargs.get("id_value"):
                 _subject_uri = uid_to_repo_uri(id_value)
                 subject_uri = _subject_uri
                 obj.data_subject_uri = _subject_uri
         elif obj.rdf_instructions.get("kds_subjectUriTransform") == \
                 "kdr_UidToTriplestoreUri":
-            id_value = kwargs.get("id_value") 
+            id_value = kwargs.get("id_value")
             if kwargs.get("id_value"):
                 rdf_class = getattr(rdfw(), obj.data_class_uri)
                 subject_uri = rdf_class.uri_patterner(id_value)
                 obj.data_subject_uri = subject_uri
-                    
+
     elif kwargs.get("id_value") or obj.rdf_instructions.get("kds_lookupPropertyUri"):
         # find the details for formating the sparql query for the supplied
         # id_value or lookup via a property Value
@@ -61,7 +61,7 @@ def create_data_sparql_query(obj, **kwargs):
             id_value = subject_uri
         _kds_propUri = obj.rdf_instructions.get("kds_lookupPropertyUri")
         _rdf_class_uri = obj.rdf_instructions.get("kds_lookupPropertyClass")
-        if not _rdf_class_uri: 
+        if not _rdf_class_uri:
             _rdf_class_uri = obj.rdf_instructions.get("kds_lookupClassUri")
         _rdf_class = getattr(rdfw(),_rdf_class_uri)
         _rdf_prop = _rdf_class.kds_properties[_kds_propUri]
@@ -73,9 +73,9 @@ def create_data_sparql_query(obj, **kwargs):
                             iri(uri(_rdf_class.kds_classUri))),
                 make_triple("?subject",
                             iri(uri(_kds_propUri)),
-                            _formated_val))            
+                            _formated_val))
         subject_uri = "?subject"
-        
+
     subject_lookup = kwargs.get("subject_lookup")
     if subject_lookup:
         # subject lookup will pull a subject and all of its related data
@@ -87,7 +87,7 @@ def create_data_sparql_query(obj, **kwargs):
                                          prefix=rdfw().get_prefix(),
                                          kds_propUri=_kds_propUri,
                                          prop_value=_prop_value)
-        return _sparql          
+        return _sparql
     _lookup_class_uri = _class_uri
     _sparql_args = None
     _sparql_constructor = copy.deepcopy(obj.dependancies)
@@ -104,7 +104,7 @@ def create_data_sparql_query(obj, **kwargs):
     if is_not_null(subject_uri):
         # find the primary linkage between the supplied subjectId and
         # other form classes
-        
+
         for _rdf_class in _sparql_constructor:
             for _prop in _sparql_constructor[_rdf_class]:
                 try:
@@ -246,7 +246,7 @@ def create_data_sparql_query(obj, **kwargs):
             print(_sparql)
         if debug: print("END create_data_sparql_query ---------------------\n")
         return _sparql
-                                         
+
 def query_select_options(field):
     ''' returns a list of key value pairs for a select field '''
     _prefix = rdfw().get_prefix()
@@ -272,7 +272,7 @@ def query_select_options(field):
                     "value":row.get(_display_var, {}).get('value', '')
                 })
     return _options
-    
+
 def save_file_to_repository(data, repo_item_address):
     ''' saves a file from a form to a repository'''
     object_value = ""

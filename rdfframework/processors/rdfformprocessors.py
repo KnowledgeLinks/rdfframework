@@ -17,7 +17,7 @@ def run_form_processor(processor, obj, prop=None, mode="save"):
     '''runs the passed in processor and returns the saveData'''
     if isinstance(processor, dict):
         processor_type = processor.get('rdf_type')
-    else: 
+    else:
         processor_type = processor
     processor_type = processor_type.replace(\
             "http://knowledgelinks.io/ns/data-resources/", "kdr_")
@@ -26,9 +26,9 @@ def run_form_processor(processor, obj, prop=None, mode="save"):
         return pw_status_processor(obj, mode)
 
 def pw_status_processor(obj, mode):
-    ''' This processor will check the status of the user's password 
-        credential's. If the kds:changePasswordRequired it set to true the 
+    ''' This processor will check the status of the user's password
+        credential's. If the kds:changePasswordRequired it set to true the
         application will redirect to the change password formMode'''
-        
+
     if current_user.change_password is True:
         setattr(obj,'immediate_redirect', "login/reset")

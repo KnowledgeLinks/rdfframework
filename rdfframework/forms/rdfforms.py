@@ -38,7 +38,7 @@ def form_loader(form_url, **kwargs):
                       subject_uri=subject_uri)
     return form
 """
-DEBUG = False    
+DEBUG = False
 class Form(flask_wtf.Form):
     ''' This class extends the wtforms base form class to add rdfframework
         specific attributes and functions '''
@@ -65,20 +65,20 @@ class Form(flask_wtf.Form):
         self.display_path = "{}{}?id={}".format(\
                 self.base_url,
                 rdfw().get_form_path(self.form_uri, "kdr_DisplayForm"),
-                quote(nz(self.data_subject_uri,'')))     
+                quote(nz(self.data_subject_uri,'')))
         self.data_class_uri = self.data_class_uri
         self.has_subobj = self.has_subobj
-        self.is_subobj = self.is_subobj                        
-        self.rdf_field_list = self.rdf_field_list                
-        self.rdf_instructions = self.rdf_instructions            
-        self.instance_uri = self.instance_uri                
-        self.data_class_uri = self.data_class_uri                          
-        self.data_prop_uri = self.data_prop_uri                
+        self.is_subobj = self.is_subobj
+        self.rdf_field_list = self.rdf_field_list
+        self.rdf_instructions = self.rdf_instructions
+        self.instance_uri = self.instance_uri
+        self.data_class_uri = self.data_class_uri
+        self.data_prop_uri = self.data_prop_uri
         self._set_class_links()
         self._tie_wtf_fields_to_field_list()
         if not kwargs.get('no_query'):
             #self._get_form_data()
-            self._load_form_select_options()      
+            self._load_form_select_options()
         for fld in self.rdf_field_list:
             pretty_data = pp.pformat(fld.__dict__)
             setattr(fld, 'debug_data', pretty_data)
@@ -86,7 +86,7 @@ class Form(flask_wtf.Form):
         self.debug_data = pretty_data
         self.original_fields = copy_obj(self._fields)
         self._renumber_field_rows()
-        
+
 
     def save(self):
         ''' sends the form to the framework for saving '''
@@ -97,7 +97,7 @@ class Form(flask_wtf.Form):
             rdfw().clear_password_reset(self)
         else:
             rdfw().save_obj(self)
-    
+
     def redirect_url(self, id_value=None, **kwargs):
         ''' formats the redirect url for the form in its current state '''
         if id_value is None:
@@ -128,13 +128,13 @@ class Form(flask_wtf.Form):
         elif _url_instructions is not None:
             _form_url = rdfw().get_form_path(self.form_uri, _url_instructions)
             if _form_url is not None:
-                return "{}{}?id={}".format(self.base_url, _form_url, 
+                return "{}{}?id={}".format(self.base_url, _form_url,
                         quote(nz(id_value,'')))
             else:
                 return _url_instructions
         else:
             return self.base_url
-            
+
     def remove_prop(self, prop):
         ''' removes a prop completely from the form '''
         self.form_changed = True
@@ -163,9 +163,9 @@ class Form(flask_wtf.Form):
             if isinstance(self.class_grouping[_current_class], list):
                 self.class_grouping[_current_class].append(_prop)
             else:
-                self.class_grouping[_current_class] = [_prop]    
+                self.class_grouping[_current_class] = [_prop]
         self._set_class_links()
-    
+
     def reset_fields(self):
         ''' fields are moved around during save process and if the validation
             fails this method will return the fields to their original
@@ -185,10 +185,10 @@ class Form(flask_wtf.Form):
                             form.reset_fields()
                 elif isinstance(fld, FormField):
                             form.reset_fields()
-            self.form_changed = False 
-               
+            self.form_changed = False
+
     def _tie_wtf_fields_to_field_list(self):
-        ''' add the attributes to the wtforms fields and creates the 
+        ''' add the attributes to the wtforms fields and creates the
             rdf_field_list and the rdf class groupings '''
         self.class_grouping = {}
         _new_field_list = []
@@ -210,7 +210,7 @@ class Form(flask_wtf.Form):
         self.rdf_field_list = _new_field_list
         self.original_rdf_field_list = copy_obj(_new_field_list)
         self.original_class_grouping = copy_obj(self.class_grouping)
-            
+
     def _set_class_links(self):
         ''' reads the classes used in the form fields and determines the
             linkages between the classes and sets the the following
@@ -311,7 +311,7 @@ class Form(flask_wtf.Form):
                         setattr(fld,"selected_display",_option['value'])
                 fld.choices = [(_option['id'], _option['value']) \
                         for _option in _options]
-                        
+
     def _renumber_field_rows(self):
         ''' this will renmber the rows based upon any inserts into the form '''
         if DEBUG:
@@ -320,14 +320,14 @@ class Form(flask_wtf.Form):
             debug = False
         if debug: print("START Form._renumber_field_rows ------------------\n")
         current_row = float(self.rdf_field_list[0].kds_formLayoutRow)
-        last_row = current_row 
+        last_row = current_row
         for fld in self.rdf_field_list:
             if hasattr(fld, 'kds_formLayoutRow'):
                 current_row = float(fld.kds_formLayoutRow)
             else:
                 current_row = last_row + .01
-            if debug: print("%s cr:%s lr:%s" % (fld.name, 
-                                                current_row, 
+            if debug: print("%s cr:%s lr:%s" % (fld.name,
+                                                current_row,
                                                 last_row))
             if current_row >= last_row:
                 fld.kds_formLayoutRow = current_row
@@ -337,7 +337,7 @@ class Form(flask_wtf.Form):
                 last_row += 1
         if debug: print("\nEND Form._renumber_field_rows ------------------\n")
 
-    
+
 
 def get_form_instructions_json(instructions, instance):
     ''' This function will read through the RDF defined info and proccess the
@@ -382,7 +382,7 @@ def get_form_instructions_json(instructions, instance):
                                     instructions.get("kds_saveAction", ""))
     _new_instr["kds_lookupPropertyClass"] = \
             _form_instance_info.get('"kds_lookupPropertyClass"',
-                                    instructions.get("kds_lookupPropertyClass"))                                
+                                    instructions.get("kds_lookupPropertyClass"))
     _new_instr["kds_loginRequired"] = \
             _form_instance_info.get('"kds_loginRequired"',
                                     instructions.get("kds_loginRequired"))
@@ -481,7 +481,7 @@ def rdf_framework_form_factory(form_url, **kwargs):
                                 nfld['kds_field'],_new_field)
                         rdf_field_list.append(_new_field)
                         setattr(rdf_form, nfld['kds_fieldName'], augmented_field)
-                        i += .01  
+                        i += .01
             else:
                 #print(field['formFieldName'], " - ", form_field)
                 if form_field:

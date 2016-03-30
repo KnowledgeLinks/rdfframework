@@ -13,16 +13,16 @@ def get_framework(**kwargs):
     server_check = kwargs.get("server_check", True)
     if _reset:
         from .framework import RdfFramework
-        RDF_GLOBAL = RdfFramework(root_file_path, 
+        RDF_GLOBAL = RdfFramework(root_file_path,
                                   reset=_reset,
                                   server_check=server_check)
-    try:    
+    try:
         RDF_GLOBAL
     except NameError:
         RDF_GLOBAL = None
     if RDF_GLOBAL is None:
         from .framework import RdfFramework
-        RDF_GLOBAL = RdfFramework(root_file_path, 
+        RDF_GLOBAL = RdfFramework(root_file_path,
                                   reset=_reset,
                                   server_check=server_check)
     return RDF_GLOBAL

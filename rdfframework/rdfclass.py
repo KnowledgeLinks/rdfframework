@@ -33,8 +33,8 @@ class RdfClass(object):
         setattr(self, "class_name", class_name)
         # The below accounts for cases where we may be using more than one
         # repository or triplestore
-        
-        # The 'kds_triplestoreConfigName' is the variable name in the 
+
+        # The 'kds_triplestoreConfigName' is the variable name in the
         # config file that specifies the URL of the triplestore
         if not hasattr(self, "kds_triplestoreConfigName"):
             self.kds_triplestoreConfigName = "TRIPLESTORE_URL"
@@ -45,7 +45,7 @@ class RdfClass(object):
         if not hasattr(self, "kds_saveLocation"):
             self.kds_saveLocation = kwargs.get("kds_saveLocation",
                                                "triplestore")
-        # The kds_queryLocation specifies where to query for class data                                         
+        # The kds_queryLocation specifies where to query for class data
         if not hasattr(self, "kds_queryLocation"):
             self.kds_queryLocation = "triplestore"
         # set the triplestore and repository urls for the class
@@ -59,7 +59,7 @@ class RdfClass(object):
                 "ORGANIZATION",{}).get("url", "NO_BASE_URL"))
         if debug: pp.pprint(self.__dict__)
         if debug: print("\nEND RdfClass.init ---------------------------\n")
-            
+
     def save(self, rdf_obj, validation_status=True):
         """Method validates and saves passed data for the class
 
@@ -73,7 +73,7 @@ class RdfClass(object):
         validDependancies = self._validate_dependant_props(
             rdf_obj,
             old_form_data)"""
-            
+
         if not DEBUG:
             debug = False
         else:
@@ -103,7 +103,7 @@ class RdfClass(object):
         if debug: print("START RdfClass.new_uri ---------------------------\n")
         return_val = None
         if self.kds_saveLocation == "triplestore":
-            # get a uuid by saving an empty record to the repo and then 
+            # get a uuid by saving an empty record to the repo and then
             # delete the item.
             repository_result = requests.post(
                             self.repository_url,
@@ -113,10 +113,10 @@ class RdfClass(object):
             uid = re.sub(r'^(.*[#/])','',object_value)
             requests.delete(object_value)
             if debug: print("new uid: ", uid)
-            return_val = self.uri_patterner(uid)   
+            return_val = self.uri_patterner(uid)
         return return_val
         if debug: print("END RdfClass.new_uri ---------------------------\n")
-    
+
     def uri_patterner(self, uid, **kwargs):
         if not DEBUG:
             debug = False
@@ -155,8 +155,8 @@ class RdfClass(object):
         if debug: print("pattern: %s\nuid: %s\nnew_uri: %s" %
                     (pattern, uid, new_uri))
         if debug: print("END RdfClass.uri_patterner -----------------------\n")
-        return new_uri    
-        
+        return new_uri
+
     def validate_obj_data(self, rdf_obj, old_data):
         '''This method will validate whether the supplied object data
            meets the class requirements and returns the results'''
@@ -188,7 +188,7 @@ class RdfClass(object):
         else:
             debug = False
         if debug: print("START RdfClass.validate_primary_key --------------\n")
-        if debug: print("old_data:\n",json.dumps(old_data,indent=4)) 
+        if debug: print("old_data:\n",json.dumps(old_data,indent=4))
         if old_data is None:
             old_data = {}
         _prop_name_list = []
@@ -209,7 +209,7 @@ class RdfClass(object):
             _new_class_data = {}
             _query_args = [make_triple("?uri", "a", \
                     iri(uri(self.kds_classUri)))]
-            _multi_key_query_args = [make_triple("?uri", 
+            _multi_key_query_args = [make_triple("?uri",
                                                  "a",
                                                  iri(uri(self.kds_classUri)))]
             _key_changed = False
@@ -221,7 +221,7 @@ class RdfClass(object):
                     _new_class_data[prop.kds_propUri] = prop.data
                     _prop_name_list.append(prop.kds_formLabelName)
                     _key_props.append(prop)
-        
+
             for key in pkey:
                 _object_val = None
                 #get the _data_value to test against
@@ -237,22 +237,22 @@ class RdfClass(object):
                     else:
                         _object_val = iri(uri(_data_value))
                 else:
-                    # if data is missing from the key fields exit method and 
-                    # return valid. *** The object value does not exist and 
-                    #                   will be generated when another class 
+                    # if data is missing from the key fields exit method and
+                    # return valid. *** The object value does not exist and
+                    #                   will be generated when another class
                     #                   is saved
                     if debug: print(\
                         "END RdfClass.validate_primary_key - NO data-------\n")
                     return ["valid"]
                 # if the old_data is not equel to the newData re-evaluate
                 # the primaryKey
-                
-                # if the old value is not equal to the new value need to test 
+
+                # if the old value is not equal to the new value need to test
                 # the key
                 # if the new value is to be calculated, i.e. a dependant class
                 # generating a value then we don't need to test the key.
-                # however if there is a supplied value and it is listed as a 
-                # calculated property we need to test. 
+                # however if there is a supplied value and it is listed as a
+                # calculated property we need to test.
                 if (_old_class_data.get(key) != _new_class_data.get(key)) and \
                         ((key not in _calculated_props) or \
                         _new_class_data.get(key) is not None):
@@ -280,7 +280,7 @@ class RdfClass(object):
                          {}\nSELECT DISTINCT (COUNT(?uri)>0 AS ?keyViolation)
                          {{\n{}\n}}\nGROUP BY ?uri'''.format(\
                                 rdfw().get_prefix(),
-                                "\n".join(args)) 
+                                "\n".join(args))
                 if debug: print("----------- PrimaryKey query:\n", sparql)
                 _key_test_results =\
                         requests.post(\
@@ -296,7 +296,7 @@ class RdfClass(object):
                 else:
                     _key_test = False
 
-                
+
                 if not _key_test:
                     if debug: print(\
                         "END RdfClass.validate_primary_key - Key Passed --\n")
@@ -439,7 +439,7 @@ class RdfClass(object):
                     _calc_list.add(_prop)
         #any dependant properties will be generated at time of save
         _dependent_list = self.list_dependant()
-        # properties that are dependant on another class will assume to be 
+        # properties that are dependant on another class will assume to be
         # calculated
         for _prop in _dependent_list:
             _calc_list.add(_prop.get("kds_propUri"))
@@ -495,7 +495,7 @@ class RdfClass(object):
         obj = {}
         _required_props = self.list_required()
         _calculated_props = self._get_calculated_properties()
-        _old_data = self._select_class_query_data(rdf_obj.query_data) 
+        _old_data = self._select_class_query_data(rdf_obj.query_data)
         # cycle through the form class data and add old, new, doNotSave and
         # processors for each property
         _class_obj_props = rdf_obj.class_grouping.get(self.kds_classUri,[])
@@ -518,7 +518,7 @@ class RdfClass(object):
             _class_prop = self.kds_properties.get(_prop_uri,{})
             _class_prop_processors = make_list(_class_prop.get("kds_propertyProcessing"))
             _form_prop_processors = make_list(prop.kds_processors)
-            # clean the list of processors by sending a list based on 
+            # clean the list of processors by sending a list based on
             # precedence i.e. the form processors should override the rdf_class
             # processors
             processors = clean_processors([_form_prop_processors,
@@ -588,7 +588,7 @@ class RdfClass(object):
                          "editable": True,
                          "processors":_class_prop_processors,
                          "defaultVal":_class_prop.get("kds_defaultVal")})
-        
+
         # now deal with missing calculated properties. cycle through the
         # remaing properties and add them to the _pre_save_data object
         if debug: print("calc props: ", _calculated_props)
@@ -721,7 +721,7 @@ class RdfClass(object):
                         _insert_clause)
             if debug: print(_save_query)
             if debug: print("END RdfClass._generate_save_query -------------\n")
-            return {"query":_save_query, "subjectUri":subject_uri, 
+            return {"query":_save_query, "subjectUri":subject_uri,
                     "new_status":new_status}
         else:
             if debug: print("END RdfClass._generate_save_query -------------\n")
@@ -762,7 +762,7 @@ class RdfClass(object):
                     elif self.kds_saveLocation == "triplestore":
                         triplestore_result = requests.post(
                                 url=self.triplestore_url,
-                                headers={"Content-Type": 
+                                headers={"Content-Type":
                                          "text/turtle"},
                                 data=_save_query)
                         if debug: print("triplestore_result: ",
@@ -774,7 +774,7 @@ class RdfClass(object):
                             print ("**************** ES Connection NOT Built")
                     elif self.kds_saveLocation == "sql_database":
                             print ("**************** SQL Connection NOT Built")
-                # if the subject uri exists send an update query to the 
+                # if the subject uri exists send an update query to the
                 # specified datastore
                 else:
                     if debug: print("Enter Update")
@@ -819,7 +819,7 @@ class RdfClass(object):
 
     def _process_prop(self, obj):
         # obj = propUri, prop, processedData, _pre_save_data
-        # !!!!!!! the merge_prop function will need to be relooked for 
+        # !!!!!!! the merge_prop function will need to be relooked for
         # instances where we have multiple property entries i.e. a fieldList
         if not DEBUG:
             debug = False
@@ -855,13 +855,13 @@ class RdfClass(object):
             if clean_iri(obj['prop'].get("new")) != \
                                     clean_iri(obj['prop'].get("old")):
                 # if the new data is null and the property is not
-                # required run the processors first then mark property for 
+                # required run the processors first then mark property for
                 # deletion if it is still should be deleted
                 if not is_not_null(obj['prop'].get("new")) and not \
                                                 obj['prop'].get("required"):
                     for processor in processors.values():
                             obj = run_processor(processor, obj)
-                    if not obj['prop']['doNotSave']:         
+                    if not obj['prop']['doNotSave']:
                         obj['processedData'][_prop_uri] = DeleteProperty()
                 # if the property has new data
                 elif is_not_null(obj['prop'].get("new")):
@@ -875,7 +875,7 @@ class RdfClass(object):
                         obj['processedData'][_prop_uri] = obj['prop'].get("new")
         if debug: print("END RdfClass._process_prop -------------------\n")
         return obj
-        
+
     def __calculate_property(self, obj):
         ''' Reads the obj and calculates a value for the property'''
         return obj
@@ -885,8 +885,8 @@ class RdfClass(object):
         the only case is an image '''
         #_prop_list = obj['prop']
         _keep_image = -1
-        
-        for i, prop in enumerate(obj['prop']):       
+
+        for i, prop in enumerate(obj['prop']):
             if isinstance(prop['new'], FileStorage):
                 if prop['new'].filename:
                     _keep_image = i
@@ -910,7 +910,7 @@ class RdfClass(object):
                                                    attribute]
                 else:
                     conflictingValues[name] = attribute'''
-                    
+
     def __format_data_for_save(self, processed_data, pre_save_data):
         ''' takes the processed data and formats the values for the sparql
             query '''
@@ -926,7 +926,7 @@ class RdfClass(object):
         if debug: pp.pprint(processed_data)
         if not processed_data:
             processed_data = {}
-        # cycle throught the properties in the processed data    
+        # cycle throught the properties in the processed data
         for _prop_uri, prop in processed_data.items():
             # if the property is maked for deletion add it to the save list
             if isinstance(prop, NotInFormClass):
@@ -939,10 +939,10 @@ class RdfClass(object):
                 _file_iri = save_file_to_repository(\
                         prop, pre_save_data[_prop_uri][0].get('old'))
                 _save_data.append([_prop_uri, _file_iri])
-            # otherwise determine the range of the property and format it in 
+            # otherwise determine the range of the property and format it in
             # the correct sparl format
             else:
-                # some properties have more than one option for the object 
+                # some properties have more than one option for the object
                 # value i.e. schema:image can either store a ImageObject or
                 # a Url to an image. We need to determine the range options
                 _range_list = make_list(self.kds_properties[_prop_uri].get(\
@@ -978,7 +978,7 @@ class RdfClass(object):
                                 _data_type).sparql(str(item))])
         if debug: print("END RdfClass.__format_data_for_save -----------\n")
         return _save_data
-    
+
     def _select_class_query_data(self, old_data):
         ''' Find the data in query data that pertains to this class instance
             returns dictionary of data with the subject_uri stored as
@@ -993,13 +993,13 @@ class RdfClass(object):
                 for entry in old_data:
                     for _subject_uri, value in entry.items():
                         _class_types = make_list(value.get("rdf_type", []))
-                        for _rdf_type in _class_types: 
+                        for _rdf_type in _class_types:
                             if _rdf_type == self.kds_classUri or \
                                     _rdf_type == "<%s>" % self.kds_classUri:
                                 _old_class_data = value
                                 _old_class_data["!!!!subjectUri"] = _subject_uri
                                 break
-            else:    
+            else:
                 for _subject_uri in old_data:
                     _class_types = make_list(old_data[_subject_uri].get( \
                         "rdf_type", []))

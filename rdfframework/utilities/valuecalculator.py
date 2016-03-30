@@ -9,7 +9,7 @@ def calculate_default_value(field):
         return None
     if _calculation_string.startswith("item_class"):
         _return_val = iri(uri(field.get("kds_classUri",field.get("classUri"))))
-    else: 
+    else:
         _calc_params = _calculation_string.split('+')
         _base = _calc_params[0].strip()
         if len(_calc_params) > 1:
