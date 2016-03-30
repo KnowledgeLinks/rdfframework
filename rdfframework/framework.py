@@ -13,6 +13,7 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
         JSON_LOCATION 
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
+from rdfframework.validators import OldPasswordValidator
 from .rdfproperty import RdfProperty
 from flask import current_app, json
 from flask.ext.login import login_user, current_user
@@ -115,27 +116,8 @@ class RdfFramework(object):
                                        lookup_related=True,
                                        processor_mode="verify")
         if _password.password_verified:
-            person_info = None
-            user_obj = {}
-            user_uri = ""
-            for subject, value in query_data['query_data'].items():
-                if "<schema_Person>" in make_list(value.get("rdf_type")):
-                    person_info = value
-                    person_uri = subject
-                if "<kds_UserClass>" in make_list(value.get("rdf_type")):
-                    user_info = value
-                    user_uri = subject
-            if person_info:
-                user_obj = {'username': _username.data,
-                            'email': person_info['schema_email'], 
-                            'full_name': "%s %s" % (\
-                                    person_info['schema_givenName'],
-                                         person_info['schema_familyName']),
-                            'person_uri': person_uri,
-                            'change_password': \
-                                    user_info['kds_changePasswordRequired'],
-                            'user_uri': user_uri}
-            new_user = User(user_obj)
+            user_obj = self._make_user_obj(rdf_obj, query_data, _username)
+            
             #login_user(new_user)
             #print(current_user.is_authenticated())
             #print("framework ------------ ", current_user.is_authenticated)
@@ -143,14 +125,90 @@ class RdfFramework(object):
             #pp.pprint(current_app.__dict__)
             
             #current_app.login_manager.login_user(new_user)
-            rdf_obj.save_state = "success"
-            rdf_obj.save_results = new_user
+            
+            if user_obj.get("change_password") is True:
+                rdf_obj.save_state = "password_reset"
+            else:    
+                rdf_obj.save_state = "success"
+                new_user = User(user_obj)
+                rdf_obj.save_results = new_user
+                
         else:
             error_msg = "The supplied credentials could not be verified"
             _username.errors.append(" ")
             _password.errors.append(error_msg)
             rdf_obj.save_state = "fail"
 
+    def clear_password_reset(self, rdf_obj):
+        ''' reads through the rdf_obj fields/data and changes the 
+            kds_changePasswordRequired property to false '''
+        if not DEBUG:
+            debug = False
+        else:
+            debug = True
+        if debug: print("START RdfFramework.clear_password_reset ----------\n")
+        for fld in rdf_obj.rdf_field_list:
+            if fld.kds_propUri == "kds_userName":
+                _username = fld
+            if fld.kds_propUri == "kds_password":
+                for validator in make_list(fld.validators):
+                    if debug: print(validator)
+                    if isinstance(validator, OldPasswordValidator):
+                        _password = fld
+        # get the stored information
+        subject_lookup = _username
+        query_data = self.get_obj_data(rdf_obj, 
+                                       subject_lookup=_username,
+                                       lookup_related=True,
+                                       processor_mode="verify")
+        if _password.password_verified:
+            for subject, value in query_data['query_data'].items():
+                if iri(rdf_obj.data_class_uri) in \
+                        make_list(value.get("rdf_type")):
+                    rdf_obj.subject_uri = subject
+            req_fld = None    
+            for fld in rdf_obj.rdf_field_list:
+                if fld.kds_propUri == "kds_changePasswordRequired":
+                    req_fld = fld
+                    fld.data = False
+            if req_fld is None:
+                prop_json = self.kds_UserClass.kds_properties.get(\
+                        "kds_changePasswordRequired")
+                prop_json['kds_classUri'] = "kds_UserClass"
+                prop_json['name'] = "pw_reset_req"
+                req_fld = RdfProperty(prop_json, False)
+                rdf_obj.add_props([req_fld])
+            self.save_obj(rdf_obj, query_data)
+            user_obj = self._make_user_obj(rdf_obj, query_data, _username)
+            rdf_obj.save_state = "success"
+            new_user = User(user_obj)
+            rdf_obj.save_results = new_user
+        if debug: print("END RdfFramework.clear_password_reset ----------\n")
+            
+    def _make_user_obj(self, rdf_obj, query_data, username):
+        person_info = None
+        user_obj = {}
+        user_uri = ""
+        for subject, value in query_data['query_data'].items():
+            person_class = iri(self.app.get("kds_personClass","schema_Person"))
+            if person_class in make_list(value.get("rdf_type")):
+                person_info = value
+                person_uri = subject
+            if "<kds_UserClass>" in make_list(value.get("rdf_type")):
+                user_info = value
+                user_uri = subject
+        if person_info:
+            user_obj = {'username': username.data,
+                        'email': person_info['schema_email'], 
+                        'full_name': "%s %s" % (\
+                                person_info['schema_givenName'],
+                                     person_info['schema_familyName']),
+                        'person_uri': person_uri,
+                        'change_password': \
+                                user_info['kds_changePasswordRequired'],
+                        'user_uri': user_uri}
+        return user_obj  
+                                      
     def form_exists(self, form_path):
         '''Tests to see if the form and instance is valid'''
         if form_path in self.form_list.keys():
@@ -411,6 +469,7 @@ class RdfFramework(object):
         _data_list = kwargs.get("data_list",False)
         _parent_field = None
         processor_mode = kwargs.get("processor_mode","load")
+        #x = y #kds:lookupPropertyUri kds:userName;
         subject_lookup = kwargs.get("subject_lookup", kwargs.get("id_value"))
         # if there is no subject_uri exit the function
         if not is_not_null(subject_uri) and not subject_lookup:
@@ -652,11 +711,11 @@ class RdfFramework(object):
                                              "format": "json"})
             _string_defs = _form_list.json().get(\
                     'results').get('bindings')[0]['app']['value']
-            _json_defs = json.loads(_string_defs)
             with open(
                 os.path.join(JSON_LOCATION, "app_query.json"), 
                 "w") as file_obj:
                 file_obj.write( _string_defs )
+            _json_defs = json.loads(_string_defs)
         else:
             with open(
                 os.path.join(JSON_LOCATION, "app_query.json")) as file_obj:

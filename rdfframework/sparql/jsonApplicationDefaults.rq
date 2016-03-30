@@ -29,24 +29,26 @@ GRAPH <http://knowledgelinks.io/ns/application-framework/>
                                                         {
                                                           ?klapp rdfs:subClassOf kds:InternalClass .
                                                           ?bns a ?klapp .
+                                                          OPTIONAL {
+                                                            ?bns ?p1 ?o1 .
+                                                          } .
+                                                          
                                                         } UNION {
                                                           ?klapp rdfs:subClassOf kds:FormClass .
                                                           ?bns a ?klapp .
+                                                          OPTIONAL {
+                                                            ?bns ?p1 ?o1 .
+                                                          } .
                                                         } UNION {
 	                                                        ?klapp a kds:Application .
 	                                                        ?klapp ?ps ?os .
+                                                          OPTIONAL {
+                                                          	{?os ?p1 ?o1 .
+                                                            FILTER(ISBLANK(?os))}
+                                                          } .
                                                         }
                                                         BIND(IF(bound(?bns),?bns,?os) AS ?o).
-                                                        BIND(IF(bound(?bns),?bns,?ps) AS ?p).
-                                                        OPTIONAL {
-                                                          {?o ?p1 ?o1 .
-                                                          }
-                                                        } .
-                                                        OPTIONAL {
-                                                          {?o ?p1 ?o1 .
-                                                          FILTER(ISBLANK(?o))}
-                                                        } .
-                                                        
+                                                        BIND(IF(bound(?bns),?bns,?ps) AS ?p).                                                        
                                                         BIND(IF(bound(?o1),CONCAT('"',STR(?o1),'"'),"") AS ?o1j)
                                                         BIND(IF(BOUND(?p1),?p1,"") AS ?p1_) .
                                                         BIND(IF(BOUND(?o),?o,"") AS ?bn_).

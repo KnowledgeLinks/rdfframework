@@ -93,6 +93,8 @@ class Form(flask_wtf.Form):
         save_action = self.rdf_instructions.get('kds_saveAction')
         if save_action == "kdr_AuthenticateUser":
             rdfw().user_authentication(self)
+        elif save_action == "kdr_ClearPasswordReset":
+            rdfw().clear_password_reset(self)
         else:
             rdfw().save_obj(self)
     
@@ -104,7 +106,15 @@ class Form(flask_wtf.Form):
             _url_instructions = self.rdf_instructions.get("kds_submitSuccessRedirect")
             if not _url_instructions:
                 return base_url
-        elif self.save_state == "fail":
+        elif self.save_state == "password_reset":
+            _url_instructions = rdfw().app.get("kds_passwordResetPath")
+            if not _url_instructions:
+                return "/login/reset?next=" + kwargs.get("params", {}).get("next","/")
+            else:
+                return  "%s?next=%s" % (nz(
+                        rdfw().app.get("kds_passwordResetPath"),''),
+                        kwargs.get("params", {}).get("next","/"))
+        else:
             _url_instructions = self.rdf_instructions.get("submitFailRedirect")
             if not _url_instructions:
                 return "!--currentpage"
