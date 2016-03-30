@@ -5,17 +5,17 @@ Module of helper functions used in the RDF Framework.
 """
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-from base64 import b64encode
-from flask import current_app, json
-from jinja2 import Template, Environment, FileSystemLoader
-from rdflib import Namespace, XSD
-from dateutil.parser import parse
-
 import copy
 import datetime
 import os
 import re
 import requests
+
+from base64 import b64encode, b64decode
+from flask import current_app, json
+from jinja2 import Template, Environment, FileSystemLoader
+from rdflib import Namespace, XSD
+from dateutil.parser import parse
 
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
@@ -66,7 +66,7 @@ def nz(value, none_value, strict=True):
     if debug: print("value: %s | none_value: %s | return_val: %s" %
         (value, none_value, return_val))
     if debug: print("END nz frameworkutilities.py ----------------------\n")
-    return return_val    
+    return return_val
 
 def render_without_request(template_name, template_path=None, **template_vars):
     """
@@ -169,7 +169,7 @@ def uid_to_repo_uri(id_value):
                                           id_value[6:8],
                                           id_value)
         return _uri
-    
+
 def fw_config(**kwargs):
     ''' function returns the application configuration information '''
     global FRAMEWORK_CONFIG
@@ -222,7 +222,7 @@ def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
         return value
     elif data_type == "xsd_base64Binary":
         # Binary content coded as "base64"
-        return value.decode()
+        return b64decode(value)
     elif data_type == "xsd_boolean":
         # Boolean (true or false)
         return cbool(value)
@@ -408,7 +408,7 @@ def convert_spo_to_dict(data, mode="subject", option="string"):
                     _return_obj[_iv][_sv][_pv] = \
                             xsd_to_python(item['o']['value'], item['o'].get(\
                             "datatype"), item['o']['type'], option)
-                    
+
             # if not a list of objects
             else:
                 if _return_obj.get(_sv):
@@ -490,16 +490,15 @@ def clean_iri(uri_string):
 
 def copy_obj(obj):
     ''' does a deepcopy of an object, but does not copy a class
-        i.e. 
+        i.e.
         x = {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
         y = copy_obj(x)
-        y --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]} 
+        y --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
         del y['key'][0]
-        y --> {"key":[<classInstance2>,<classInstance3>]} 
+        y --> {"key":[<classInstance2>,<classInstance3>]}
         x --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
         *** this is to overcome a dictionary object that lists with classes
             as the list items. '''
-    
     if isinstance(obj, dict):
         return_obj = {}
         for key, value in obj.items():
@@ -521,8 +520,8 @@ def copy_obj(obj):
     else:
         return_obj = copy.copy(obj)
     return return_obj
-                
-               
+
+
 def get_attr(item, name, default=None):
     ''' similar to getattr and get but will test for class or dict '''
     if isinstance(item, dict):

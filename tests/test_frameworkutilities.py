@@ -2,6 +2,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import json
 import os
+import rdflib
 import sys
 import unittest
 
@@ -52,6 +53,16 @@ class TestDeletePropertyClass(unittest.TestCase):
         self.assertTrue(delete_property.delete)
 
 
+class Test_fw_config(unittest.TestCase):
+
+    def test_fw_config_is_none(self):
+        self.assertEqual(fw_config(),
+                         "framework not initialized")
+
+    def test_fw_config_kw(self):
+        config = {"host": "local"}
+        self.assertEqual(fw_config(config=config),
+                         config)   
 
 class TestIri(unittest.TestCase):
 
@@ -116,6 +127,20 @@ class Test_make_set(unittest.TestCase):
         test_set = set(range(0,5))
         self.assertEqual(make_set(test_set),
                          test_set)
+
+
+class Test_make_triple(unittest.TestCase):
+
+    def setUp(self):
+        self.SCHEMA = rdflib.Namespace("https://schema.org/")
+
+    def test_triple(self):
+        subject = rdflib.URIRef("http://peopleuid.com/42")
+        object_ = rdflib.Literal("Josey McNamera")
+        self.assertEqual(
+            make_triple(subject, self.SCHEMA.name, object_),
+            "{0} {1} {2} .".format(subject, self.SCHEMA.name, object_))
+
 
 class TestNotInFormClass(unittest.TestCase):
 
@@ -194,3 +219,55 @@ class Test_render_without_request(unittest.TestCase):
                 TemplateNotFound,
                 render_without_request,
                 "test.html")
+
+class Test_xsd_to_python(unittest.TestCase):
+
+    def setUp(self):
+        self.SCHEMA = rdflib.Namespace("https://schema.org/")
+        self.XSD = rdflib.XSD
+
+    def test_xsd_in_datatype(self):
+        self.assertEqual(
+            xsd_to_python("More than a string",
+                          str(XSD.string)),
+            "More than a string")
+
+    def test_absent_xsd_in_datatype(self):
+        self.assertEqual(
+            xsd_to_python("More than a string",
+                "xsd_string"),
+            "More than a string")
+
+    def test_none_value(self):
+        self.assertIsNone(
+            xsd_to_python(None,
+                "xsd_string"))
+
+    def test_uri_rdftype(self):
+        self.assertEqual(
+            xsd_to_python(str(self.SCHEMA.name),
+                str(XSD.url),
+                "uri"),
+            "<{}>".format(self.SCHEMA.name))
+
+    def test_xsd_anyURI_datatype(self):
+        self.assertEqual(
+            xsd_to_python(str(self.SCHEMA.description),
+                         "xsd_anyURI"),
+            str(self.SCHEMA.description))
+
+    def test_xsd_anyURI_datatype_invalid_uri(self):
+        #! This passes but should we validate as a URI
+        bad_uri = "This is a string pretending to a URI"
+        self.assertEqual(
+            xsd_to_python(bad_uri,
+                "xsd_anyURI"),
+            bad_uri)
+
+    def test_xsd_base64Binary(self):
+        import base64
+        base_64_value = base64.b64encode(b'This some base 64 encoded data')
+        self.assertEqual(
+            xsd_to_python(base_64_value,
+                "xsd_base64Binary"),
+                base64.b64decode(base_64_value))
