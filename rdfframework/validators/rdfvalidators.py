@@ -170,7 +170,7 @@ class OldPasswordValidator(object):
         else:
             self.tied_field_name = None
         if not message:
-            message = u'You did not enter the correct password!'
+            message = u'The supplied credentials are not valid!'
         self.message = message
 
     def __call__(self, form, field):
@@ -180,7 +180,10 @@ class OldPasswordValidator(object):
         else:
             debug = False
         if debug: print("START OldPasswordValidator.call rdfvalidators.py --n")
-
+        # find the username
+        for fld in form.rdf_field_list:
+            if fld.kds_propUri == "kds_userName":
+                _username = fld
         if not is_not_null(field.data):
             if self.tied_field_name:
                 tied_field = get_attr(form, self.tied_field_name)
@@ -191,7 +194,15 @@ class OldPasswordValidator(object):
             query_data = rdfw().get_obj_data(form,
                                              lookup_related=True,
                                              processor_mode="verify")
-                                             
+            if len(query_data.get('query_data')) == 0:
+                query_data = rdfw().get_obj_data(form, 
+                                               subject_lookup=_username,
+                                               lookup_related=True,
+                                               processor_mode="verify")                                     
             if not field.password_verified:
+                if hasattr(_username, "errors"):
+                    _username.errors.append(" ")
+                else:
+                    setattr(_username, "errors", [" "])
                 raise ValidationError(self.message)
 
