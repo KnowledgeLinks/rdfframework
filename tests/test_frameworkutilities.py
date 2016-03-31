@@ -6,7 +6,7 @@ import rdflib
 import sys
 import unittest
 
-
+from unittest.mock import MagicMock, patch
 
 PROJECT_DIR = os.path.abspath(os.curdir)
 sys.path.append(PROJECT_DIR)
@@ -179,11 +179,6 @@ class Test_slugify(unittest.TestCase):
             slugify("N$ one"),
             "n-one")
 
-class Test_uid_to_repo_uri(unittest.TestCase):
-
-    def setUp(self):
-        self.fedora_local_uri = ""
-
 class Test_nz(unittest.TestCase):
 
     def test_nz_none(self):
@@ -219,6 +214,16 @@ class Test_render_without_request(unittest.TestCase):
                 TemplateNotFound,
                 render_without_request,
                 "test.html")
+
+
+class Test_uid_to_repo_uri(unittest.TestCase):
+
+    @patch("rdfframework.utilities.frameworkutilities.FRAMEWORK_CONFIG")
+    def test_good_uid(self, config):
+        config.get = MagicMock(return_value="http://test/fedora/rest")
+        self.assertEqual(
+            uid_to_repo_uri("7f70bee2-1e24-4c35-9078-c6efbfa30aaf"),
+            "http://test/fedora/rest/7f/70/be/e2/7f70bee2-1e24-4c35-9078-c6efbfa30aaf")
 
 class Test_xsd_to_python(unittest.TestCase):
 
