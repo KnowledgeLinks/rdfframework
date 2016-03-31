@@ -1,25 +1,34 @@
+__author__ = "Jeremy Nelson, Mike Stabile"
+
 import unittest
 
 from rdfframework.rdfdatatype import RdfDataType
+from unittest.mock import MagicMock, patch
 
-##class TestRdfDatatype(unittest.TestCase):
-##
-##    def setUp(self):
-##        self.langstring_instance = RdfDataType("langstring")
-##        self.literal_instance = RdfDataType("literal")
-##        self.obj_instance = RdfDataType("object")
-##        self.str_instance = RdfDataType("http://www.w3.org/2001/XMLSchema#string")
-##
-####    def test_init(self):
-####        instance = RdfDataType("https://schema.org/Person")
-####        self.assertEqual(instance.name, "string")
-####        self.assertEqual(
-####            instance.iri, 
-####            "<http://www.w3.org/2001/XMLSchema#string>")
-####        self.assertEqual(instance.prefix, "xsd:string")
-##
-####    def test_init_errors(self):
-####        self.assertRaises(AttributeError, RdfDataType)
+
+class TestRdfDatatype(unittest.TestCase):
+
+    @patch("rdfframework.rdfdatatype.rdfw")
+    def setUp(self, mock_rdfw):
+        print("Iin setup {}".format(mock_rdfw))
+        #self.langstring_instance = RdfDataType("langstring")
+        #self.literal_instance = RdfDataType("literal")
+        #self.obj_instance = RdfDataType("object")
+        #self.str_instance = RdfDataType("http://www.w3.org/2001/XMLSchema#string")
+
+    #@patch("rdfframework.utilities.frameworkutilities.FRAMEWORK_CONFIG")
+    def test_init(self):#, mock_get_framework):
+        print("in init")
+        #instance = RdfDataType("https://schema.org/Person")
+        #self.assertEqual(instance.name, "string")
+        #self.assertEqual(
+        #    instance.iri, 
+        #    "<http://www.w3.org/2001/XMLSchema#string>")
+        #self.assertEqual(instance.prefix, "xsd:string")
+
+    @patch("rdfframework.rdfdatatype.rdfw")
+    def test_init_errors(self, mock_get_framework):
+        self.assertRaises(AttributeError, RdfDataType)
 ####
 ##    def test_literal_datatype(self):
 ##        self.assertEqual(self.literal_instance.name, "literal")
