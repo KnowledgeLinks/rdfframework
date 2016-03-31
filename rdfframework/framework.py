@@ -145,7 +145,7 @@ class RdfFramework(object):
         if not DEBUG:
             debug = False
         else:
-            debug = True
+            debug = False
         if debug: print("START RdfFramework.clear_password_reset ----------\n")
         for fld in rdf_obj.rdf_field_list:
             if fld.kds_propUri == "kds_userName":
@@ -186,6 +186,9 @@ class RdfFramework(object):
         if debug: print("END RdfFramework.clear_password_reset ----------\n")
 
     def _make_user_obj(self, rdf_obj, query_data, username):
+        ''' This method will create a user_obj dictionary to be used when
+            initializing a User() for the login_manager '''
+             
         person_info = None
         user_obj = {}
         user_uri = ""
