@@ -221,7 +221,10 @@ def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
         return b64decode(value)
     elif data_type == "xsd_boolean":
         # Boolean (true or false)
-        return cbool(value)
+        if output == "string":
+            return str(value).lower()
+        else:
+            return cbool(value)
     elif data_type == "xsd_byte":
         # Signed value of 8 bits
         return value.decode()
