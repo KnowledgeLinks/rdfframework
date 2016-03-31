@@ -2,7 +2,9 @@
 
 [![Build Status](https://travis-ci.org/KnowledgeLinks/rdfframework.svg)](https://travis-ci.org/KnowledgeLinks/rdfframework)
 
-*** STILL IN DEVELOPMENT ***
+
+Development Documentation is available on the Knowledgelinks.io's  
+[website](http://knowledgelinks.io/products/rdfframework/index.html).
 
 This application reads an RDF data file that describes a web application using the [knowledgelinks.io][KL] data-structures RDF Vocabulary. The current test web application is for issuing and hosting [Open Badges][OPENBADGE].
 
