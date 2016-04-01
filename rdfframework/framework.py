@@ -1,24 +1,28 @@
+"""Base Module for RDFFRamework Project"""
+
 __author__ = "Mike Stabile, Jeremy Nelson"
-import re
+
+
 import os
 import time
 import operator
 import requests
-from wtforms import ValidationError
+
+from .rdfproperty import RdfProperty
+
 from werkzeug.datastructures import MultiDict
 from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
-        remove_null, clean_iri, make_triple, convert_spo_to_dict, \
-        render_without_request, code_timer, create_namespace_obj, \
-        convert_obj_to_rdf_namespace, pyuri, nouri, uri, pp, iris_to_strings, \
+        remove_null, clean_iri, convert_spo_to_dict, \
+        render_without_request, create_namespace_obj, \
+        convert_obj_to_rdf_namespace, pyuri, nouri, pp, iris_to_strings, \
         JSON_LOCATION
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from rdfframework.validators import OldPasswordValidator
-from .rdfproperty import RdfProperty
-from flask import current_app, json
-from flask.ext.login import login_user, current_user
+from flask import json
 from rdfframework.security import User
 from rdfframework.forms import rdf_framework_form_factory
+
 DEBUG = True
 
 class RdfFramework(object):
@@ -1226,7 +1230,7 @@ class RdfFramework(object):
         return rdf_field_json"""
 
 # Theses imports are placed at the end of the module to avoid circular imports
-from rdfframework import RdfClass
+from .rdfclass import RdfClass
 #from rdfframework import RdfDataType
 
 def verify_server_core(timeout=120, start_delay=90):
