@@ -276,3 +276,38 @@ class Test_xsd_to_python(unittest.TestCase):
             xsd_to_python(base_64_value,
                 "xsd_base64Binary"),
                 base64.b64decode(base_64_value))
+
+    def test_xsd_boolean(self):
+        self.assertTrue(
+            xsd_to_python(
+                "true",
+                "xsd_boolean"))
+        self.assertFalse(
+            xsd_to_python(
+                "false",
+                "xsd_boolean"))
+
+    def test_xsd_boolean_str(self):
+        self.assertEqual(
+            xsd_to_python(
+                "true",
+                "xsd_boolean",
+                output="string"),
+            "true")
+        self.assertEqual(
+            xsd_to_python(
+                "False",
+                "xsd_boolean",
+                output="string"),
+            "false")
+
+    def test_xsd_byte(self):
+        self.assertEqual(
+            xsd_to_python(
+                b"1",
+                "xsd_byte"),
+            "1")
+
+
+            
+            
