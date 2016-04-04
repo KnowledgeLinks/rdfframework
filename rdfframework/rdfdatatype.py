@@ -53,7 +53,7 @@ class RdfDataType(object):
                                           self.py_prefix,
                                           "literal",
                                           "string")
-            return '{}^^{}'.format(json.dumps(data_value), self.prefix)
+            return '{}^^{}'.format(json.dumps(formated_data), self.prefix)
 
     def _find_type(self, class_uri, prop_uri):
         '''find the data type based on class_uri and prop_uri'''

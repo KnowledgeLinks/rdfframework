@@ -2,12 +2,12 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 import re
 import json
 import requests
-
+import copy
 from werkzeug.datastructures import FileStorage
 from jinja2 import Template
 from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, \
     make_list, make_set, make_triple, remove_null, DeleteProperty, \
-    NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri
+    NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, get_attr
 
 from .getframework import get_framework as rdfw
 from rdfframework.rdfdatatype import RdfDataType
@@ -77,18 +77,50 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.save ---------------------------\n")
         if debug: print("kds_classUri: ", self.kds_classUri, "  ************")
         if not validation_status:
             return self.validate_form_data(rdf_obj)
-
-        save_data = self._process_class_data(rdf_obj)
-        if debug: print("-------------- Save data:\n",pp.pprint(save_data))
-        save_query = self._generate_save_query(save_data)
-        if debug: print("save_query: \n", pp.pprint(save_query))
-        if debug: print("END RdfClass.save ---------------------------\n")
-        return self._run_save_query(save_query)
+        _class_obj_props = rdf_obj.class_grouping.get(self.kds_classUri,[])
+        expanded_prop_list = []
+        nonlist_prop_list = []
+        for prop in _class_obj_props:
+            if get_attr(prop, "type") == 'FieldList':
+                for entry in prop.entries:
+                    new_prop = copy.copy(prop)
+                    new_prop.data = entry.data
+                    
+                    if debug: print("* * * * * ", prop.name,": ",entry.data)
+                    expanded_prop_list.append(new_prop)
+            else:
+                nonlist_prop_list.append(prop)
+        list_save_multi = []
+        for prop in expanded_prop_list:
+            list_save_multi.append([prop] + nonlist_prop_list)
+        if len(list_save_multi) > 0:
+            save_results = []
+            for class_props in list_save_multi:
+                save_data = self._process_class_data(rdf_obj, class_props=class_props)
+                if debug: print("-------------- Save data:\n",pp.pprint(save_data))
+                save_query = self._generate_save_query(save_data)
+                if debug: print("save_query: \n", pp.pprint(save_query))
+                if debug: print("END RdfClass.save ---------------------------\n")
+                save_results.append(self._run_save_query(save_query))
+            consolidated = {}
+            object_values = []
+            for result in save_results:
+                consolidated['status'] = result.get("status")
+                object_values.append(result.get("lastSave",{}).get("objectValue"))
+            consolidated['lastSave'] = {"objectValue":",".join(object_values)}
+            return consolidated
+        else:
+            save_data = self._process_class_data(rdf_obj)
+            if debug: print("-------------- Save data:\n",pp.pprint(save_data))
+            save_query = self._generate_save_query(save_data)
+            if debug: print("save_query: \n", pp.pprint(save_query))
+            if debug: print("END RdfClass.save ---------------------------\n")
+            return self._run_save_query(save_query)
         #return None
 
     def new_uri(self):
@@ -481,24 +513,28 @@ class RdfClass(object):
     def _validate_security(self, rdf_obj, old_data):
         return ["valid"]
 
-    def _process_class_data(self, rdf_obj):
+    def _process_class_data(self, rdf_obj, **kwargs):
         '''Reads through the processors in the defination and processes the
             data for saving'''
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START rdfclass.RdfClass._process_class_data ------\n")
         _pre_save_data = {}
         _save_data = {}
         _processed_data = {}
         obj = {}
         _required_props = self.list_required()
+        
         _calculated_props = self._get_calculated_properties()
         _old_data = self._select_class_query_data(rdf_obj.query_data)
         # cycle through the form class data and add old, new, doNotSave and
         # processors for each property
-        _class_obj_props = rdf_obj.class_grouping.get(self.kds_classUri,[])
+        if kwargs.get("class_props"):
+            _class_obj_props = kwargs.get("class_props")
+        else:
+            _class_obj_props = rdf_obj.class_grouping.get(self.kds_classUri,[])
         subject_uri = "<>"
         for prop in _class_obj_props:
             if hasattr(prop, "subject_uri"):
@@ -917,7 +953,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.__format_data_for_save -----------\n")
         _save_data = []
         #if "obi_recipient" in pre_save_data.keys():

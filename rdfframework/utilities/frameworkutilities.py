@@ -75,7 +75,7 @@ def render_without_request(template_name, template_path=None, **template_vars):
     render_without_request('my_template.html', var1='foo', var2='bar')
     """
     if template_path:
-        env = Environment(loader=FileSystemLoader([template_path]))
+        env = Environment(loader=FileSystemLoader([os.path.join(template_path)]))
     else:
         env = ENV
     template = env.get_template(template_name)
@@ -242,8 +242,11 @@ def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
         _temp_value = parse(value)
         if output == "string":
             _date_format = rdfw().app['kds_dataFormats'].get(\
-                    'kds_pythonDateTimeFormat', '')
-            return _temp_value.strftime(_date_format)
+                    'kds_pythonDateTimeFormat', "%Y-%m-%dT%H:%M:%SZ")
+            if _date_format:
+                return _temp_value.strftime(_date_format)
+            else:
+                return str(_temp_value)
         elif output == "python":
             return _temp_value
     elif data_type == "xsd_decimal":

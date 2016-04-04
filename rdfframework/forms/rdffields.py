@@ -1,5 +1,7 @@
 import datetime
+import copy
 import json
+from wtforms import Form
 from wtforms.fields import StringField, TextAreaField, PasswordField, \
         BooleanField, FileField, DateField, DateTimeField, SelectField, Field,\
         FormField, FieldList, HiddenField
@@ -8,11 +10,11 @@ from rdfframework import get_framework as rdfw
 from rdfframework.processors import clean_processors
 from rdfframework.validators import get_wtform_validators, OldPasswordValidator
 from rdfframework.utilities import make_list, make_set, cbool, \
-        calculate_default_value #, code_timer, \
+        calculate_default_value, pp #, code_timer, \
 #        fw_config, iri, is_not_null
 from rdfframework.forms.widgets import BsGridTableWidget, \
-        RepeatingSubFormWidget, ButtonActionWidget
-
+        RepeatingSubFormWidget, ButtonActionWidget, JinjaTemplateWidget
+DEBUG = True
 def get_field_json(field, instructions, instance, user_info, item_permissions=None):
     '''This function will read through the RDF defined info and proccess the
 	json to return the correct values for the instance, security and details'''
@@ -129,6 +131,13 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
 
 def get_wtform_field(field, instance='', **kwargs):
     ''' return a wtform field '''
+    if not DEBUG:
+        debug = False
+    else:
+        debug = False
+    if debug: print("START get_wtform_field rdffields.py ---------------- \n")
+    if debug: print("instance=",instance,"\nField dict:\n",\
+            json.dumps(field,indent=4))
     _form_field = None
     _field_label = field.get("kds_formLabelName", '')
     #print("______label:", _field_label)
@@ -275,17 +284,33 @@ def get_wtform_field(field, instance='', **kwargs):
             _form_field = _sub_form
             setattr(_form_field,"frameworkField","subForm")
     elif _field_type == 'kdr_FieldList':
-        _field_json = dict.copy(field)
-        _field_type_obj['rdf_type'] = _field_type_obj['kds_listFieldType']
-        _field_json['kds_fieldType'] = _field_type_obj
+        template_path = _field_type_obj.get("kds_templatePath")
+        template_name = _field_type_obj.get("kds_templateName")
+        if debug: print("template_name: ", template_name, "template_path: ", template_path)
+        if template_name is not None:
+            widget = JinjaTemplateWidget(template_name, template_path)
+        else:
+            widget = RepeatingSubFormWidget()
+        if debug: print("widget: ", widget)
+        _field_json = copy.deepcopy(field)
+        _field_json['kds_fieldType']['rdf_type'] = _field_type_obj['kds_listFieldType']
+        #_field_json['kds_fieldType'] = {"rdf_type":"kdr_TextField"} #_field_type_obj
         list_field = get_wtform_field(_field_json, instance, **kwargs)['fld']
-        _form_field = FieldList(list_field, _field_label, min_entries=1)
+        pp.pprint(list_field.__dict__)
+        x = Form
+        x.f1 = StringField()
+        x.f2 = StringField()
+        _form_field = FieldList(#StringField(), #FormField(x),
+                                list_field,
+                                _field_label, 
+                                min_entries=1,
+                                widget=widget)
 
     else:
         _form_field = StringField(_field_label,
                                   _field_validators,
                                   description=field.get('kds_formFieldHelp', ''))
-    #print("--_form_field: ", _form_field)
+    if debug: print("END get_wtform_field rdffields.py ---------------- \n")
     return {"fld": _form_field, "fld_json": field, "form_js": None}
 
 def get_field_security_access(field, user_info, item_permissions=None):
