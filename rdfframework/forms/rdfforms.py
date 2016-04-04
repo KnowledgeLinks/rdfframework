@@ -204,6 +204,14 @@ class Form(flask_wtf.Form):
                 setattr(fld, 'old_data', None)
                 setattr(fld, 'query_data', None)
                 setattr(fld, 'subject_uri', None)
+            '''if fld.type == 'FieldList':
+                for entry in fld.entries:
+                    for attr, value in fld.items():
+                        setattr(entry, attr, value)
+                    setattr(entry, 'processed_data', None)
+                    setattr(entry, 'old_data', None)
+                    setattr(entry, 'query_data', None)
+                    setattr(entry, 'subject_uri', None)'''
             _new_field_list.append(fld)
             self.class_grouping[field['kds_classUri']].append(fld)
             field['field'] = getattr(self,field['kds_formFieldName'])
@@ -297,12 +305,25 @@ class Form(flask_wtf.Form):
                         _prop.data = _prop.old_data
                 #pp.pprint(_prop.__dict__)
         if debug: print("END Form.set_obj_data rdfforms.py --------------\n")
+            
     def _load_form_select_options(self):
         ''' queries the triplestore for the select options and loads the data
         '''
         for fld in self.rdf_field_list:
-            if fld.kds_fieldType['rdf_type'] == "kdr_SelectField":
-                _options = query_select_options(fld)
+            _options = None
+            _empty_choice = [{"id":"","value":""}]
+            if fld.type == "FieldList":
+                if fld.entries[0].type == 'SelectField':
+                   _options = _empty_choice + query_select_options(fld) 
+                   
+                for entry in fld.entries:
+                    for _option in _options:
+                        if _option['id'] == entry.data:
+                            setattr(entry,"selected_display",_option['value'])
+                    entry.choices = [(_option['id'], _option['value']) \
+                            for _option in _options]   
+            elif fld.kds_fieldType['rdf_type'] == "kdr_SelectField":
+                _options = _empty_choice + query_select_options(fld)
                 # set the selected options display field to the field
                 # attribute "selected_display" this can then be referenced
                 # when running a display form.

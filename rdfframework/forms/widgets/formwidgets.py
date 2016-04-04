@@ -1,8 +1,9 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
+from flask import render_template
 from wtforms.widgets import HTMLString, html_params
 from wtforms.compat import text_type
-from rdfframework.utilities import is_not_null
+from rdfframework.utilities import is_not_null, render_without_request
 class BsGridTableWidget(object):
     """
     Renders a list of fields as a bootstrap formated table.
@@ -225,3 +226,24 @@ class ButtonActionWidget(object):
         return_args.append("id='%s' " % field.name)
         return_args.append(">%s</a>" % button_text)
         return "".join(return_args)
+        
+class JinjaTemplateWidget(object):
+    ''' This widget will pass the field into a jinja2 template and return
+        the rendered template. This is allow easy modification of the 
+        FieldList and FormField.
+        
+        Args:
+            template_path - filepath to the template '''
+    def __init__(self, template_name, template_path):
+        self.template_name = template_name
+
+    def __call__(self, field, **kwargs):
+        if not DEBUG:
+            debug = False
+        else:
+            debug = False
+        if debug: print("START JingaTemplateWidget formwidgets.py ---------\n")
+        kwargs['widget_fld'] = field
+        return_html = render_template(self.template_name, **kwargs)
+        if debug: print("END JingaTemplateWidget formwidgets.py ---------\n")
+        return return_html

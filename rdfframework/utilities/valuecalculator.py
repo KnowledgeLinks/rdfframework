@@ -1,4 +1,5 @@
 import datetime
+import pytz
 from rdfframework.utilities import iri, uri
 
 def calculate_default_value(field):
@@ -17,12 +18,12 @@ def calculate_default_value(field):
         else:
             _add_value = 0
         if _base == 'today':
-            _return_val = datetime.datetime.now().date() +\
+            _return_val = datetime.datetime.utcnow().replace(tzinfo = pytz.utc).date() +\
                     datetime.timedelta(days=_add_value)
         elif _base == 'now':
-            _return_val = datetime.datetime.now() +\
+            _return_val = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) +\
                     datetime.timedelta(days=_add_value)
         elif _base == 'time':
-            _return_val = datetime.datetime.now().time() +\
+            _return_val = datetime.datetime.utcnow().replace(tzinfo = pytz.utc).time() +\
                     datetime.timedelta(days=_add_value)
     return _return_val

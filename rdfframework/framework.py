@@ -10,7 +10,7 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
         remove_null, clean_iri, make_triple, convert_spo_to_dict, \
         render_without_request, code_timer, create_namespace_obj, \
         convert_obj_to_rdf_namespace, pyuri, nouri, uri, pp, iris_to_strings, \
-        JSON_LOCATION
+        JSON_LOCATION, get_attr
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from rdfframework.validators import OldPasswordValidator
@@ -92,12 +92,17 @@ class RdfFramework(object):
                 for prop in form.rdf_field_list:
                     prop.data = form_data.get(prop.name)
                 form.save()
-            # tag the repositry that the data has been loaded
-            save_data = ' <> kds:defaultLoaded "true"^^xsd:string'
+            # tag the triplestore that the data has been loaded
+            save_data = ' kdr:appData kds:defaultLoaded "true"^^xsd:string .'
             save_query = self.get_prefix("turtle") + save_data
-            responce = requests.post(fw_config().get("REPOSITORY_URL"),
-                           data=save_query,
-                           headers={"Content-type": "text/turtle"})
+            #responce = requests.post(fw_config().get("REPOSITORY_URL"),
+            #               data=save_query,
+            #               headers={"Content-type": "text/turtle"})
+            triplestore_result = requests.post(
+                                url=fw_config().get("TRIPLESTORE_URL"),
+                                headers={"Content-Type":
+                                         "text/turtle"},
+                                data=save_query)
 
     def user_authentication(self, rdf_obj):
         ''' reads the object for authentication information and sets the
@@ -463,10 +468,9 @@ class RdfFramework(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START get_obj_data ---------------------------\n")
         _class_uri = kwargs.get("class_uri", rdf_obj.data_class_uri)
-        _lookup_class_uri = _class_uri
         subject_uri = kwargs.get("subject_uri", rdf_obj.data_subject_uri)
         _subobj_data = {}
         _data_list = kwargs.get("data_list",False)
@@ -479,21 +483,20 @@ class RdfFramework(object):
             return {'query_data':{}}
         # test to see if a subobj is in the form
         if rdf_obj.has_subobj:
-            _sub_rdf_obj = None
-            # find the subform field
+            _sub_rdf_obj_list = []
+            # find the subform fields
             for _field in rdf_obj.rdf_field_list:
                 if _field.type == 'FieldList':
-                    for _entry in _field.entries:
-                        if _entry.type == 'FormField':
-                            _sub_rdf_obj = _entry.form
-                            _sub_rdf_obj.is_subobj = True
-                            _parent_field = _field.name
-            # if the subform exists recursively call this method to get the
+                    if get_attr(_field.entries[0],'type') == 'FormField':
+                        _sub_rdf_obj = _entry.form
+                        _sub_rdf_obj.is_subobj = True
+                        _sub_rdf_obj_list.append(_sub_rdf_obj)
+            # if subforms exist, recursively call this method to get the
             # subform data
-            if _sub_rdf_obj:
-                _subform_data = self.get_obj_data(_sub_rdf_obj,
-                                                  subject_uri=subject_uri,
-                                                  class_uri=_lookup_class_uri)
+            _subobj_datalist = []
+            for _sub_rdf_obj in _sub_rdf_obj_list:
+                _subobj_datalist.append(self.get_obj_data(_sub_rdf_obj,
+                    subject_uri=subject_uri, class_uri=_class_uri))
         _query_data = convert_spo_to_dict(convert_obj_to_rdf_namespace(\
                     get_data(rdf_obj, **kwargs)), "subject", rdf_obj.xsd_load)
         rdf_obj.query_data = _query_data
@@ -505,54 +508,15 @@ class RdfFramework(object):
         for _item in make_list(_query_data):
             _obj_data = {}
             for _prop in rdf_obj.rdf_field_list:
-                _prop_uri = _prop.kds_propUri
-                _class_uri = _prop.kds_classUri
-                _data_value = None
-                if not hasattr(_prop, 'kds_fieldType'):
-                    _field_type = {}
-                else:
-                    _field_type = _prop.kds_fieldType
-                if "subform" in _field_type.get("rdf_type",'').lower():
-                    for i, _data in enumerate(make_list(\
-                            _subform_data.get("obj_data"))):
-                        for _key, _value in _data.items():
-                            _obj_key = "%s-%s-%s" % (_prop.kds_formFieldName,
-                                                     i,
-                                                    _key)
-                            _obj_data[_obj_key] = _value
-                else:
-                    prop_query_data = None
-                    if _class_uri not in [None, "kds_NoClass"]:
-                        for _subject in _item:
-                            if _class_uri in _item.get(_subject,{}).get("rdf_type"):
-                                prop_query_data = _item[_subject].get(_prop_uri)
-                                #_prop.query_data = _item[_subject].get(_prop_uri)
-                                #_prop.subject_uri = _subject
-                                _data_value = _item[_subject].get(_prop_uri)
-                    for _processor in clean_processors(\
-                            [make_list(_prop.kds_processors)],
-                            _prop.kds_classUri).values():
-                        run_processor(_processor,
-                                      rdf_obj,
-                                      _prop,
-                                      processor_mode)
-                        if debug:
-                            if _prop.kds_propUri == "schema_image": x=1
-                    if _prop.kds_propUri == "kds_StaticValue":
-                        _prop.processed_data = _prop.kds_returnValue
-                        prop_old_data = _prop.kds_returnValue
-                    if _prop.processed_data is not None:
-                        if debug: print(_prop_uri, " __ ", type(_prop), "--pro--", _prop.processed_data)
-                        prop_old_data = _prop.processed_data
-                        _prop.processed_data = None
-                    else:
-                        prop_old_data = prop_query_data
-                    if prop_old_data is not None:
-                        if hasattr(_prop,"kds_formFieldName"):
-                            _obj_data[_prop.kds_formFieldName] = prop_old_data
-                        elif hasattr(_prop,"kds_apiFieldName"):
-                            _obj_data[_prop.kds_apiFieldName] = prop_old_data
-
+                data = read_prop_data(_prop, rdf_obj, _item, processor_mode)   
+                i = 0
+                if len(data) > 1 or _prop.type == "FieldList":
+                    for _value in data:
+                        _obj_key = "%s-%s" % (_prop.kds_formFieldName, i)
+                        _obj_data[_obj_key] = _value
+                        i = i + 1
+                elif len(data) == 1:
+                    _obj_data[_prop.kds_formFieldName] = data[0]
             _obj_data_list.append(MultiDict(_obj_data))
         if len(_obj_data_list) == 1:
             _obj_data_dict = _obj_data_list[0]
@@ -565,12 +529,12 @@ class RdfFramework(object):
         if debug: pp.pprint({"obj_data":_obj_data_dict,
                              "obj_json":_obj_data,
                              "query_data":_query_data,
-                             "form_class_uri":_lookup_class_uri})
+                             "form_class_uri":_class_uri})
         if debug: print("END get_obj_data ---------------------------\n")
         return {"obj_data":_obj_data_dict,
                 "obj_json":_obj_data,
                 "query_data":_query_data,
-                "form_class_uri":_lookup_class_uri}
+                "form_class_uri":_class_uri}
 
     def _make_form_list(self):
         ''' creates an indexed dictionary of available forms and attaches
@@ -916,315 +880,6 @@ class RdfFramework(object):
                         json_mod = file_mod
         self.last_json_mod = json_mod
 
-    # possible deletion: no longer in use. Commented out till certian
-    """def get_form_data(self, rdf_form, **kwargs):
-        ''' returns the data for the current form paramters
-
-        **keyword arguments
-        subject_uri: the URI for the subject
-        class_uri: the rdf class of the subject
-        '''
-        _class_uri = kwargs.get("class_uri", rdf_form.data_class_uri)
-        _lookup_class_uri = _class_uri
-        #if hasattr(rdf_form,"subjectUri"):
-        #    subject_uri = rdf_form.subjectUri.data
-        #else:
-        subject_uri = kwargs.get("subject_uri", rdf_form.data_subject_uri)
-        _subform_data = {}
-        _data_list = kwargs.get("data_list",False)
-        _parent_field = None
-        # test to see if a subform is in the form
-        if rdf_form.has_subform:
-            _sub_rdf_form = None
-            # find the subform field
-            for _field in rdf_form:
-            #print(_field.__dict__,"\n********************\n")
-                if _field.type == 'FieldList':
-                    for _entry in _field.entries:
-                        print("__________\n",_entry.__dict__)
-                        if _entry.type == 'FormField':
-                            _sub_rdf_form = _entry.form
-                            _parent_field = _field.name
-            # if the subform exists recursively call this method to get the
-            # subform data
-            if _sub_rdf_form:
-                _subform_data = self.get_form_data(_sub_rdf_form,
-                                                   subject_uri=subject_uri,
-                                                   class_uri=_lookup_class_uri,
-                                                   data_list=True)
-        if DEBUG:
-            print("tttttt subform data\n",json.dumps(_subform_data, indent=4))
-
-        _class_name = self.get_class_name(_class_uri)
-
-        subject_uri = kwargs.get("subject_uri", rdf_form.data_subject_uri)
-        #print("%%%%%%%%%%% subject_uri: ",subject_uri)
-        _sparql_args = None
-        _class_links = self.get_form_class_links(rdf_form)
-        _sparql_constructor = dict.copy(_class_links['dependancies'])
-        if DEBUG:
-            print("+++++++++++++++++++++++ Dependancies:\n", json.dumps(_sparql_constructor, indent=4))
-        _base_subject_finder = None
-        _linked_class = None
-        _linked_prop = False
-        _sparql_elements = []
-        if is_not_null(subject_uri):
-            # find the primary linkage between the supplied subjectId and
-            # other form classes
-            for _rdf_class in _sparql_constructor:
-                for _prop in _sparql_constructor[_rdf_class]:
-                    try:
-                        if _class_uri == _prop.get("classUri"):
-                            _sparql_args = _prop
-                            _linked_class = _rdf_class
-                            _sparql_constructor[_rdf_class].remove(_prop)
-                            if _rdf_class != _lookup_class_uri:
-                                _linked_prop = True
-
-                    except:
-                        pass
-            # generate the triple pattern for linked class
-            if DEBUG:
-                print("+++++++++++++++++++++++ SPARQL Constructor:\n", json.dumps(_sparql_constructor, indent=4))
-            if _sparql_args:
-                # create a binding for multi-item results
-                if _data_list:
-                    _list_binding = "BIND(?classID AS ?itemID) ."
-                else:
-                    _list_binding = ''
-                _base_subject_finder = \
-                        "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}".format(
-                            iri(subject_uri),
-                            make_triple("?baseSub",
-                                        "a",
-                                        iri(_lookup_class_uri)),
-                            make_triple("?classID",
-                                        iri(_sparql_args.get("propUri")),
-                                        "?baseSub"),
-                            _list_binding)
-               #print("base subject Finder:\n", _base_subject_finder)
-                if _linked_prop:
-                    if _data_list:
-                        _list_binding = "BIND(?s AS ?itemID) ."
-                    else:
-                        _list_binding = ''
-                    _sparql_elements.append(\
-                            "BIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
-                                    iri(subject_uri),
-                                    make_triple("?baseSub",
-                                                "a",
-                                                iri(_lookup_class_uri)),
-                                    make_triple("?s",
-                                                iri(_sparql_args.get("propUri")),
-                                                "?baseSub"),
-                                    _list_binding))
-            # iterrate though the classes used in the form and generate the
-            # spaqrl triples to pull the data for that class
-            for _rdf_class in _sparql_constructor:
-                if _rdf_class == _class_name:
-                    if _data_list:
-                        _list_binding = "BIND(?s AS ?itemID) ."
-                    else:
-                        _list_binding = ''
-                    _sparql_elements.append(\
-                            "\tBIND({} AS ?s) .\n\t{}\n\t{}\n\t?s ?p ?o .".format(
-                                iri(subject_uri),
-                                make_triple("?s", "a", iri(_lookup_class_uri)),
-                                _list_binding))
-                for _prop in _sparql_constructor[_rdf_class]:
-                    if _rdf_class == _class_name:
-                        if _data_list:
-                            _list_binding = "BIND(?s AS ?itemID) ."
-                        else:
-                            _list_binding = ''
-                        #_sparql_elements.append("\t"+make_triple(iri(str(\
-                                #subject_uri)), iri(_prop.get("propUri")), "?s")+\
-                                # "\n\t?s ?p ?o .")
-                        _sparql_arg = "\tBIND({} AS ?baseSub) .\n\t{}\n\t{}\n\t{}\n\t?s ?p ?o .".format(\
-                                iri(subject_uri),
-                                make_triple("?baseSub",
-                                            "a",
-                                            iri(_lookup_class_uri)),
-                                make_triple("?baseSub",
-                                            iri(_prop.get("propUri")),
-                                            "?s"),
-                                _list_binding)
-                        _sparql_elements.append(_sparql_arg)
-                    elif _rdf_class == _linked_class:
-                        _sparql_elements.append(
-                            "\t{}\n\t{}\n\t?s ?p ?o .".format(
-                                _base_subject_finder,
-                                make_triple("?classID",
-                                            iri(_prop.get("propUri")),
-                                            "?s")
-                                )
-                            )
-
-
-                    '''**** The case where an ID looking up a the triples for
-                        a non-linked related is not functioning i.e. password
-                        ClassID not looking up person org triples if the org
-                        class is not used in the form. This may not be a
-                        problem ... the below comment out is a start to solving
-                         if it is a problem
-
-                        elif _linked_class != self.get_class_name(prop.get(\
-                                "classUri")):
-                        _sparql_elements.append(
-                            "\t" +_base_subject_finder + "\n " +
-                            "\t"+ make_triple("?classID", iri(prop.get(\
-                                    "propUri")), "?s") + "\n\t?s ?p ?o .")'''
-
-            # merge the sparql elements for each class used into one combined
-            # sparql union statement
-            _sparql_unions = "{{\n{}\n}}".format("\n} UNION {\n".join(\
-                    _sparql_elements))
-            if _data_list:
-                _list_binding = "?itemID"
-            else:
-                _list_binding = ''
-            # render the statment in the jinja2 template
-            _sparql = render_without_request("sparqlItemTemplate.rq",
-                                             prefix=self.get_prefix(),
-                                             query=_sparql_unions,
-                                             list_binding=_list_binding)
-            if DEBUG:
-                print(_sparql)
-            # query the triplestore
-            code_timer().log("loadOldData", "pre send query")
-            _form_data_query =\
-                    requests.post(fw_config().get('TRIPLESTORE_URL'),
-                                  data={"query": _sparql, "format": "json"})
-            code_timer().log("loadOldData", "post send query")
-            #print(json.dumps(_form_data_query.json().get('results').get(\
-                    #'bindings'), indent=4))
-            _query_data = convert_spo_to_dict(\
-                    _form_data_query.json().get('results').get('bindings'))
-            code_timer().log("loadOldData", "post convert query")
-            #print("form query data _____\n", json.dumps(_query_data, indent=4))
-            #_query_data = _form_data_query.json().get('results').get('bindings')
-            #_query_data = json.loads(_form_data_query.json().get('results').get(
-            #'bindings')[0]['itemJson']['value'])
-        else:
-            _query_data = {}
-        # compare the return results with the form fields and generate a
-        # formData object
-
-        _form_data_list = []
-        for _item in make_list(_query_data):
-            _form_data = {}
-            for _row in rdf_form.rdfFieldList:
-                for _prop in _row:
-                    #print(_prop, "\n\n")
-                    _prop_uri = _prop.get("propUri")
-                    _class_uri = _prop.get("classUri")
-                    #print(_class_uri, " ", _prop_uri, "\n\n")
-                    _data_value = None
-                    if "subform" in _prop.get("fieldType",{}).get("type",'').lower():
-                        for i, _data in enumerate(_subform_data.get("formdata")):
-                            for _key, _value in _data.items():
-                                _form_data["%s-%s-%s" % (_prop.get("formFieldName"),i,_key)] = _value
-                    else:
-                        for _subject in _item:
-                            if _class_uri in _item[_subject].get( \
-                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
-                                _data_value = _item[_subject].get(_prop.get("propUri"))
-                        if _data_value:
-                            _processors = clean_processors(
-                                            make_list(_prop.get("processors")), _class_uri)
-                            #print("processors - ", _prop_uri, " - ", _processors,
-                                  #"\npre - ", make_list(_prop.get("processors")))
-                            _processors = remove_null(_processors)
-                            for _processor in _processors:
-                                _data_value = \
-                                        run_processor(_processor,
-                                                      {"propUri": _prop_uri,
-                                                       "classUri": _class_uri,
-                                                       "prop": _prop,
-                                                       "queryData": _item,
-                                                       "dataValue": _data_value},
-                                                      "load")
-                        if _data_value is not None:
-                            _form_data[_prop.get("formFieldName")] = _data_value
-            _form_data_list.append(MultiDict(_form_data))
-        if len(_form_data_list) == 1:
-            _form_data_dict = _form_data_list[0]
-        elif len(_form_data_list) > 1:
-            _form_data_dict = _form_data_list
-        else:
-            _form_data_dict = MultiDict()
-        code_timer().log("loadOldData", "post load into MultiDict")
-        #print("data:\n", _form_data)
-        #print("dataDict:\n", _form_data_dict)
-        code_timer().print_timer("loadOldData", delete=True)
-        return {"formdata":_form_data_dict,
-                "queryData":_query_data,
-                "formClassUri":_lookup_class_uri}"""
-
-    # possible deletion: no longer in use. Commented out till certian
-    '''def _find_form_field_name(self, rdf_form, prop_uri):
-        for _row in rdf_form.rdfFieldList:
-            for _prop in _row:
-                if _prop.get("propUri") == prop_uri:
-                    return _prop.get("formFieldName")
-        return None'''
-
-    # possible deletion: no longer in use. Commented out till certian
-    """def get_class_name(self, class_uri):
-        '''This method returns the rdf class name for the supplied Class URI'''
-        for _rdf_class in self.rdf_class_dict:
-            _current_class_uri = self.rdf_class_dict.get(_rdf_class, {}).get(\
-                    "classUri")
-            if _current_class_uri == class_uri:
-                return _rdf_class
-        return ''"""
-
-    # possible deletion: no longer in use. Commented out till certian
-    """def get_property(self, **kwargs):
-        ''' Method returns a list of the property json objects where the
-            property is used
-
-        keyword Args:
-            class_name: *Optional the name of Class
-            class_uri: *Optional the Uri of the Class
-            prop_name: The Name of the property
-            prop_uri: The URI of the property
-            ** the Prop Name or URI is required'''
-        _return_list = []
-        _class_name = kwargs.get("class_name")
-        _class_uri = kwargs.get("class_uri")
-        _prop_name = kwargs.get("prop_name")
-        _prop_uri = kwargs.get("prop_uri")
-        if _class_name or _class_uri:
-            if _class_uri:
-                _class_name = self.get_class_name(_class_uri)
-            if _prop_uri:
-                _return_list.append(getattr(self, _class_name).get_property(\
-                        prop_uri=_prop_uri))
-            else:
-                _return_list.append(getattr(self, _class_name).get_property(\
-                        prop_name=_prop_name))
-        else:
-            for _rdf_class in self.rdf_class_dict:
-                if _prop_name:
-                    _current__class_prop = getattr(self, _rdf_class).get_property(\
-                            prop_name=_prop_name)
-                else:
-                    _current__class_prop = getattr(self, _rdf_class).get_property(\
-                            prop_uri=_prop_uri)
-                if _current__class_prop:
-                    _return_list.append(_current__class_prop)
-        return _return_list"""
-
-    # possible deletion: no longer in use. Commented out till certian
-    """def _remove_field_from_json(self, rdf_field_json, field_name):
-        ''' removes a field form the rdfFieldList form attribute '''
-        for _row in rdf_field_json:
-            for _field in _row:
-                if _field.get('formFieldName') == field_name:
-                    _row.remove(_field)
-        return rdf_field_json"""
-
 # Theses imports are placed at the end of the module to avoid circular imports
 from rdfframework import RdfClass
 #from rdfframework import RdfDataType
@@ -1274,3 +929,106 @@ def verify_server_core(timeout=120, start_delay=90):
     return return_val
 
 
+def read_prop_data(prop, rdf_obj, qry_data, processor_mode):
+    if not DEBUG:
+        debug = False
+    else:
+        debug = True
+    if debug: print("START read_prop_data framework.py --------------------\n")
+    prop_uri = prop.kds_propUri
+    _class_uri = prop.kds_classUri
+    _data_value = None
+    if not hasattr(prop, 'kds_fieldType'):
+        _field_type = {}
+    else:
+        _field_type = prop.kds_fieldType
+    if "subform" in _field_type.get("rdf_type",'').lower():
+        for i, _data in enumerate(make_list(\
+                _subform_data.get("obj_data"))):
+            for _key, _value in _data.items():
+                _obj_key = "%s-%s-%s" % (prop.kds_formFieldName,
+                                         i,
+                                        _key)
+                _obj_data[_obj_key] = _value
+        if debug: print("END read_prop_data framework.py ----SUBFORM-------\n")
+        return _old_data
+    else:
+        prop_query_data = None
+        # find the prop class_uri's query_data
+        prop_old_data = get_class_qry_data(_class_uri, prop_uri, qry_data) 
+        _data_value = prop_old_data
+        
+        return_list = []
+        for list_data in prop_old_data: 
+            return_list.append(process_prop(prop, 
+                                            rdf_obj, 
+                                            processor_mode, 
+                                            list_data))
+        if debug: print("END read_prop_data framework.py ----NON-SUB-------\n")
+        return return_list
+    if debug: print("END read_prop_data framework.py --------------------\n")
+        
+
+def get_class_qry_data(class_uri, prop_uri, qry_data):
+    ''' Function reads through the query data and returns the specified 
+        class data 
+        
+        Args:
+            class_uri - the rdf:Class searched for
+            qry_data - the query data to search through 
+            
+        Returns:
+            list of qry_data dictionaries
+    '''
+    if not DEBUG:
+        debug = False
+    else:
+        debug = True
+    if debug: print("START get_class_qry_data framework.py ----------------\n")
+    
+    class_uri = iri(class_uri)
+    return_list = []
+    if class_uri not in [None, "kds_NoClass"]:
+        for _subject in qry_data:
+            if debug: print("******* %s - %s" % (class_uri,
+                                                 qry_data.get(_subject,\
+                                                 {}).get("rdf_type")))
+            if class_uri in qry_data.get(_subject,{}).get("rdf_type"):
+                return_list.append(qry_data[_subject].get(prop_uri))
+    if debug: print("END get_class_qry_data framework.py ----------------\n")
+    return return_list
+  
+def process_prop(prop, rdf_obj, processor_mode, prop_query_data):
+    ''' This will run the processors attached to prop and return the processed
+        data:
+        
+        Args:
+            prop: the property to processe
+            rdf_obj: the form/api obj 
+            processor_mode: which mode to run the processors in
+        
+        Returns:
+            the processed data
+    '''
+    if not DEBUG:
+        debug = False
+    else:
+        debug = True
+    if debug: print("START process_prop framework.py ----------------------\n")
+    return_val = None
+    for _processor in clean_processors([make_list(prop.kds_processors)],
+                                       prop.kds_classUri).values():
+        run_processor(_processor, rdf_obj, prop, processor_mode)
+    if prop.kds_propUri == "kds_StaticValue":
+        prop.processed_data = prop.kds_returnValue
+        return_val = prop.kds_returnValue
+    if prop.processed_data is not None:
+        if debug: print(prop.kds_propUri, " __ ", type(prop), "--pro--", 
+                        prop.processed_data)
+        return_val = prop.processed_data
+        prop.processed_data = None
+    else:
+        return_val = prop_query_data              
+    
+    if debug: print("START process_prop framework.py ----------------------\n")
+    return return_val
