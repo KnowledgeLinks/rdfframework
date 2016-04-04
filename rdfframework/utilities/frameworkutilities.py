@@ -150,15 +150,11 @@ def make_set(value):
         make_set(x) = {'setvalue'}
         or use set([x,]) by adding string as first item in list.
     '''
-    _return_set = set()
     if isinstance(value, list):
-        for i in value:
-            _return_set.add(i)
-    elif isinstance(value, set):
-        _return_set = value
-    else:
-        _return_set.add(value)
-    return _return_set
+        value = set(value)
+    elif not isinstance(value, set):
+        value = set([value,]) 
+    return value
 
 def uid_to_repo_uri(id_value):
     if id_value:

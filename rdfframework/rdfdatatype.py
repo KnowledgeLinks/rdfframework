@@ -1,9 +1,14 @@
-__author__ = "Mike Stabile, Jeremy Nelson"
-from flask import json
-from rdflib import RDF, RDFS, OWL, XSD
+"""`rdfdatatype`_ defines the basic `RdfDataType`_ Class used within the RDF Frameworks
+other classes and modules.
+"""
 
-from rdfframework.utilities import iri, uri, make_list, xsd_to_python
+__author__ = "Mike Stabile, Jeremy Nelson"
+
+
 from .getframework import get_framework as rdfw
+from flask import json
+from rdflib import RDF, XSD
+from rdfframework.utilities import iri, uri, make_list, xsd_to_python
 
 class RdfDataType(object):
     "This class will generate a rdf data type"
