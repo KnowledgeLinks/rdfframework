@@ -125,10 +125,12 @@ class RdfClass(object):
         #return None
 
     def new_uri(self, **kwargs):
-        '''*** to be written ***
-        generates a new URI
-            -- for fedora generates the container and returns the URI
-            -- for blazegraph process will need to be created'''
+        ''' Generates a new uri for a new subject
+        
+            kwargs:
+                save_data - pass in the data to be saved for uri 
+                calculations'''
+                
         if not DEBUG:
             debug = False
         else:
@@ -158,7 +160,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.uri_patterner ---------------------\n")
         pattern = kwargs.get("kds_subjectPattern", self.kds_subjectPattern)
         pattern_args = pattern.split(",")
@@ -202,6 +204,30 @@ class RdfClass(object):
             new_uri = "https://" + temp_uri
         if debug: print("pattern: %s\nuid: %s\nnew_uri: %s" %
                     (pattern, uid, new_uri))
+        # if the new_uri does not have a uid in it test for uniqueness
+        if not is_not_null(uid):
+            failed_test = True
+            i = 1
+            test_uri = new_uri
+            while failed_test:
+                sparql = """
+                         SELECT * 
+                         WHERE {
+                            {%s ?p ?o} UNION {?s ?p %s}
+                         } LIMIT 1""" % (iri(test_uri), iri(test_uri))
+                results = requests.post(self.triplestore_url,
+                                        data={"query": sparql, "format": "json"})
+                if debug: print("new_uri_test: ", results.json())
+                _uri_test = results.json().get('results').get( \
+                            'bindings', [])
+                # if the length of the return is 0 the uri is unique
+                if len(_uri_test) == 0:
+                    failed_test = False
+                # if not add in incremented number to the end of the uri
+                else:
+                    test_uri = "%s_%s" % (new_uri, i)
+                    i += 1
+            new_uri = test_uri
         if debug: print("END RdfClass.uri_patterner -----------------------\n")
         return new_uri
 
@@ -234,7 +260,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.validate_primary_key --------------\n")
         if debug: print("old_data:\n",json.dumps(old_data,indent=4))
         if old_data is None:
@@ -257,9 +283,7 @@ class RdfClass(object):
             _new_class_data = {}
             _query_args = [make_triple("?uri", "a", \
                     iri(uri(self.kds_classUri)))]
-            _multi_key_query_args = [make_triple("?uri",
-                                                 "a",
-                                                 iri(uri(self.kds_classUri)))]
+            _multi_key_query_args = copy.deepcopy(_query_args)
             _key_changed = False
             _prop_uri_list = []
             _key_props = []
@@ -281,7 +305,9 @@ class RdfClass(object):
                     _range = _range_obj.get('rangeClass')
                     if debug: print("_data_type: ", _data_type)
                     if _data_type == 'literal':
-                        _object_val = RdfDataType(_range).sparql(_data_value)
+                        _object_val = "FILTER regex(str(?o), %s, 'i') " % \
+                            json.dumps(_data_value)
+                        #RdfDataType(_range).sparql(_data_value)
                     else:
                         _object_val = iri(uri(_data_value))
                 else:
@@ -306,10 +332,21 @@ class RdfClass(object):
                         _new_class_data.get(key) is not None):
                     _key_changed = True
                     if _object_val:
-                        _query_args.append(make_triple("?uri", iri(uri(key)), \
-                                _object_val))
-                        _multi_key_query_args.append(make_triple("?uri", \
-                                iri(uri(key)), _object_val))
+                        if str(_object_val).startswith("FILTER"):
+                            arg_trip = make_triple("?uri", iri(uri(key)), "?o")
+                            _query_args.append(arg_trip)
+                            _query_args.append("FILTER (!(isIri(?o))) .")
+                            _query_args.append(_object_val) 
+                            _multi_key_query_args.append(arg_trip)
+                            _multi_key_query_args.append(\
+                                    "FILTER (!(isIri(?o))) .")
+                            _multi_key_query_args.append(_object_val) 
+                        else:    
+                            _query_args.append(make_triple("?uri", 
+                                                           iri(uri(key)), \
+                                                           _object_val))    
+                            _multi_key_query_args.append(make_triple("?uri", \
+                                    iri(uri(key)), _object_val))
                 else:
                     if _object_val:
                         _multi_key_query_args.append(make_triple("?uri", \
