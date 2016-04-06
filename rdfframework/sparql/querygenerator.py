@@ -28,7 +28,7 @@ def create_data_sparql_query(obj, **kwargs):
     if not DEBUG:
         debug = False
     else:
-        debug = False
+        debug = True
     if debug: print("START create_data_sparql_query -----------------------\n")
     if debug: print("*** kwargs ***: \n%s \n*** obj ***:\n%s" %
             (pp.pformat(kwargs), pp.pformat(obj.__dict__)))
@@ -87,6 +87,8 @@ def create_data_sparql_query(obj, **kwargs):
                                          prefix=rdfw().get_prefix(),
                                          kds_propUri=_kds_propUri,
                                          prop_value=_prop_value)
+        if debug: print(_sparql)
+        if debug: print("END create_data_sparql_query -----Related-Lookup--\n")   
         return _sparql
     _lookup_class_uri = _class_uri
     _sparql_args = None
