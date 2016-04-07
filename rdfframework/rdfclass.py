@@ -327,9 +327,15 @@ class RdfClass(object):
                 # generating a value then we don't need to test the key.
                 # however if there is a supplied value and it is listed as a
                 # calculated property we need to test.
+                if debug: print("old: %s\nNew: %s\nKey: %s\nCalc_props: %s" % \
+                        (_old_class_data.get(key),
+                         _new_class_data.get(key),
+                         key,
+                         _calculated_props))    
                 if (_old_class_data.get(key) != _new_class_data.get(key)) and \
                         ((key not in _calculated_props) or \
                         _new_class_data.get(key) is not None):
+                    
                     _key_changed = True
                     if _object_val:
                         if str(_object_val).startswith("FILTER"):

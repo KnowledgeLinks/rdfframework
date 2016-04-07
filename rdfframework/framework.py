@@ -21,7 +21,7 @@ from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from rdfframework.validators import OldPasswordValidator
 from flask import json
-from rdfframework.security import User
+from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
 
 DEBUG = True
@@ -198,18 +198,26 @@ class RdfFramework(object):
     def _make_user_obj(self, rdf_obj, query_data, username):
         ''' This method will create a user_obj dictionary to be used when
             initializing a User() for the login_manager '''
-             
+        if not DEBUG:
+            debug = False
+        else:
+            debug = True
+        if debug: print("START RdfFramework._make_user_obj ----------------\n")     
         person_info = None
         user_obj = {}
         user_uri = ""
+        user_groups = []
         for subject, value in query_data['query_data'].items():
             person_class = iri(self.app.get("kds_personClass","schema_Person"))
-            if person_class in make_list(value.get("rdf_type")):
+            rdf_types = make_list(value.get("rdf_type"))
+            if person_class in rdf_types:
                 person_info = value
                 person_uri = subject
-            if "<kds_UserClass>" in make_list(value.get("rdf_type")):
+            elif "<kds_UserClass>" in rdf_types:
                 user_info = value
                 user_uri = subject
+            elif "<kds_UserGroup>" in rdf_types:
+                user_groups.append(subject)
         if person_info:
             user_obj = {'username': username.data,
                         'email': person_info['schema_email'],
@@ -219,7 +227,11 @@ class RdfFramework(object):
                         'person_uri': person_uri,
                         'change_password': \
                                 user_info.get('kds_changePasswordRequired',True),
-                        'user_uri': user_uri}
+                        'user_uri': user_uri,
+                        'user_groups': user_groups,
+                        'app_security': get_app_security(self, user_groups)}
+        if debug: print("user_obj:\n", json.dumps(user_obj, indent=4))
+        if debug: print("END RdfFramework._make_user_obj ------------------\n")
         return user_obj
 
     def form_exists(self, form_path):
