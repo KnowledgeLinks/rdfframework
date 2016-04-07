@@ -321,7 +321,6 @@ def calculate_value(value, obj, prop):
         _query_data = obj.query_data
         for _subject, _data in _query_data.items():
             if _class_uri in make_list(_data.get("rdf_type")):
-                #if _class_uri == "<obi_Assertion>": x=y
                 return cbool(_data.get(pyuri(_lookup_value)), False)
     elif value.startswith("!--"):
         return_val = value

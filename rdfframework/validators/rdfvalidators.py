@@ -89,7 +89,7 @@ class UniqueValue(object):
 
 
     def _make_unique_value_qry(self, form, field):
-        debug = False
+        debug = True
         _sparql_args = []
         # determine the property and class details of the field
         _prop_uri = field.kds_propUri
@@ -98,9 +98,10 @@ class UniqueValue(object):
 
         # make the base triples for the query
         if _prop_uri:
+            check_val = str(field.data).lower()
             _data_value = RdfDataType(None,
                                       class_uri=_class_uri,
-                                      prop_uri=_prop_uri).sparql(field.data)
+                                      prop_uri=_prop_uri).sparql(check_val)
             _sparql_args.append(make_triple("?uri", "a", iri(uri(_class_uri))))
             _sparql_args.append(make_triple("?uri",
                                             iri(uri(_prop_uri)),

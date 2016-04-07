@@ -7,7 +7,8 @@ from werkzeug.datastructures import FileStorage
 from jinja2 import Template
 from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, \
     make_list, make_set, make_triple, remove_null, DeleteProperty, \
-    NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, get_attr
+    NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
+    pyuri, get_attr, slugify
 
 from .getframework import get_framework as rdfw
 from rdfframework.rdfdatatype import RdfDataType
@@ -123,29 +124,35 @@ class RdfClass(object):
             return self._run_save_query(save_query)
         #return None
 
-    def new_uri(self):
-        '''*** to be written ***
-        generates a new URI
-            -- for fedora generates the container and returns the URI
-            -- for blazegraph process will need to be created'''
+    def new_uri(self, **kwargs):
+        ''' Generates a new uri for a new subject
+        
+            kwargs:
+                save_data - pass in the data to be saved for uri 
+                calculations'''
+                
         if not DEBUG:
             debug = False
         else:
             debug = False
         if debug: print("START RdfClass.new_uri ---------------------------\n")
-        return_val = None
+        return_val = ''
         if self.kds_saveLocation == "triplestore":
             # get a uuid by saving an empty record to the repo and then
             # delete the item.
-            repository_result = requests.post(
-                            self.repository_url,
-                            data="",
-            				headers={"Content-type": "text/turtle"})
-            object_value = repository_result.text
-            uid = re.sub(r'^(.*[#/])','',object_value)
-            requests.delete(object_value)
-            if debug: print("new uid: ", uid)
-            return_val = self.uri_patterner(uid)
+            if "!--uuid" in self.kds_subjectPattern:
+                repository_result = requests.post(
+                                self.repository_url,
+                                data="",
+                				headers={"Content-type": "text/turtle"})
+                object_value = repository_result.text
+                uid = re.sub(r'^(.*[#/])','',object_value)
+                requests.delete(object_value)
+            else:
+                uid = ''
+            if self.kds_storageType != "blanknode":
+                if debug: print("new uid: ", uid)
+                return_val = self.uri_patterner(uid, **kwargs)
         return return_val
         if debug: print("END RdfClass.new_uri ---------------------------\n")
 
@@ -153,7 +160,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.uri_patterner ---------------------\n")
         pattern = kwargs.get("kds_subjectPattern", self.kds_subjectPattern)
         pattern_args = pattern.split(",")
@@ -168,12 +175,23 @@ class RdfClass(object):
                     value = nouri(self.kds_classUri)
                 elif arg == "!--uuid":
                     value = uid
+                elif arg.startswith("!--slugify"):
+                    _prop_uri = arg[arg.find("(")+1:arg.find(")")]
+                    _prop_uri = pyuri(_prop_uri)
+                    data = kwargs.get('save_data',{}).get("data",[[]])
+                    _value_to_slug = ""
+                    for item in data:
+                        if item[0] == _prop_uri:
+                            _value_to_slug = \
+                                    item[1][1:item[1].find('"^^xsd')]
+                    if is_not_null(_value_to_slug):
+                        value = slugify(_value_to_slug)
                 else:
                     value = arg.replace("!--","")
             else:
                 value = arg
             new_args.append(value)
-        new_uri = "".join(new_args)
+        new_uri = uri("".join(new_args))
         if new_uri.startswith("http://"):
             temp_uri = new_uri.replace("http://","").replace("//","/")
             if temp_uri[:1] == "/":
@@ -186,6 +204,30 @@ class RdfClass(object):
             new_uri = "https://" + temp_uri
         if debug: print("pattern: %s\nuid: %s\nnew_uri: %s" %
                     (pattern, uid, new_uri))
+        # if the new_uri does not have a uid in it test for uniqueness
+        if not is_not_null(uid):
+            failed_test = True
+            i = 1
+            test_uri = new_uri
+            while failed_test:
+                sparql = """
+                         SELECT * 
+                         WHERE {
+                            {%s ?p ?o} UNION {?s ?p %s}
+                         } LIMIT 1""" % (iri(test_uri), iri(test_uri))
+                results = requests.post(self.triplestore_url,
+                                        data={"query": sparql, "format": "json"})
+                if debug: print("new_uri_test: ", results.json())
+                _uri_test = results.json().get('results').get( \
+                            'bindings', [])
+                # if the length of the return is 0 the uri is unique
+                if len(_uri_test) == 0:
+                    failed_test = False
+                # if not add in incremented number to the end of the uri
+                else:
+                    test_uri = "%s_%s" % (new_uri, i)
+                    i += 1
+            new_uri = test_uri
         if debug: print("END RdfClass.uri_patterner -----------------------\n")
         return new_uri
 
@@ -218,7 +260,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass.validate_primary_key --------------\n")
         if debug: print("old_data:\n",json.dumps(old_data,indent=4))
         if old_data is None:
@@ -241,9 +283,7 @@ class RdfClass(object):
             _new_class_data = {}
             _query_args = [make_triple("?uri", "a", \
                     iri(uri(self.kds_classUri)))]
-            _multi_key_query_args = [make_triple("?uri",
-                                                 "a",
-                                                 iri(uri(self.kds_classUri)))]
+            _multi_key_query_args = copy.deepcopy(_query_args)
             _key_changed = False
             _prop_uri_list = []
             _key_props = []
@@ -265,7 +305,9 @@ class RdfClass(object):
                     _range = _range_obj.get('rangeClass')
                     if debug: print("_data_type: ", _data_type)
                     if _data_type == 'literal':
-                        _object_val = RdfDataType(_range).sparql(_data_value)
+                        _object_val = "FILTER regex(str(?o), %s, 'i') " % \
+                            json.dumps(_data_value)
+                        #RdfDataType(_range).sparql(_data_value)
                     else:
                         _object_val = iri(uri(_data_value))
                 else:
@@ -290,10 +332,21 @@ class RdfClass(object):
                         _new_class_data.get(key) is not None):
                     _key_changed = True
                     if _object_val:
-                        _query_args.append(make_triple("?uri", iri(uri(key)), \
-                                _object_val))
-                        _multi_key_query_args.append(make_triple("?uri", \
-                                iri(uri(key)), _object_val))
+                        if str(_object_val).startswith("FILTER"):
+                            arg_trip = make_triple("?uri", iri(uri(key)), "?o")
+                            _query_args.append(arg_trip)
+                            _query_args.append("FILTER (!(isIri(?o))) .")
+                            _query_args.append(_object_val) 
+                            _multi_key_query_args.append(arg_trip)
+                            _multi_key_query_args.append(\
+                                    "FILTER (!(isIri(?o))) .")
+                            _multi_key_query_args.append(_object_val) 
+                        else:    
+                            _query_args.append(make_triple("?uri", 
+                                                           iri(uri(key)), \
+                                                           _object_val))    
+                            _multi_key_query_args.append(make_triple("?uri", \
+                                    iri(uri(key)), _object_val))
                 else:
                     if _object_val:
                         _multi_key_query_args.append(make_triple("?uri", \
@@ -407,7 +460,6 @@ class RdfClass(object):
             return self.kds_properties.get(prop_uri)
         except:
             return None
-
 
     def _validate_required_properties(self, rdf_obj, old_data):
         '''Validates whether all required properties have been supplied and
@@ -688,7 +740,7 @@ class RdfClass(object):
         if not DEBUG:
             debug = False
         else:
-            debug = False
+            debug = True
         if debug: print("START RdfClass._generate_save_query -------------\n")
         _save_data = save_data_obj.get("data")
         # find the subject_uri positional argument or look in the save_data_obj
@@ -702,7 +754,7 @@ class RdfClass(object):
             _save_type = "object"
         new_status = False
         if self.kds_saveLocation == "triplestore" and subject_uri == "<>":
-            subject_uri = iri(self.new_uri())
+            subject_uri = iri(self.new_uri(save_data=save_data_obj))
             new_status = True
         _bn_insert_clause = []
         _insert_clause = ""

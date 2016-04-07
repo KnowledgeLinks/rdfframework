@@ -18,9 +18,16 @@ SELECT DISTINCT ?s ?p ?o
 	  	?s ?p0 ?item .
 	  	?s	?p ?o .
 	  	Filter(?p0 != rdf:type).
-		Filter(isiri(?s))
+		Filter(isiri(?s)||isblank(?s))
 	  	Filter(?p != ?p0)
-	}
+	} UNION {
+		?item {{ kds_propUri }} {{ prop_value }}.
+		?bn ?p0 ?item .
+  		?bn ?p1 ?o1 .
+  		?s	?p2	?bn .
+		?s ?p ?o .
+  		FILTER isblank(?bn)
+  	}
 	# hide all of the repository generated data
   	FILTER(!(
 	    STRSTARTS(STR(?p), "http://fedora.info/definitions/v4/")||
