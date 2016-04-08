@@ -648,7 +648,10 @@ class RdfFramework(object):
             kds_saveLocation = self.app.get("kds_saveLocation","triplestore")
             kds_subjectPattern = self.app.get("kds_subjectPattern",
                     "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid")
-            for _rdf_class in self.rdf_class_dict:
+            #for rdfclass, value in self.rdf_class_dict.items():
+            #    self.rdf_class_dict[rdfclass]['kds_properties'] = \
+            #        make_list(self.rdf_class_dict[rdfclass]['kds_properties'])
+            for _rdf_class in self.rdf_class_dict:    
                 setattr(self,
                         _rdf_class,
                         RdfClass(self.rdf_class_dict[_rdf_class],
@@ -664,6 +667,9 @@ class RdfFramework(object):
             _form_json = self._load_rdf_form_defintions(reset)
             self.rdf_form_dict = convert_obj_to_rdf_namespace(_form_json,
                                                               self.ns_obj)
+            for rdfform, value in self.rdf_form_dict.items():
+                self.rdf_form_dict[rdfform]['kds_properties'] = \
+                    make_list(self.rdf_form_dict[rdfform]['kds_properties'])
             print("\t\t%s objects" % len(self.rdf_form_dict))
             self._make_form_list()
             self.form_initialized = True
@@ -676,6 +682,9 @@ class RdfFramework(object):
             _api_json = self._load_rdf_api_defintions(reset)
             self.rdf_api_dict = convert_obj_to_rdf_namespace(_api_json,
                                                               self.ns_obj)
+            for api, value in self.rdf_api_dict.items():
+                self.rdf_api_dict[api]['kds_properties'] = \
+                    make_list(self.rdf_api_dict[api]['kds_properties'])
             print("\t\t%s objects" % len(self.rdf_api_dict))
             self._make_api_list()
             self.apis_initialized = True
