@@ -89,7 +89,7 @@ class UniqueValue(object):
 
 
     def _make_unique_value_qry(self, form, field):
-        debug = True
+        debug = False
         _sparql_args = []
         # determine the property and class details of the field
         _prop_uri = field.kds_propUri
