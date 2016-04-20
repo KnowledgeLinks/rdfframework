@@ -94,8 +94,12 @@ class RdfFramework(object):
                 form_class = rdf_framework_form_factory(data['form_path'])
                 form_data = data['form_data']
                 form = form_class()
+                #pp.pprint(form.__dict__)
                 for prop in form.rdf_field_list:
-                    prop.data = form_data.get(prop.name)
+                    if prop.type != "FieldList":
+                        #print(prop.name, " - ", form_data.get(prop.name))
+                        #pp.pprint(prop.__dict__)
+                        prop.data = form_data.get(prop.name)
                 form.save()
             # tag the triplestore that the data has been loaded
             save_data = ' kdr:appData kds:defaultLoaded "true"^^xsd:string .'
