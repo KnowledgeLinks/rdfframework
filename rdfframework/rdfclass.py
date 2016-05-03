@@ -276,7 +276,7 @@ class RdfClass(object):
         if debug: print(self.kds_classUri, " PrimaryKeys: ", pkey, "\n")
         if len(pkey) < 1:
             if debug: print("END RdfClass.validate_primary_key -NO pKey----\n")
-            return ["valid"]
+            return ["valid"] 
         else:
             _calculated_props = self._get_calculated_properties()
             _old_class_data = self._select_class_query_data(old_data)
@@ -327,9 +327,15 @@ class RdfClass(object):
                 # generating a value then we don't need to test the key.
                 # however if there is a supplied value and it is listed as a
                 # calculated property we need to test.
+                if debug: print("old: %s\nNew: %s\nKey: %s\nCalc_props: %s" % \
+                        (_old_class_data.get(key),
+                         _new_class_data.get(key),
+                         key,
+                         _calculated_props))    
                 if (_old_class_data.get(key) != _new_class_data.get(key)) and \
                         ((key not in _calculated_props) or \
                         _new_class_data.get(key) is not None):
+                    
                     _key_changed = True
                     if _object_val:
                         if str(_object_val).startswith("FILTER"):
@@ -762,11 +768,23 @@ class RdfClass(object):
         _where_clause = ""
         _prop_set = set()
         i = 1
+        j = 1000
         if debug: print("save data in generateSaveQuery\n", \
                     pp.pprint(_save_data))
         # test to see if there is data to save
         if len(_save_data) > 0:
             for prop in _save_data:
+                # test to see if the object value is a blank node
+                if isinstance(prop[1], str) and prop[1][:1] == "[":
+                    # build the blanknode linkage
+                    prop_range_list = get_attr(self, pyuri(_prop_uri))['rdfs_range']
+                    for rng in make_list(prop_range_list):
+                        if rng.get("storageType") == "blanknode":
+                            prop_range = rng.get("rangeClass")
+                    linked_prop = uri(get_attr(rdfw(),prop_range).kds_blankNodeLink)
+                    line1 = make_triple(subject_uri, _prop_uri, "?" + str(j))
+                    line2 = make_triple("?" + str(j), iri(uri(linked_prop)))
+                    #_bn_delete_clause.append(
                 _prop_set.add(uri(prop[0]))
                 _prop_iri = iri(uri(prop[0]))
                 if not isinstance(prop[1], DeleteProperty):

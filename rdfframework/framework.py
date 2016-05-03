@@ -21,7 +21,7 @@ from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from rdfframework.validators import OldPasswordValidator
 from flask import json
-from rdfframework.security import User
+from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
 
 DEBUG = True
@@ -94,8 +94,12 @@ class RdfFramework(object):
                 form_class = rdf_framework_form_factory(data['form_path'])
                 form_data = data['form_data']
                 form = form_class()
+                #pp.pprint(form.__dict__)
                 for prop in form.rdf_field_list:
-                    prop.data = form_data.get(prop.name)
+                    if prop.type != "FieldList":
+                        #print(prop.name, " - ", form_data.get(prop.name))
+                        #pp.pprint(prop.__dict__)
+                        prop.data = form_data.get(prop.name)
                 form.save()
             # tag the triplestore that the data has been loaded
             save_data = ' kdr:appData kds:defaultLoaded "true"^^xsd:string .'
@@ -198,18 +202,26 @@ class RdfFramework(object):
     def _make_user_obj(self, rdf_obj, query_data, username):
         ''' This method will create a user_obj dictionary to be used when
             initializing a User() for the login_manager '''
-             
+        if not DEBUG:
+            debug = False
+        else:
+            debug = True
+        if debug: print("START RdfFramework._make_user_obj ----------------\n")     
         person_info = None
         user_obj = {}
         user_uri = ""
+        user_groups = []
         for subject, value in query_data['query_data'].items():
             person_class = iri(self.app.get("kds_personClass","schema_Person"))
-            if person_class in make_list(value.get("rdf_type")):
+            rdf_types = make_list(value.get("rdf_type"))
+            if person_class in rdf_types:
                 person_info = value
                 person_uri = subject
-            if "<kds_UserClass>" in make_list(value.get("rdf_type")):
+            elif "<kds_UserClass>" in rdf_types:
                 user_info = value
                 user_uri = subject
+            elif "<kds_UserGroup>" in rdf_types:
+                user_groups.append(subject)
         if person_info:
             user_obj = {'username': username.data,
                         'email': person_info['schema_email'],
@@ -219,7 +231,11 @@ class RdfFramework(object):
                         'person_uri': person_uri,
                         'change_password': \
                                 user_info.get('kds_changePasswordRequired',True),
-                        'user_uri': user_uri}
+                        'user_uri': user_uri,
+                        'user_groups': user_groups,
+                        'app_security': get_app_security(self, user_groups)}
+        if debug: print("user_obj:\n", json.dumps(user_obj, indent=4))
+        if debug: print("END RdfFramework._make_user_obj ------------------\n")
         return user_obj
 
     def form_exists(self, form_path):
@@ -636,7 +652,10 @@ class RdfFramework(object):
             kds_saveLocation = self.app.get("kds_saveLocation","triplestore")
             kds_subjectPattern = self.app.get("kds_subjectPattern",
                     "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid")
-            for _rdf_class in self.rdf_class_dict:
+            #for rdfclass, value in self.rdf_class_dict.items():
+            #    self.rdf_class_dict[rdfclass]['kds_properties'] = \
+            #        make_list(self.rdf_class_dict[rdfclass]['kds_properties'])
+            for _rdf_class in self.rdf_class_dict:    
                 setattr(self,
                         _rdf_class,
                         RdfClass(self.rdf_class_dict[_rdf_class],
@@ -652,6 +671,9 @@ class RdfFramework(object):
             _form_json = self._load_rdf_form_defintions(reset)
             self.rdf_form_dict = convert_obj_to_rdf_namespace(_form_json,
                                                               self.ns_obj)
+            for rdfform, value in self.rdf_form_dict.items():
+                self.rdf_form_dict[rdfform]['kds_properties'] = \
+                    make_list(self.rdf_form_dict[rdfform]['kds_properties'])
             print("\t\t%s objects" % len(self.rdf_form_dict))
             self._make_form_list()
             self.form_initialized = True
@@ -664,6 +686,9 @@ class RdfFramework(object):
             _api_json = self._load_rdf_api_defintions(reset)
             self.rdf_api_dict = convert_obj_to_rdf_namespace(_api_json,
                                                               self.ns_obj)
+            for api, value in self.rdf_api_dict.items():
+                self.rdf_api_dict[api]['kds_properties'] = \
+                    make_list(self.rdf_api_dict[api]['kds_properties'])
             print("\t\t%s objects" % len(self.rdf_api_dict))
             self._make_api_list()
             self.apis_initialized = True

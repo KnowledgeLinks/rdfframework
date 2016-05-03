@@ -312,7 +312,8 @@ class Form(flask_wtf.Form):
         for fld in self.rdf_field_list:
             _options = None
             _empty_choice = [{"id":"","value":""}]
-            if fld.type == "FieldList":
+            if fld.type == "FieldList" and  "subform" not in \
+                    fld.kds_fieldType['rdf_type'].lower():
                 if fld.entries[0].type == 'SelectField':
                    _options = _empty_choice + query_select_options(fld) 
                    
