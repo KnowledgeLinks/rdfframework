@@ -4,13 +4,17 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 
 import os
+import sys
+import inspect
+import logging
 import time
 import operator
 import requests
 
-from .rdfproperty import RdfProperty
-
 from werkzeug.datastructures import MultiDict
+from flask import json
+
+from .rdfproperty import RdfProperty
 from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
         remove_null, clean_iri, convert_spo_to_dict, \
         render_without_request, create_namespace_obj, \
@@ -20,10 +24,10 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data
 from rdfframework.validators import OldPasswordValidator
-from flask import json
 from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
 
+MODULE_NAME = os.path.basename(inspect.stack()[0][1])
 DEBUG = True
 
 class RdfFramework(object):
@@ -42,6 +46,11 @@ class RdfFramework(object):
     value_processors = []
     apis_initialized = False
 
+    ln = "%s.RdfFramework" % MODULE_NAME
+    # set specific logging handler for the module allows turning on and off
+    # debug as required
+    log_level = logging.DEBUG
+    
     def __init__(self, root_file_path, **kwargs):
         self.root_file_path = root_file_path
         self._set_rdf_def_filelist()
@@ -848,6 +857,10 @@ class RdfFramework(object):
 
     def _load_rdf_data(self, reset=False):
         ''' loads the RDF/turtle application data to the triplestore '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         if reset:
             base_url = fw_config().get('ORGANIZATION').get('url')
             triplestore_url = fw_config().get('TRIPLESTORE_URL')
@@ -876,7 +889,10 @@ class RdfFramework(object):
             print
             # load the extensions in the triplestore
             context_uri = "http://knowledgelinks.io/ns/application-framework/"
+            
             for i, data in enumerate(rdf_data):
+                lg.info("uploading file: %s",
+                        list(rdf_resource_templates[i])[0]) 
                 result = requests.post(
                     url=triplestore_url,
                     headers={"Content-Type": "text/turtle"},
@@ -885,8 +901,6 @@ class RdfFramework(object):
                 if result.status_code > 399:
                     raise ValueError("Cannot load extensions {} into {}".format(
                         rdf_resource_templates[i], triplestore_url))
-                else:
-                    print("\t%s file loaded" % rdf_resource_templates[i])
 
     def _set_rdf_def_filelist(self):
         ''' does a directory search for rdf application definition files '''

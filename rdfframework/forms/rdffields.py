@@ -276,7 +276,7 @@ def get_wtform_field(field, instance='', **kwargs):
         _sub_form = FormField(\
                 rdf_framework_form_factory(_form_path, is_subobj=True),
                 widget=BsGridTableWidget())
-        if "RepeatingSubForm" in _field_type_obj.get("kds_subFormMode"):
+        if "RepeatingSubForm" == _field_type_obj.get("kds_subFormMode"):
             _form_field = FieldList(_sub_form, _field_label, min_entries=1,
                                     widget=RepeatingSubFormWidget())
             setattr(_form_field,"frameworkField","RepeatingSubForm")
