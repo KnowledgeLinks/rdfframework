@@ -1,4 +1,7 @@
+import os
+import inspect
 import datetime
+import logging
 import copy
 import json
 from wtforms import Form
@@ -14,11 +17,16 @@ from rdfframework.utilities import make_list, make_set, cbool, \
 #        fw_config, iri, is_not_null
 from rdfframework.forms.widgets import BsGridTableWidget, \
         RepeatingSubFormWidget, ButtonActionWidget, JinjaTemplateWidget
-DEBUG = True
+
+MODULE_NAME = os.path.basename(inspect.stack()[0][1])
+
 def get_field_json(field, instructions, instance, user_info, item_permissions=None):
     '''This function will read through the RDF defined info and proccess the
 	json to return the correct values for the instance, security and details'''
-    debug = False
+    
+    lg = logging.getLogger("%s.%s" % (MODULE_NAME, inspect.stack()[0][3]))
+    lg.setLevel(logging.INFO)
+    
     if item_permissions is None:
         item_permissions = []
     _rdf_app = rdfw().app
@@ -90,9 +98,7 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
     _new_field['kds_processors'] = make_list(_form_instance_info.get('kds_formProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_formProcessing', []))
     _new_field['kds_processors'] += make_list(field.get('kds_propertyProcessing', []))
-    if debug:
-        if field['kds_propUri'] == "schema_image":
-            x=1
+
     # get required state
     _required = False
     _field_req_var = cbool(_new_field['kds_fieldType'].get(\
@@ -131,13 +137,14 @@ def get_field_json(field, instructions, instance, user_info, item_permissions=No
 
 def get_wtform_field(field, instance='', **kwargs):
     ''' return a wtform field '''
-    if not DEBUG:
-        debug = False
-    else:
-        debug = False
-    if debug: print("START get_wtform_field rdffields.py ---------------- \n")
-    if debug: print("instance=",instance,"\nField dict:\n",\
-            json.dumps(field,indent=4))
+    
+    lg = logging.getLogger("%s.%s" % (MODULE_NAME, inspect.stack()[0][3]))
+    lg.setLevel(logging.INFO)
+    
+    
+    lg.debug("\ninstance: %s\nField dict:\n%s", 
+             instance,
+             json.dumps(field,indent=4))
     _form_field = None
     _field_label = field.get("kds_formLabelName", '')
     #print("______label:", _field_label)
@@ -273,30 +280,44 @@ def get_wtform_field(field, instance='', **kwargs):
         _form_path = rdfw().get_form_path(\
                 _field_type_obj.get('kds_subFormUri'), instance)
         kwargs['is_subobj'] = True
-        _sub_form = FormField(\
-                rdf_framework_form_factory(_form_path, is_subobj=True),
-                widget=BsGridTableWidget())
-        if "RepeatingSubForm" == _field_type_obj.get("kds_subFormMode"):
+        template_path = _field_type_obj.get("kds_templatePath")
+        template_name = _field_type_obj.get("kds_templateName")
+        if template_name is not None:
+            widget = JinjaTemplateWidget(template_name, template_path)
+        else:
+            widget = RepeatingSubFormWidget()
+        
+        if "RepeatingSubForm" in _field_type_obj.get("kds_subFormMode",""):
+            _sub_form = FormField(\
+                rdf_framework_form_factory(_form_path, is_subobj=True))
+            template_path = "/widgets/form_repeatingsubform.html"
+            template_name = template_path
+            widget = JinjaTemplateWidget(template_name, template_path)
             _form_field = FieldList(_sub_form, _field_label, min_entries=1,
-                                    widget=RepeatingSubFormWidget())
+                                    widget=widget)
             setattr(_form_field,"frameworkField","RepeatingSubForm")
         else:
+            _sub_form = FormField(\
+                rdf_framework_form_factory(_form_path, is_subobj=True),
+                widget=widget)
             _form_field = _sub_form
             setattr(_form_field,"frameworkField","subForm")
     elif _field_type == 'kdr_FieldList':
         template_path = _field_type_obj.get("kds_templatePath")
         template_name = _field_type_obj.get("kds_templateName")
-        if debug: print("template_name: ", template_name, "template_path: ", template_path)
+        lg.debug("\ntemplate_name: %s\ntemplate_path: %s", 
+                 template_name,
+                 template_path)
         if template_name is not None:
             widget = JinjaTemplateWidget(template_name, template_path)
         else:
             widget = RepeatingSubFormWidget()
-        if debug: print("widget: ", widget)
+        lg.debug("widget: %s", widget)
         _field_json = copy.deepcopy(field)
         _field_json['kds_fieldType']['rdf_type'] = _field_type_obj['kds_listFieldType']
         #_field_json['kds_fieldType'] = {"rdf_type":"kdr_TextField"} #_field_type_obj
         list_field = get_wtform_field(_field_json, instance, **kwargs)['fld']
-        pp.pprint(list_field.__dict__)
+        lg.debug(" list_field\n%s", pp.pformat(list_field.__dict__))
         x = Form
         x.f1 = StringField()
         x.f2 = StringField()
@@ -308,9 +329,8 @@ def get_wtform_field(field, instance='', **kwargs):
 
     else:
         _form_field = StringField(_field_label,
-                                  _field_validators,
-                                  description=field.get('kds_formFieldHelp', ''))
-    if debug: print("END get_wtform_field rdffields.py ---------------- \n")
+                _field_validators,
+                description=field.get('kds_formFieldHelp', ''))
     return {"fld": _form_field, "fld_json": field, "form_js": None}
 
 def get_field_security_access(field, user_info, item_permissions=None):

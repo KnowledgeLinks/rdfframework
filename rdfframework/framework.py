@@ -28,7 +28,6 @@ from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
 
 MODULE_NAME = os.path.basename(inspect.stack()[0][1])
-DEBUG = True
 
 class RdfFramework(object):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
@@ -49,9 +48,13 @@ class RdfFramework(object):
     ln = "%s.RdfFramework" % MODULE_NAME
     # set specific logging handler for the module allows turning on and off
     # debug as required
-    log_level = logging.DEBUG
+    log_level = logging.INFO
     
     def __init__(self, root_file_path, **kwargs):
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         self.root_file_path = root_file_path
         self._set_rdf_def_filelist()
         # if the the definition files have been modified since the last json
@@ -71,21 +74,25 @@ class RdfFramework(object):
         if kwargs.get('server_check', True):
             servers_up = verify_server_core(600, 0)
         else:
-            print("server check skipped")
+            lg.info("server check skipped")
         if not servers_up:
-            print("Sever core not initialized --- Framework Not loaded")
+            lg.info("Sever core not initialized --- Framework Not loaded")
         if servers_up:
-            print("*** Loading Framework ***")
+            lg.info("*** Loading Framework ***")
             self._load_rdf_data(reset)
             self._load_app(reset)
             self._generate_classes(reset)
             self._generate_forms(reset)
             self._generate_apis(reset)
-            print("*** Framework Loaded ***")
+            lg.info("*** Framework Loaded ***")
 
     def load_default_data(self):
         ''' reads default data in the fw_config and attempts to add it
             to the server core i.e. inital users and organizations'''
+
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+               
         # test to see if the default data was already loaded
         sparql = '''
             SELECT ?default_loaded
@@ -126,6 +133,9 @@ class RdfFramework(object):
         ''' reads the object for authentication information and sets the
             flask userclass information '''
 
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         # find the username and password
         for fld in rdf_obj.rdf_field_list:
             if fld.kds_propUri == "kds_userName":
@@ -165,17 +175,16 @@ class RdfFramework(object):
     def clear_password_reset(self, rdf_obj):
         ''' reads through the rdf_obj fields/data and changes the
             kds_changePasswordRequired property to false '''
-        if not DEBUG:
-            debug = False
-        else:
-            debug = False
-        if debug: print("START RdfFramework.clear_password_reset ----------\n")
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         for fld in rdf_obj.rdf_field_list:
             if fld.kds_propUri == "kds_userName":
                 _username = fld
             if fld.kds_propUri == "kds_password":
                 for validator in make_list(fld.validators):
-                    if debug: print(validator)
+                    lg.debug(validator)
                     if isinstance(validator, OldPasswordValidator):
                         _password = fld
         # get the stored information
@@ -206,16 +215,14 @@ class RdfFramework(object):
             rdf_obj.save_state = "success"
             new_user = User(user_obj)
             rdf_obj.save_results = new_user
-        if debug: print("END RdfFramework.clear_password_reset ----------\n")
 
     def _make_user_obj(self, rdf_obj, query_data, username):
         ''' This method will create a user_obj dictionary to be used when
             initializing a User() for the login_manager '''
-        if not DEBUG:
-            debug = False
-        else:
-            debug = True
-        if debug: print("START RdfFramework._make_user_obj ----------------\n")     
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+            
         person_info = None
         user_obj = {}
         user_uri = ""
@@ -243,12 +250,15 @@ class RdfFramework(object):
                         'user_uri': user_uri,
                         'user_groups': user_groups,
                         'app_security': get_app_security(self, user_groups)}
-        if debug: print("user_obj:\n", json.dumps(user_obj, indent=4))
-        if debug: print("END RdfFramework._make_user_obj ------------------\n")
+        lg.debug("user_obj:\n%s", json.dumps(user_obj, indent=4))
         return user_obj
 
     def form_exists(self, form_path):
         '''Tests to see if the form and instance is valid'''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         if form_path in self.form_list.keys():
             return self.form_list[form_path]
         else:
@@ -256,6 +266,10 @@ class RdfFramework(object):
 
     def api_exists(self, api_path):
         '''Tests to see if the form and instance is valid'''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         if api_path in self.api_list.keys():
             return self.api_list[api_path]
         else:
@@ -263,18 +277,30 @@ class RdfFramework(object):
 
     def get_form_path(self, form_uri, instance):
         ''' reads through the list of defined APIs and returns the path '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         for form_path, val in self.form_list.items():
             if val['form_uri'] == form_uri and val['instance_uri'] == instance:
                 return form_path
 
     def get_api_path(self, api_uri, instance):
         ''' reads through the list of defined forms and returns the path '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         for api_path, val in self.api_list.items():
             if val['api_uri'] == api_uri and val['instance_uri'] == instance:
                 return api_path
 
     def get_form_name(self, form_uri):
         '''returns the form name for a form '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         if form_uri:
             return pyuri(form_uri)
         else:
@@ -282,6 +308,10 @@ class RdfFramework(object):
 
     def get_api_name(self, api_uri):
         '''returns the API name for an API '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         if api_uri:
             return pyuri(api_uri)
         else:
@@ -291,21 +321,24 @@ class RdfFramework(object):
         ''' finds the subform field and appends the parent form attributes
            to the subform entries and individually sends the augmented
            subform to the main save_form property'''
-        debug = False
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         _parent_fields = []
         _parent_field_list = {}
         result = []
         rdf_obj.save_results = []
         rdf_obj.save_state = "success"
-        if debug:
-            print("-----------------------")
-            for fld in rdf_obj.Recipient.entries[0].form.rdf_field_list:
-                print(fld.name, " - ", fld.data, " | ", fld)
-            for fld in rdf_obj.Recipient.entries[1].form.rdf_field_list:
-                print(fld.name, " - ", fld.data, " | ", fld)
-            for fld in rdf_obj.Recipient.entries[2].form.rdf_field_list:
-                print(fld.name, " - ", fld.data, " | ", fld)
-            print("-----------------------")
+#        if debug:
+#            print("-----------------------")
+#            for fld in rdf_obj.Recipient.entries[0].form.rdf_field_list:
+#                print(fld.name, " - ", fld.data, " | ", fld)
+#            for fld in rdf_obj.Recipient.entries[1].form.rdf_field_list:
+#                print(fld.name, " - ", fld.data, " | ", fld)
+#            for fld in rdf_obj.Recipient.entries[2].form.rdf_field_list:
+#                print(fld.name, " - ", fld.data, " | ", fld)
+#            print("-----------------------")
         for _field in rdf_obj.rdf_field_list:
             if _field.type != 'FieldList':
                 _parent_fields.append(_field)
@@ -314,8 +347,6 @@ class RdfFramework(object):
         for _field in rdf_obj.rdf_field_list:
             if _field.type == 'FieldList':
                 for _entry in _field.entries:
-                    #if DEBUG:
-                    #    print("__________\n",_entry.__dict__)
                     if _entry.type == 'FormField':
                         if hasattr(_entry.form,"subjectUri"):
                             _entry.form.data_subject_uri = \
@@ -325,12 +356,16 @@ class RdfFramework(object):
                             _entry.form.remove_prop(_entry.form.subjectUri)
 
                             # ------------------------------------------
-                            if debug:
-                                print("subjectUri: ",_entry.form.subjectUri.data)
-                                for fld in _entry.form.rdf_field_list:
-                                    print(fld.name, " - ", fld.data, " | ", fld)
-                                for fld in _field.entries[2].form.rdf_field_list:
-                                    print(fld.name, " - ", fld.data, " | ", fld)
+                            debug_note = []
+                            for fld in _entry.form.rdf_field_list:
+                                debug_note.append("%s - %s | %s" % \
+                                        (fld.name, fld.data, fld))
+                            for fld in _field.entries[2].form.rdf_field_list:
+                                debug_note.append("%s - %s | %s" % \
+                                        (fld.name, fld.data, fld))
+                            lg.debug("\nsubjectUri: %s\n%s",
+                                    _entry.form.subjectUri.data,
+                                    "\n".join(debug_note))
                             # -------------------------------------------
 
                         _entry.form.add_props(_parent_fields)
@@ -353,11 +388,11 @@ class RdfFramework(object):
          - send data to classes for processing
          - send data to classes for saving
         '''
-        if not DEBUG:
-            debug = False
-        else:
-            debug = True
-        if debug: print("START RdfFramework.save_obj --------------------\n")
+        
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
 
         if old_data is None:
             old_obj_data = self.get_obj_data(rdf_obj)
@@ -400,8 +435,7 @@ class RdfFramework(object):
         _form_by_classes = rdf_obj.class_grouping
         _class_save_order = self._get_save_order(rdf_obj)
 
-        if debug: print("class save order:\n",\
-                json.dumps(_class_save_order, indent=4))
+        lg.debug("class save order:\n%s", pp.pformat(_class_save_order))
 
         _reverse_dependancies = rdf_obj.reverse_dependancies
         _id_class_uri = rdf_obj.data_class_uri
@@ -412,8 +446,7 @@ class RdfFramework(object):
             _status = {}
             _status = getattr(self, _rdf_class).save(rdf_obj)
             _data_results.append({"rdfClass":_rdf_class, "status":_status})
-            if DEBUG:
-                print("status ----------\n", json.dumps(_status))
+            lg.debug("status ----------\n%s", pp.pformat(_status))
             if _status.get("status") == "success":
                 _update_class = _reverse_dependancies.get(_rdf_class, [])
                 if _rdf_class == _id_class_uri:
@@ -449,6 +482,10 @@ class RdfFramework(object):
 
             formatType: "sparql" or "turtle"
         '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         _return_str = ""
         for _prefix, _ns in self.ns_obj.items():
             if format_type.lower() == "sparql":
@@ -458,6 +495,10 @@ class RdfFramework(object):
         return _return_str
 
     def get_class_links(self, set_of_classes):
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         _class_set = set()
         _dependant_classes = set()
         _independant_classes = set()
@@ -495,11 +536,10 @@ class RdfFramework(object):
         subject_uri: the URI for the subject
         class_uri: the rdf class of the subject
         '''
-        if not DEBUG:
-            debug = False
-        else:
-            debug = True
-        if debug: print("START get_obj_data ---------------------------\n")
+
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
         _class_uri = kwargs.get("class_uri", rdf_obj.data_class_uri)
         subject_uri = kwargs.get("subject_uri", rdf_obj.data_subject_uri)
         _subobj_data = {}
@@ -530,7 +570,7 @@ class RdfFramework(object):
         _query_data = convert_spo_to_dict(convert_obj_to_rdf_namespace(\
                     get_data(rdf_obj, **kwargs)), "subject", rdf_obj.xsd_load)
         rdf_obj.query_data = _query_data
-        if debug: pp.pprint(_query_data)
+        lg.debug("\n_query_data\n%s", pp.pformat(_query_data))
         # compare the return results with the form fields and generate a
         # formData object
 
@@ -555,12 +595,10 @@ class RdfFramework(object):
         else:
             _obj_data_dict = MultiDict()
         _obj_data = iris_to_strings(_obj_data)
-        if debug: print("**** return value: ---------------------------- \n")
-        if debug: pp.pprint({"obj_data":_obj_data_dict,
+        lg.debug(pp.pformat({"obj_data":_obj_data_dict,
                              "obj_json":_obj_data,
                              "query_data":_query_data,
-                             "form_class_uri":_class_uri})
-        if debug: print("END get_obj_data ---------------------------\n")
+                             "form_class_uri":_class_uri}))
         return {"obj_data":_obj_data_dict,
                 "obj_json":_obj_data,
                 "query_data":_query_data,
@@ -974,11 +1012,7 @@ def verify_server_core(timeout=120, start_delay=90):
 
 
 def read_prop_data(prop, rdf_obj, qry_data, processor_mode):
-    if not DEBUG:
-        debug = False
-    else:
-        debug = True
-    if debug: print("START read_prop_data framework.py --------------------\n")
+
     prop_uri = prop.kds_propUri
     _class_uri = prop.kds_classUri
     _data_value = None
@@ -994,7 +1028,6 @@ def read_prop_data(prop, rdf_obj, qry_data, processor_mode):
                                          i,
                                         _key)
                 _obj_data[_obj_key] = _value
-        if debug: print("END read_prop_data framework.py ----SUBFORM-------\n")
         return _old_data
     else:
         prop_query_data = None
@@ -1008,9 +1041,8 @@ def read_prop_data(prop, rdf_obj, qry_data, processor_mode):
                                             rdf_obj, 
                                             processor_mode, 
                                             list_data))
-        if debug: print("END read_prop_data framework.py ----NON-SUB-------\n")
+
         return return_list
-    if debug: print("END read_prop_data framework.py --------------------\n")
         
 
 def get_class_qry_data(class_uri, prop_uri, qry_data):
@@ -1024,22 +1056,18 @@ def get_class_qry_data(class_uri, prop_uri, qry_data):
         Returns:
             list of qry_data dictionaries
     '''
-    if not DEBUG:
-        debug = False
-    else:
-        debug = True
-    if debug: print("START get_class_qry_data framework.py ----------------\n")
+    lg = logging.getLogger("%s.%s" % (MODULE_NAME, inspect.stack()[0][3]))
+    lg.setLevel(logging.INFO)
     
     class_uri = iri(class_uri)
     return_list = []
     if class_uri not in [None, "kds_NoClass"]:
         for _subject in qry_data:
-            if debug: print("******* %s - %s" % (class_uri,
-                                                 qry_data.get(_subject,\
-                                                 {}).get("rdf_type")))
+            lg.debug("******* %s - %s", 
+                     class_uri,
+                     qry_data.get(_subject, {}).get("rdf_type"))
             if class_uri in qry_data.get(_subject,{}).get("rdf_type"):
                 return_list.append(qry_data[_subject].get(prop_uri))
-    if debug: print("END get_class_qry_data framework.py ----------------\n")
     return return_list
   
 def process_prop(prop, rdf_obj, processor_mode, prop_query_data):
@@ -1054,11 +1082,9 @@ def process_prop(prop, rdf_obj, processor_mode, prop_query_data):
         Returns:
             the processed data
     '''
-    if not DEBUG:
-        debug = False
-    else:
-        debug = True
-    if debug: print("START process_prop framework.py ----------------------\n")
+    lg = logging.getLogger("%s.%s" % (MODULE_NAME, inspect.stack()[0][3]))
+    lg.setLevel(logging.INFO)
+    
     return_val = None
     for _processor in clean_processors([make_list(prop.kds_processors)],
                                        prop.kds_classUri).values():
@@ -1067,12 +1093,11 @@ def process_prop(prop, rdf_obj, processor_mode, prop_query_data):
         prop.processed_data = prop.kds_returnValue
         return_val = prop.kds_returnValue
     if prop.processed_data is not None:
-        if debug: print(prop.kds_propUri, " __ ", type(prop), "--pro--", 
-                        prop.processed_data)
+        lg.debug("\n%s __ %s --pro-- %s ",
+                 prop.kds_propUri, type(prop), 
+                 prop.processed_data)
         return_val = prop.processed_data
         prop.processed_data = None
     else:
         return_val = prop_query_data              
-    
-    if debug: print("START process_prop framework.py ----------------------\n")
     return return_val
