@@ -14,10 +14,12 @@ def get_data(obj, **kwargs):
 def run_sparql_query(sparql, **kwargs):
     ''' run the passed in sparql query and returns the results '''
     _prefix = rdfw().get_prefix()
+    print(_prefix)
+    print(sparql)
     if sparql is not None:
         _results = requests.post(fw_config().get('TRIPLESTORE_URL'),
-                                 data={"prefix": _prefix,
-                                       "query": sparql,
+                                 data={#"prefix": _prefix,
+                                       "query": _prefix + sparql,
                                        "format": "json"})
         return _results.json().get('results', {}).get('bindings', [])
     else:
