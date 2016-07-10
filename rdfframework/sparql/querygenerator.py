@@ -17,9 +17,12 @@ def run_sparql_query(sparql, **kwargs):
     print(_prefix)
     print(sparql)
     if sparql is not None:
+        query = sparql
+        if not sparql.lower().startswith("prefix"):
+            query = _prefix + sparql
         _results = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                  data={#"prefix": _prefix,
-                                       "query": _prefix + sparql,
+                                       "query": query,
                                        "format": "json"})
         return _results.json().get('results', {}).get('bindings', [])
     else:
