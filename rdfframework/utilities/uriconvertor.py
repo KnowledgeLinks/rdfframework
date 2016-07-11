@@ -270,7 +270,7 @@ class RdfNsManager(NamespaceManager):
         graph = NS_GRAPH
         super(RdfNsManager, self).__init__(graph, *args, **kwargs)
 
-    def bind(self, prefix, *args, **kwargs):
+    def bind(self, prefix, namespace, *args, **kwargs):
         """ Extends the function to add an attribute to the class for each 
         added namespace to allow for use of dot notation. All prefixes are 
         converted to lowercase
@@ -289,7 +289,9 @@ class RdfNsManager(NamespaceManager):
         #! treat 'graph' as a reserved word and convert it to graph1 
         if prefix == "graph":
             prefix == "graph1"
-        super(RdfNsManager, self).bind(prefix, *args, **kwargs)
+        if not isinstance(namespace, Namespace):
+            namespace = Namespace(namespace)
+        super(RdfNsManager, self).bind(prefix, namespace, *args, **kwargs)
         # remove all namespace attributes from the class
         ns_attrs = inspect.getmembers(RdfNsManager,
                                       lambda a:not(inspect.isroutine(a)))
@@ -367,3 +369,14 @@ class RdfNsManager(NamespaceManager):
     def clean_iri(self, uri_string):
         return clean_iri(uri_string)
 
+    def pyuri(self, value):
+        return pyuri(value)
+
+    def ttluri(self, value):
+        return ttluri(value)
+
+    def nouri(self, value):
+        return nouri(value)
+
+    def uri_prefix(self, value):
+        return uri_prefix(value)
