@@ -482,17 +482,7 @@ class RdfFramework(object):
 
             formatType: "sparql" or "turtle"
         '''
-        
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
-        
-        _return_str = ""
-        for _prefix, _ns in self.ns_obj.items():
-            if format_type.lower() == "sparql":
-                _return_str += "PREFIX {0}: {1}\n".format(_prefix, iri(_ns))
-            elif format_type.lower() == "turtle":
-                _return_str += "@prefix {0}: {1} .\n".format(_prefix, iri(_ns))
-        return _return_str
+        return self.ns_obj.prefix(format_type)
 
     def get_class_links(self, set_of_classes):
         

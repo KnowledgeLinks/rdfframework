@@ -1,32 +1,39 @@
 ''' contains functions for converting objects to namespace prefixes '''
 import re
-__author__ = "Mike Stabile"
+import inspect
+import logging
+
+from rdflib import Namespace, Graph
+from rdflib.namespace import NamespaceManager
+
+__author__ = "Mike Stabile, Jeremy Nelson"
 
 NS_OBJ = None
+NS_GRAPH = Graph()
 DEBUG = True
+# set the modulename
+MNAME = inspect.stack()[0][1]
+
 def convert_to_ns(value, ns_obj=None):
     ''' converts a value to the prefixed rdf ns equivalent. If not found
         returns the value as is '''
-    if ns_obj is None:
-        from rdfframework import get_framework
-        ns_obj = get_framework().ns_obj
-    for _prefix, _ns_uri in ns_obj.items():
+    ns_obj = get_ns_obj(ns_obj)
+    for _prefix, _ns_uri in ns_obj.namespaces():
         if str(value).startswith(_prefix + ":") or \
                 str(value).startswith("<%s:" % _prefix):
             return value.replace(_prefix + ":", _prefix + "_").replace(\
                     "<","").replace(">","")
-        if str(value).startswith(_ns_uri) or str(value).startswith("<"+_ns_uri):
-            return value.replace(_ns_uri, _prefix + "_").replace(\
+        if str(value).startswith(str(_ns_uri)) or str(value).startswith("<"+str(_ns_uri)):
+            return value.replace(str(_ns_uri), _prefix + "_").replace(\
                     "<","").replace(">","")
     return value
 
 def convert_to_ttl(value, ns_obj=None):
     ''' converts a value to the prefixed rdf ns equivalent. If not found
         returns the value as is '''
-    if ns_obj is None:
-        from rdfframework import get_framework
-        ns_obj = get_framework().ns_obj
-    for _prefix, _ns_uri in ns_obj.items():
+    ns_obj = get_ns_obj(ns_obj)
+    for _prefix, _ns_uri in ns_obj.namespaces():
+        _ns_uri = str(_ns_uri)
         if str(value).startswith(_prefix + "_") or \
                 str(value).startswith("<%s_" % _prefix):
             return value.replace(_prefix + "_", _prefix + ":").replace(\
@@ -40,24 +47,22 @@ def convert_to_uri(value, ns_obj=None, strip_iri=False):
     ''' converts a prefixed rdf ns equivalent value to its uri form.
         If not found returns the value as is '''
 
-    if ns_obj is None:
-        from rdfframework import get_framework
-        ns_obj=get_framework().ns_obj
-    for _prefix, _ns_uri in ns_obj.items():
+    ns_obj = get_ns_obj(ns_obj)
+    for _prefix, _ns_uri in ns_obj.namespaces():
         if str(value).startswith(_prefix + "_") or \
                 str(value).startswith("<%s_" % _prefix):
             if strip_iri:
-                return value.replace("%s_" % _prefix, _ns_uri).replace(\
+                return value.replace("%s_" % _prefix, str(_ns_uri)).replace(\
                         "<","").replace(">","")
             else:
-                return value.replace("%s_" % _prefix, _ns_uri)
+                return value.replace("%s_" % _prefix, str(_ns_uri))
         if str(value).startswith(_prefix + ":") or \
                 str(value).startswith("<%s:" % _prefix):
             if strip_iri:
-                return value.replace("%s:" % _prefix, _ns_uri).replace(\
+                return value.replace("%s:" % _prefix, str(_ns_uri)).replace(\
                         "<","").replace(">","")
             else:
-                return value.replace("%s:" % _prefix, _ns_uri)
+                return value.replace("%s:" % _prefix, str(_ns_uri))
     if str(value).lower() == "none":
         return ""
     else:
@@ -77,21 +82,19 @@ def create_namespace_obj(obj):
                     break
         except AttributeError:
             pass
-    return_obj = {}
+    return_obj = RdfNsManager()
     # cylce through the namespace section and add to the return obj
     for _ns in _ns_obj:
         _prefix_key = "http://knowledgelinks.io/ns/data-structures/prefix"
         _ns_key = 'http://knowledgelinks.io/ns/data-structures/nameSpaceUri'
-        return_obj[_ns.get(_prefix_key)] = _ns.get(_ns_key)
+        return_obj.bind(_ns.get(_prefix_key), Namespace(_ns.get(_ns_key)))
     NS_OBJ = return_obj
     return return_obj
 
 def convert_obj_to_rdf_namespace(obj, ns_obj=None):
     ''' This function takes rdf json definitions and converts all of the
         uri strings to a ns_value format '''
-    if ns_obj is None:
-        from rdfframework import get_framework
-        ns_obj = get_framework().ns_obj
+    ns_obj = get_ns_obj(ns_obj)
 
     if isinstance(obj, list):
         _return_list = []
@@ -121,36 +124,27 @@ def pyuri(value):
     ''' converts an iri to the app defined rdf namespaces in the framework
         in a python accessable format. i.e. schema:name or
         http:schema.org/name  --> schema_name '''
-    global NS_OBJ
-    if NS_OBJ is None:
-        from rdfframework import get_framework
-        NS_OBJ=get_framework().ns_obj
+    ns_obj = get_ns_obj()
     if str(value).startswith("http"):
-        return convert_to_ns(value, NS_OBJ)
+        return convert_to_ns(value, ns_obj)
     else:
-        return convert_to_ns(convert_to_uri(value, NS_OBJ), NS_OBJ)
+        return convert_to_ns(convert_to_uri(value, ns_obj), ns_obj)
 
 def ttluri(value):
     ''' converts an iri to the app defined rdf namespaces in the framework
         in a turtle accessable format. i.e. schema_name or
         http:schema.org/name  --> schema:name '''
-    global NS_OBJ
-    if NS_OBJ is None:
-        from rdfframework import get_framework
-        NS_OBJ=get_framework().ns_obj
+    ns_obj = get_ns_obj()
     if str(value).startswith("http"):
-        return convert_to_ttl(value, NS_OBJ)
+        return convert_to_ttl(value, ns_obj)
     else:
-        return convert_to_ttl(convert_to_uri(value, NS_OBJ), NS_OBJ)
+        return convert_to_ttl(convert_to_uri(value, ns_obj), ns_obj)
 
 def nouri(value):
-    global NS_OBJ
-    if NS_OBJ is None:
-        from rdfframework import get_framework
-        NS_OBJ=get_framework().ns_obj
+    ns_obj = get_ns_obj()
     _uri = None
     if not str(value).startswith("http"):
-        _uri = convert_to_uri(value, NS_OBJ)
+        _uri = convert_to_uri(value, ns_obj)
     else:
         _uri = value
     if _uri:
@@ -165,10 +159,7 @@ def uri_prefix(value):
     else:
         debug = False
     if debug: print("START uri_prefix() uriconvertor.py -------------------\n")
-    global NS_OBJ
-    if NS_OBJ is None:
-        from rdfframework import get_framework
-        NS_OBJ=get_framework().ns_obj
+    ns_obj = get_ns_obj()
     _uri = None
     if not str(value).startswith("http"):
         _uri = convert_to_uri(value, NS_OBJ)
@@ -178,7 +169,7 @@ def uri_prefix(value):
     if debug: print("_uri: ", _uri)
     if debug: print("_ns_uri: ", _ns_uri)
     if _uri:
-        for prefix, uri in NS_OBJ.items():
+        for prefix, uri in NS_OBJ.namespaces():
             if debug: print("uri: ", uri, " prefix: ", prefix)
             if _ns_uri == uri:
                 value = prefix
@@ -187,19 +178,34 @@ def uri_prefix(value):
     return value
 
 def uri(value):
-    global NS_OBJ
-    if NS_OBJ is None:
-        from rdfframework import get_framework
-        NS_OBJ=get_framework().ns_obj
+    ns_obj = get_ns_obj()
     if str(value).startswith("http"):
         return value
     else:
         return convert_to_uri(value)
 
-def iris_to_strings(obj, ns_obj=None):
+def get_ns_obj(ns_obj=None):
+    """ returns an instance of the RdfNsManager
+
+    Args:
+        ns_obj: an RdfNsManager instance or None
+    """
+    global NS_OBJ
     if ns_obj is None:
-        from rdfframework import get_framework
-        ns_obj = get_framework().ns_obj
+        try:
+            from rdfframework import get_framework
+            ns_obj = get_framework().ns_obj
+            if ns_obj is None:
+                ns_obj = RdfNsManager()
+        except:
+            if isinstance(NS_OBJ, RdfNsManager):
+                ns_obj = NS_OBJ
+            else:
+                ns_obj = RdfNsManager()
+    return ns_obj
+
+def iris_to_strings(obj, ns_obj=None):
+    ns_obj = get_ns_obj(ns_obj)
 
     if isinstance(obj, list):
         _return_list = []
@@ -224,3 +230,140 @@ def iris_to_strings(obj, ns_obj=None):
         return _return_obj
     else:
         return convert_to_uri(obj, ns_obj, True)
+
+def clean_iri(uri_string):
+    '''removes the <> signs from a string start and end'''
+    if isinstance(uri_string, str):
+        uri_string = uri_string.strip()
+        if uri_string[:1] == "<" and uri_string[len(uri_string)-1:] == ">":
+            uri_string = uri_string[1:len(uri_string)-1]
+    return uri_string
+
+def iri(uri_string):
+    """converts a string to an IRI or returns an IRI if already formated
+
+    Args:
+        uri_string: uri in string format
+
+    Returns:
+        formated uri with <>
+    """
+
+    if uri_string[:1] == "?":
+        return uri_string
+    if uri_string[:1] == "[":
+        return uri_string
+    if uri_string[:1] != "<":
+        uri_string = "<{}".format(uri_string.strip())
+    if uri_string[len(uri_string)-1:] != ">":
+        uri_string = "{}>".format(uri_string.strip())
+    return uri_string
+
+class RdfNsManager(NamespaceManager):
+    """ Extends the the rdflib Namespace Manager. Provides additional methods
+    to easily generate prefixes in use thoughout the application """
+    ln = "%s-RdfNsManager" % MNAME
+    log_level = logging.DEBUG
+
+    def __init__(self, *args, **kwargs):
+        global NS_GRAPH
+        graph = NS_GRAPH
+        super(RdfNsManager, self).__init__(graph, *args, **kwargs)
+
+    def bind(self, prefix, *args, **kwargs):
+        """ Extends the function to add an attribute to the class for each 
+        added namespace to allow for use of dot notation. All prefixes are 
+        converted to lowercase
+
+        Args:
+            prefix: string of namespace name
+            namespace: rdflib.namespace instance
+
+        Example usage:
+            RdfNsManager.rdf.type => 
+                    http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+
+        """
+        # convert all prefix names to lowercase
+        prefix = str(prefix).lower()
+        #! treat 'graph' as a reserved word and convert it to graph1 
+        if prefix == "graph":
+            prefix == "graph1"
+        super(RdfNsManager, self).bind(prefix, *args, **kwargs)
+        # remove all namespace attributes from the class
+        ns_attrs = inspect.getmembers(RdfNsManager,
+                                      lambda a:not(inspect.isroutine(a)))
+        for attr in ns_attrs:
+            if isinstance(attr[1], Namespace):
+                delattr(RdfNsManager, attr[0])
+
+        # cycle through the namespaces and add them to the class
+        for prefix, namespace in self.store.namespaces():
+            setattr(RdfNsManager, prefix, Namespace(namespace))
+
+    def prefix(self, format_type="sparql"):
+        ''' Generates a string of the rdf namespaces listed used in the
+            framework
+            
+            formatType: "sparql" or "turtle"
+        '''
+        
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        
+        _return_str = ""
+        for _prefix, _ns in self.store.namespaces():
+            if format_type.lower() == "sparql":
+                _return_str += "PREFIX {0}: <{1}>\n".format(_prefix, _ns)
+            elif format_type.lower() == "turtle":
+                _return_str += "@prefix {0}: <{1}> .\n".format(_prefix, _ns)
+        return _return_str
+
+    def load(self, filepath, file_encoding=None):
+        """ Reads the the beginning of a turtle file and sets the prefix's used
+        in that file and sets the prefix attribute 
+
+        Args:
+            filepath: the path to the turtle file
+            file_encoding: specify a specific encoding if necessary
+        """
+        with open(filepath, encoding=file_encoding) as inf:
+            for line in inf:
+                current_line = str(line).strip()
+                if current_line.startswith("@prefix"):
+                    self._add_ttl_ns(current_line.replace("\n",""))
+                elif len(current_line) > 10:
+                    break
+    
+    def _add_ttl_ns(self, line):
+        """ takes one prefix line from the turtle file and binds the namespace
+        to the class
+
+        Args:
+            line: the turtle prefix line string
+        """
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+
+        lg.debug("line:\n%s", line)
+        line = str(line).strip()
+        # if the line is not a prefix line exit
+        if line is None or line == 'none' or line == '' \
+                or not line.lower().startswith('@prefix'):
+            return
+        # parse the turtle line
+        line = line.replace("@prefix","",1).strip()
+        if line.endswith("."):
+            line = line[:-1]
+        prefix = line[:line.find(":")].strip()
+        uri = clean_iri(line[line.find(":")+1:].strip())
+        # add the namespace to the class
+        lg.debug("\nprefix: %s  uri: %s", prefix, uri)
+        self.bind(prefix, Namespace(uri))
+
+    def iri(self, uri_string):
+        return iri(uri_string)
+
+    def clean_iri(self, uri_string):
+        return clean_iri(uri_string)
+

@@ -16,6 +16,7 @@ from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
 from dateutil.parser import parse
+from .uriconvertor import iri, clean_iri
 
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
@@ -102,18 +103,6 @@ def cbool(value, strict=True):
             return_val = None
     return return_val
 
-
-def iri(uri_string):
-    "converts a string to an IRI or returns an IRI if already formated"
-    if uri_string[:1] == "?":
-        return uri_string
-    if uri_string[:1] == "[":
-        return uri_string
-    if uri_string[:1] != "<":
-        uri_string = "<{}".format(uri_string.strip())
-    if uri_string[len(uri_string)-1:] != ">":
-        uri_string = "{}>".format(uri_string.strip())
-    return uri_string
 
 def is_not_null(value):
     ''' test for None and empty string '''
@@ -482,13 +471,6 @@ def get_app_ns_uri(value):
                                                        "appNameSpace", []):
         if _ns.get('prefix') == value:
             return _ns.get('nameSpaceUri')
-
-def clean_iri(uri_string):
-    '''removes the <> signs from a string start and end'''
-    if isinstance(uri_string, str):
-        if uri_string[:1] == "<" and uri_string[len(uri_string)-1:] == ">":
-            uri_string = uri_string[1:len(uri_string)-1]
-    return uri_string
 
 def copy_obj(obj):
     ''' does a deepcopy of an object, but does not copy a class
