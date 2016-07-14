@@ -1,7 +1,12 @@
 __author__ = "Jeremy Nelson, Mike Stabile"
 
+import os
+import sys
 import unittest
-import rdffframework.utilities.uriconvertor as uriconvertor 
+
+PROJECT_DIR = os.path.abspath(os.curdir)
+sys.path.append(PROJECT_DIR)
+import rdfframework.utilities.uriconvertor as uriconvertor 
 
 class TestConvertToNs(unittest.TestCase):
 
@@ -9,3 +14,5 @@ class TestConvertToNs(unittest.TestCase):
         pass
         
 
+if __name__ == '__main__':
+    unittest.main()
