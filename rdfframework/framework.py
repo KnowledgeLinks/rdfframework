@@ -48,7 +48,7 @@ class RdfFramework(object):
     ln = "%s.RdfFramework" % MODULE_NAME
     # set specific logging handler for the module allows turning on and off
     # debug as required
-    log_level = logging.INFO
+    log_level = logging.DEBUG
     
     def __init__(self, root_file_path, **kwargs):
         
@@ -330,15 +330,19 @@ class RdfFramework(object):
         result = []
         rdf_obj.save_results = []
         rdf_obj.save_state = "success"
-#        if debug:
-#            print("-----------------------")
-#            for fld in rdf_obj.Recipient.entries[0].form.rdf_field_list:
-#                print(fld.name, " - ", fld.data, " | ", fld)
-#            for fld in rdf_obj.Recipient.entries[1].form.rdf_field_list:
-#                print(fld.name, " - ", fld.data, " | ", fld)
-#            for fld in rdf_obj.Recipient.entries[2].form.rdf_field_list:
-#                print(fld.name, " - ", fld.data, " | ", fld)
-#            print("-----------------------")
+        if self.log_level == logging.DEBUG:
+            debug_data = []
+            debug_data.append("name\t\tdata\t\tfield")
+            debug_data.append("---------------------")
+            for fld in rdf_obj.Recipient.entries[0].form.rdf_field_list:
+                debug_data.append("%s\t\t%s\t\t%s" % (fld.name, fld.data, fld))
+            debug_data.append("---------------------")
+            for fld in rdf_obj.Recipient.entries[1].form.rdf_field_list:
+                debug_data.append("%s\t\t%s\t\t%s" % (fld.name, fld.data, fld))
+            debug_data.append("---------------------")
+            for fld in rdf_obj.Recipient.entries[2].form.rdf_field_list:
+                debug_data.append("%s\t\t%s\t\t%s" % (fld.name, fld.data, fld))
+            lg.debug("\n".join(debug_data))
         for _field in rdf_obj.rdf_field_list:
             if _field.type != 'FieldList':
                 _parent_fields.append(_field)
@@ -399,7 +403,7 @@ class RdfFramework(object):
             rdf_obj.query_data = old_obj_data.get('query_data')
         else:
             old_obj_data = old_data
-
+        lg.debug("\nold_obj_data\n%s", pp.pformat(old_obj_data))
         if rdf_obj.has_subobj:
             return self.save_object_with_subobj(rdf_obj, old_obj_data)
         if rdf_obj.is_subobj:
@@ -985,13 +989,17 @@ def verify_server_core(timeout=120, start_delay=90):
             try:
                 repo = requests.get(fw_config().get('REPOSITORY_URL'))
                 repo_code = repo.status_code
+                print ("\t", fw_config().get('REPOSITORY_URL'), " - ", repo_code)
             except:
                 repo_code = 400
+                print ("\t", fw_config().get('REPOSITORY_URL'), " - DOWN")
             try:
                 triple = requests.get(fw_config().get('TRIPLESTORE_URL'))
                 triple_code = triple.status_code
+                print ("\t", fw_config().get('TRIPLESTORE_URL'), " - ", triple_code)
             except:
                 triple_code = 400
+                print ("\t", fw_config().get('TRIPLESTORE_URL'), " - down")
             if repo_code == 200 and triple_code == 200:
                 server_down = False
                 return_val = True

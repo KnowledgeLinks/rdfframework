@@ -7,7 +7,7 @@ from rdfframework.utilities import make_triple, iri, clean_iri, fw_config,\
     make_list, uri, get_attr, is_not_null
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-DEBUG = True
+DEBUG = False
 def get_wtform_validators(field):
     ''' reads the list of validators for the field and returns the wtforms
         validator list'''
