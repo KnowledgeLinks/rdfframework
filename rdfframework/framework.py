@@ -551,10 +551,11 @@ class RdfFramework(object):
             # find the subform fields
             for _field in rdf_obj.rdf_field_list:
                 if _field.type == 'FieldList':
-                    if get_attr(_field.entries[0],'type') == 'FormField':
-                        _sub_rdf_obj = _entry.form
-                        _sub_rdf_obj.is_subobj = True
-                        _sub_rdf_obj_list.append(_sub_rdf_obj)
+                    if getattr(_field.entries[0],'type') == 'FormField':
+                        for _entry in _field.entries:
+                            _sub_rdf_obj = _entry.form
+                            _sub_rdf_obj.is_subobj = True
+                            _sub_rdf_obj_list.append(_sub_rdf_obj)
             # if subforms exist, recursively call this method to get the
             # subform data
             _subobj_datalist = []
@@ -747,8 +748,10 @@ class RdfFramework(object):
             _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
                                        data={"query": _sparql,
                                              "format": "json"})
+           
             _string_defs = _form_list.json().get(\
                     'results').get('bindings')[0]['app']['value']
+        
             with open(
                 os.path.join(JSON_LOCATION, "app_query.json"),
                 "w") as file_obj:
@@ -1019,6 +1022,8 @@ def read_prop_data(prop, rdf_obj, qry_data, processor_mode):
     else:
         _field_type = prop.kds_fieldType
     if "subform" in _field_type.get("rdf_type",'').lower():
+        #! NEED _subform_data
+        return []
         for i, _data in enumerate(make_list(\
                 _subform_data.get("obj_data"))):
             for _key, _value in _data.items():
