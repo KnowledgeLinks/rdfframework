@@ -10,6 +10,9 @@ import datetime
 import os
 import re
 import requests
+import pdb
+import logging
+import inspect
 
 from base64 import b64encode, b64decode
 from flask import current_app, json
@@ -17,18 +20,21 @@ from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
 from dateutil.parser import parse
 from .uriconvertor import iri, clean_iri
+from hashlib import sha1
 
-DC = Namespace("http://purl.org/dc/elements/1.1/")
-DCTERMS = Namespace("http://purl.org/dc/terms/")
-DOAP = Namespace("http://usefulinc.com/ns/doap#")
-FOAF = Namespace("http://xmlns.com/foaf/spec/")
-SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+MNAME = inspect.stack()[0][1]
+
+# DC = Namespace("http://purl.org/dc/elements/1.1/")
+# DCTERMS = Namespace("http://purl.org/dc/terms/")
+# DOAP = Namespace("http://usefulinc.com/ns/doap#")
+# FOAF = Namespace("http://xmlns.com/foaf/spec/")
+# SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 DEBUG = True
 
 FRAMEWORK_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-if not os.path.exists(FRAMEWORK_BASE):
-    #! Quick hack to get running on Docker container -- jpn 2016-03-08
-    FRAMEWORK_BASE = "/opt/intro2libsys/ebadges/rdfframework/rdfframework"
+# if not os.path.exists(FRAMEWORK_BASE):
+#     #! Quick hack to get running on Docker container -- jpn 2016-03-08
+#     FRAMEWORK_BASE = "/opt/intro2libsys/ebadges/rdfframework/rdfframework"
 JSON_LOCATION = os.path.join(FRAMEWORK_BASE, "json-definitions")
 
 ENV = Environment(loader=FileSystemLoader(
@@ -173,6 +179,7 @@ def fw_config(**kwargs):
         if not config is None:
             FRAMEWORK_CONFIG = config
         else:
+            #pdb.set_trace()
             print("framework not initialized")
             return "framework not initialized"
     return FRAMEWORK_CONFIG
@@ -427,6 +434,40 @@ def convert_spo_to_dict(data, mode="subject", option="string"):
         else:
             return _return_obj
 
+def convert_spo_nested(data, base_id, hash_ids=True):
+    """ Reads throught the data converts to a nested data object 
+
+    args:
+        data: The s p o query results to convert
+        base_id: the base subject_uri
+        hash_ids: [True, False] hashes the id's 
+    """
+    converted_data = convert_spo_to_dict(data)
+    rtn_obj = converted_data.pop(clean_iri(base_id))
+    if hash_ids:
+        rtn_obj['uri'] = iri(base_id)
+        base_id = sha1(iri(base_id).encode()).hexdigest()
+    rtn_obj["id"] = base_id
+    #pdb.set_trace()
+    for key, value in converted_data.items():
+        new_val = value
+        if not re.match(r'^t\d+', key):
+            new_val['uri'] = iri(key)
+            new_val['id'] = sha1(key.encode()).hexdigest()
+        #pdb.set_trace()
+        for r_key, r_value in rtn_obj.items():
+            #pdb.set_trace()
+            if isinstance(r_value, list):
+                for i, item in enumerate(r_value):
+                    if not isinstance(item, dict) and iri(item) == iri(key):
+                        r_value[i] = new_val
+            elif isinstance(r_value, dict):
+                pass
+            else:
+                if iri(r_value) == iri(key):
+                    rtn_obj[r_key] = new_val
+    return rtn_obj
+
 def remove_null(obj):
     ''' reads through a list or set and strips any null values'''
     if isinstance(obj, set):
@@ -505,7 +546,6 @@ def copy_obj(obj):
         return_obj = copy.copy(obj)
     return return_obj
 
-
 def get_attr(item, name, default=None):
     ''' similar to getattr and get but will test for class or dict '''
     if isinstance(item, dict):
@@ -523,3 +563,306 @@ def separate_props(obj):
     props = copied_obj.get("kds_properties")
     del copied_obj["kds_properties"]
     return({"obj": copied_obj, "kds_properties":props})
+
+
+def mod_git_ignore(directory, ignore_item, action):
+    """ checks if an item is in the specified gitignore file and adds it if it
+    is not in the file
+    """
+    if not os.path.isdir(directory):
+        return
+    ignore_filepath = os.path.join(directory,".gitignore")
+    if not os.path.exists(ignore_filepath):
+        items = []
+    else:
+        with open(ignore_filepath) as ig_file:
+            items = ig_file.readlines()
+    # strip and clean the lines
+    clean_items  = [line.strip("\n").strip() for line in items]
+    clean_items = make_list(clean_items)
+    print(clean_items)
+    if action == "add":
+        if ignore_item not in clean_items:
+            with open(ignore_filepath, "w") as ig_file:
+                clean_items.append(ignore_item)
+                ig_file.write("\n".join(clean_items) + "\n")
+    elif action == "remove":
+        with open(ignore_filepath, "w") as ig_file:
+            for i, value in enumerate(clean_items):
+                if value != ignore_item.lower():
+                    ig_file.write(items[i])
+
+class DataStatus(object):
+    """ Checks and updates the data status from the triplestore 
+        
+    args:
+        group: the datagroup for statuses
+    """
+    ln = "%s-DataStatus" % MNAME
+    log_level = logging.DEBUG
+
+
+    def __init__(self, group, **kwargs):
+
+        self.group = group
+
+    def get(self, status_item):
+        """ queries the database and returns that status of the item.
+
+        args:
+            status_item: the name of the item to check
+        """
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        from rdfframework.sparql import run_sparql_query
+        sparql = '''
+            SELECT ?loaded
+            WHERE {{
+                kdr:{0} kds:{1} ?loaded .
+            }}'''
+        value = run_sparql_query(sparql=sparql.format(self.group, status_item))
+        if len(value) > 0 and cbool(value[0].get('loaded',{}).get("value",False)):
+            return True
+        else:
+            return False
+
+    def set(self, status_item, status):
+        """ sets the status item to the passed in paramaters
+
+        args:
+            status_item: the name if the item to set
+            status: boolean value to set the item
+        """
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        from rdfframework.sparql import run_sparql_query
+        sparql = '''
+            DELETE {{
+                kdr:{0} kds:{1} ?o
+            }}
+            INSERT {{
+                kdr:{0} kds:{1} "{2}"^^xsd:boolean
+            }} 
+            WHERE {{
+                OPTIONAL {{ kdr:{0} kds:{1} ?o }}
+            }}'''
+        return run_sparql_query(sparql=sparql.format(self.group, 
+                                                     status_item,
+                                                     str(status).lower()),
+                                mode='update')
+
+
+class Dot(object):
+    """ Takes a dictionary and gets and sets values via a "." dot notation
+    of the path
+    
+    args:
+        dictionary: The dictionary object
+        copy_dict: Boolean - True - (default) does a deepcopy of the dictionay 
+            before returning. False - maniplutes the passed in dictionary
+            
+    """
+    def __init__(self, dictionary, copy_dict=True):
+        self.obj = dictionary
+        self.new_dict = {}
+        self.copy_dict = copy_dict
+
+    def get(self, prop):
+        """ get the value off the passed in dot notation
+        
+        args:
+            prop: a string of the property to retreive 
+                "a.b.c" ~ dictionary['a']['b']['c']
+        """
+        prop_parts = prop.split(".")
+        val = None
+        for part in prop_parts:
+            if val is None:
+                val = self.obj.get(part)
+            else:
+                val = val.get(part)
+        return val
+
+    def set(self, prop, value):
+        """ sets the dot notated property to the passed in value
+        
+        args:
+            prop: a string of the property to retreive 
+                "a.b.c" ~ dictionary['a']['b']['c']
+            value: the value to set the prop object
+        """
+        
+        prop_parts = prop.split(".")
+        if self.copy_dict:
+            new_dict = copy.deepcopy(self.obj)
+        else:
+            new_dict = self.obj
+        pointer = None
+        parts_length = len(prop_parts) - 1
+        for i, part in enumerate(prop_parts):
+            if pointer is None and i == parts_length:
+                new_dict[part] = value
+            elif pointer is None:
+                pointer = new_dict.get(part)            
+            elif i == parts_length:
+                pointer[part] = value
+            else:
+                pointer = pointer.get(part)
+        return new_dict
+
+def rep_int(value):
+    """ takes a value and see's if can be converted to an integer
+
+    Args:
+        value: value to test
+    Returns:
+        True or False
+    """
+
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False
+
+def delete_key_pattern(obj, regx_pattern):
+    ''' takes a dictionary object and a regular expression pattern and removes
+    all keys that match the pattern. 
+    
+    args:
+        obj: dictionay object to search trhough
+        regx_pattern: string without beginning and ending / '''
+    
+    if isinstance(obj, list):
+        _return_list = []
+        for item in obj:
+            if isinstance(item, list):
+                _return_list.append(delete_key_pattern(item, regx_pattern))
+            elif isinstance(item, set):
+                _return_list.append(list(item))
+            elif isinstance(item, dict):
+                _return_list.append(delete_key_pattern(item, regx_pattern))
+            else:
+                try:
+                    json.dumps(item)
+                    _return_list.append(item)
+                except:
+                    _return_list.append(str(type(item)))
+        return _return_list
+    elif isinstance(obj, set):
+        return list(obj)
+    elif isinstance(obj, dict):
+        _return_obj = {}
+        for key, item in obj.items():
+            if not re.match(regx_pattern, key):
+                if isinstance(item, list):
+                    _return_obj[key] = delete_key_pattern(item, regx_pattern)
+                elif isinstance(item, set):
+                    _return_obj[key] = list(item)
+                elif isinstance(item, dict):
+                    _return_obj[key] = delete_key_pattern(item, regx_pattern)
+                else:
+                    try:
+                        json.dumps(item)
+                        _return_obj[key] = item
+                    except:
+                        _return_obj[key] = str(type(item))
+        return _return_obj
+    else:
+        try:
+            json.dumps(obj)
+            return obj
+        except:
+            return str(type(obj))
+
+def get_dict_key(data, key):
+    ''' will serach a mulitdemensional dictionary for a key name and return a 
+        value list of matching results '''   
+    
+    if isinstance(data, Mapping):
+        if key in data:
+            yield data[key]
+        for key_data in data.values():
+            for found in get_dict_key(key_data, key):
+                yield found
+
+def get_attr(item, name, default=None):
+    ''' similar to getattr and get but will test for class or dict '''
+
+    if isinstance(item, dict):
+        return_val = item.get(name, default)
+    else:
+        if hasattr(item, name):
+            return_val = getattr(item, name)
+        else:
+            return_val = default
+    return return_val
+
+def copy_obj(obj):
+    ''' does a deepcopy of an object, but does not copy a class
+        i.e.
+        x = {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
+        y = copy_obj(x)
+        y --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
+        del y['key'][0]
+        y --> {"key":[<classInstance2>,<classInstance3>]}
+        x --> {"key":[<classInstance1>,<classInstance2>,<classInstance3>]}
+        *** this is to overcome a dictionary object that lists with classes
+            as the list items. '''
+
+    if isinstance(obj, dict):
+        return_obj = {}
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                return_obj[key] = copy_obj(value)
+            elif isinstance(value, list):
+                return_obj[key] = copy_obj(value)
+            else:
+                return_obj[key] = value
+    elif isinstance(obj, list):
+        return_obj = []
+        for value in obj:
+            if isinstance(value, dict):
+                return_obj.append(copy_obj(value))
+            elif isinstance(value, list):
+                return_obj.append(copy_obj(value))
+            else:
+                return_obj.append(value)
+    else:
+        return_obj = copy.copy(obj)
+    return return_obj
+
+def get2(item, key, if_none=None, strict=True):
+    ''' similar to dict.get functionality but None value will return then 
+        if_none value 
+     
+    args:
+        item: dictionary to search
+        key: the dictionary key
+        if_none: the value to return if None is passed in
+        strict: if False an empty string is treated as None'''
+        
+    if not strict and item.get(key) == "":
+        return if_none
+    elif item.get(key) is None:
+        return if_none
+    else:
+        return item.get(key)
+
+class IsFirst():
+    ''' tracks if is the first time through a loop. class must be initialized
+        outside the loop.
+        
+        *args:
+            true -> specifiy the value to return on true
+            false -> specify to value to return on false    '''
+            
+    def __init__(self):
+        self.__first = True
+        
+    def first(self, true=True, false=False):
+        if self.__first == True:
+            self.__first = False
+            return true
+        else:
+            return false

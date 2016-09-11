@@ -1,10 +1,13 @@
 import requests
 import copy
 from rdfframework import get_framework as rdfw
-from rdfframework.utilities import fw_config, make_triple, iri, uri,\
-        is_not_null, render_without_request, make_list, pp, uid_to_repo_uri
+from rdfframework.utilities import make_triple, iri, uri,\
+        is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
+        RdfNsManager as NS_MGR
+from instance import config
 DEBUG = True
 
+NSM = NS_MGR(config=config)
 def get_data(obj, **kwargs):
     ''' queries that datastore for the based on the supplied arguments '''
     _sparql = create_data_sparql_query(obj, **kwargs)
@@ -12,21 +15,30 @@ def get_data(obj, **kwargs):
     return data
 
 def run_sparql_query(sparql, **kwargs):
-    ''' run the passed in sparql query and returns the results '''
-    _prefix = rdfw().get_prefix()
-    print(_prefix)
-    print(sparql)
+    """ run the passed in sparql query and returns the results 
+
+    Args:
+        spaqrl: the sparl query to run. If a prefix is not provided one will be
+                attached
+    kwargs:
+        mode: ['get','update']
+    """
+    _prefix = NSM.prefix()
     if sparql is not None:
         query = sparql
         if not sparql.lower().startswith("prefix"):
             query = _prefix + sparql
-        _results = requests.post(fw_config().get('TRIPLESTORE_URL'),
+    else:
+        return None
+    #print(query)
+    if kwargs.get("mode","get") == "get":
+        _results = requests.post(config.TRIPLESTORE_URL,
                                  data={#"prefix": _prefix,
                                        "query": query,
                                        "format": "json"})
         return _results.json().get('results', {}).get('bindings', [])
-    else:
-        return None
+    elif kwargs.get("mode") == "update":
+        return requests.post(config.TRIPLESTORE_URL, data={"update":query})
 
 def create_data_sparql_query(obj, **kwargs):
     ''' generates the sparql query for getting an object's data '''
@@ -263,7 +275,7 @@ def query_select_options(field):
     if _select_query:
         # send query to triplestore
         _select_list = requests.post(
-            fw_config().get('TRIPLESTORE_URL'),
+            config.TRIPLESTORE_URL,
             data={"query": _prefix + _select_query,
                   "format": "json"})
         _raw_options = _select_list.json().get('results', {}).get('bindings', [])
@@ -287,8 +299,14 @@ def save_file_to_repository(data, repo_item_address):
         print("~~~~~~~~ write code here")
     else:
         repository_result = requests.post(
-            fw_config().get("REPOSITORY_URL"),
+            config.REPOSITORY_URL,
             data=data.read(),
 			         headers={"Content-type":"'image/png'"})
         object_value = repository_result.text
     return iri(object_value)
+
+def get_all_item_data(item_uri):
+    _sparql = render_without_request("sparqlAllItemDataTemplate.rq",
+                                     prefix=NSM.prefix(),
+                                     item_uri=item_uri)
+    return run_sparql_query(_sparql)

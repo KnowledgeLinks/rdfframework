@@ -10,6 +10,7 @@ import logging
 import time
 import operator
 import requests
+import pdb
 
 from werkzeug.datastructures import MultiDict
 from flask import json
@@ -92,7 +93,7 @@ class RdfFramework(object):
 
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-               
+        pdb.set_trace()      
         # test to see if the default data was already loaded
         sparql = '''
             SELECT ?default_loaded
