@@ -310,3 +310,9 @@ def get_all_item_data(item_uri):
                                      prefix=NSM.prefix(),
                                      item_uri=item_uri)
     return run_sparql_query(_sparql)
+
+def get_class_def_item_data(class_uri):
+    _sparql = render_without_request("sparqlClassDefinitionDataTemplate.rq",
+                                     prefix=NSM.prefix(),
+                                     item_uri=class_uri)
+    return run_sparql_query(_sparql)

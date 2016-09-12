@@ -1,0 +1,49 @@
+{{ prefix }}
+
+SELECT DISTINCT ?s ?p ?o
+{
+  	BIND({{ item_uri }} as ?item) .
+	{
+	  	# get all of the triples for the base item
+        ?item ?p ?o.
+	  	BIND(?item as ?s) .
+	} UNION {
+	  	?s ?p0 ?item .
+	  	?s ?p ?o .
+	  	Filter(?p0 != rdf:type).
+		Filter(isiri(?s)||isblank(?s))
+	} UNION {
+        # get the blanknodes tied by kds:classUri
+		?bn ?p0 ?item .
+  		?s ?p2 ?bn .
+        # selects only the base linked subjects
+        ?s kds:classUri {{ item_uri }}.
+        # get the triples for that item 
+		?s ?p ?o .
+  		FILTER isblank(?bn)
+  	} UNION {
+        # get 2nd level blanknodes
+		?s1 ?p0 ?item .
+        # selects only the base linked subjects
+        ?s1 kds:classUri {{ item_uri }}.
+        # get the triples for that item 
+		?s1 ?p3 ?s .
+      	?s ?p ?o .
+      	
+  		FILTER isblank(?s) .
+  	} UNION {
+        # get 3nd level blanknodes
+		?s1 ?p0 ?item .
+        # selects only the base linked subjects
+        ?s1 kds:classUri {{ item_uri }}.
+        # get the triples for that item 
+		?s1 ?p3 ?s2 .
+        ?s2 ?p4 ?s .
+      	?s ?p ?o .
+      	
+  		FILTER isblank(?s) .
+  	}UNION {
+  		?o ?p0 ?item .
+		?s ?p ?o .
+	}	
+}

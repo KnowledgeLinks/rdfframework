@@ -19,7 +19,7 @@ from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
 from dateutil.parser import parse
-from .uriconvertor import iri, clean_iri
+from .uriconvertor import iri, clean_iri, uri
 from hashlib import sha1
 
 MNAME = inspect.stack()[0][1]
@@ -442,6 +442,7 @@ def convert_spo_nested(data, base_id, hash_ids=True):
         base_id: the base subject_uri
         hash_ids: [True, False] hashes the id's 
     """
+    base_id = uri(base_id)
     converted_data = convert_spo_to_dict(data)
     rtn_obj = converted_data.pop(clean_iri(base_id))
     if hash_ids:
@@ -468,6 +469,111 @@ def convert_spo_nested(data, base_id, hash_ids=True):
                     rtn_obj[r_key] = new_val
     return rtn_obj
 
+def convert_spo_def(data, base_id, hash_ids=True):
+    """ Reads throught the data converts to an application definition object 
+
+    args:
+        data: The s p o query results to convert
+        base_id: the base subject_uri
+        hash_ids: [True, False] hashes the id's 
+    """
+    base_id = uri(base_id)
+    converted_data = convert_spo_to_dict(data)
+    rtn_obj = {}
+    rtn_obj[iri(base_id)] = converted_data.pop(clean_iri(base_id))
+    blanknodes = {}
+    temp_data = copy.deepcopy(converted_data)
+    for key, val in temp_data.items():
+        if re.match(r'^t\d+', key):
+            blanknodes[key] = converted_data.pop(key)
+    clean_nodes = bnode_nester(blanknodes, copy.deepcopy(blanknodes))
+    # if hash_ids:
+    #     rtn_obj['uri'] = iri(base_id)
+    #     base_id = sha1(iri(base_id).encode()).hexdigest()
+    #     rtn_obj["id"] = base_id
+    # #pdb.set_trace()
+    # for key, value in converted_data.items():
+    #     new_val = value
+    #     if not re.match(r'^t\d+', key):
+    #         new_val['uri'] = iri(key)
+    #         new_val['id'] = sha1(key.encode()).hexdigest()
+    #     #pdb.set_trace()
+    #     for r_key, r_value in rtn_obj.items():
+    #         #pdb.set_trace()
+    #         if isinstance(r_value, list):
+    #             for i, item in enumerate(r_value):
+    #                 if not isinstance(item, dict) and iri(item) == iri(key):
+    #                     r_value[i] = new_val
+    #         elif isinstance(r_value, dict):
+    #             for sub_key, sub_value in r_value.items():
+
+    #         else:
+    #             if iri(r_value) == iri(key):
+    #                 rtn_obj[r_key] = new_val
+    return clean_nodes
+
+def bnode_nester(obj, bnodes):
+    ''' takes a dictionary object and a list of blanknodes and nests them where
+    the key is
+
+    all keys that match the pattern. 
+    
+    args:
+        obj: dictionay object to search trhough
+        bnodes: dictionay of blanknodes'''
+    
+    if isinstance(obj, list):
+        return_list = []
+        for item in obj:
+            if isinstance(item, list):
+                return_list.append(bnode_nester(item, bnodes))
+            elif isinstance(item, set):
+                return_list.append(list(item))
+            elif isinstance(item, dict):
+                return_list.append(bnode_nester(item, bnodes))
+            elif isinstance(item, str) \
+                    and re.match(r'^t\d+', item) \
+                    and bnodes.get(item):
+                return_list.append(bnodes.get(item))
+            else:
+                try:
+                    json.dumps(item)
+                    return_list.append(item)
+                except:
+                    return_list.append(str(type(item)))
+        return return_list
+    elif isinstance(obj, set):
+        return bnode_nester(list(item), bnodes)
+    elif isinstance(obj, dict):
+        return_obj = {}
+        for key, item in obj.items():
+            if isinstance(item, list):
+                return_obj[key] = bnode_nester(item, bnodes)
+            elif isinstance(item, set):
+                return_obj[key] = list(item)
+            elif isinstance(item, dict):
+                return_obj[key] = bnode_nester(item, bnodes)
+            elif isinstance(item, str) \
+                    and re.match(r'^t\d+', item) \
+                    and bnodes.get(item):
+                return_obj[key] = bnodes.get(item)
+            else:
+                try:
+                    json.dumps(item)
+                    return_obj[key] = item
+                except:
+                    return_obj[key] = str(type(item))
+        return return_obj
+    elif isinstance(item, str) \
+            and re.match(r'^t\d+', item) \
+            and bnodes.get(item):
+        return bnodes.get(item)
+    else:
+        try:
+            json.dumps(obj)
+            return obj
+        except:
+            return str(type(obj))
 def remove_null(obj):
     ''' reads through a list or set and strips any null values'''
     if isinstance(obj, set):
