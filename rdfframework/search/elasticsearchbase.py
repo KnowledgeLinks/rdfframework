@@ -44,23 +44,24 @@ class EsBase():
         self.es_mapping = kwargs.get("es_mapping")
         
  
-    def make_action_list(self, **kwargs):
+    def make_action_list(self, item_list, **kwargs):
         ''' Generates a list of actions for sending to Elasticsearch '''
         
         action_list = []
         es_index = get2(kwargs, "es_index", self.es_index)
-        item_list = kwargs.get("item_list",[])
         action_type = kwargs.get("action_type","create")
         action_settings = {'_op_type': action_type,
                            '_index': es_index}
-        doc_type = kwargs.get("doc_type","unk")
+        doc_type = kwargs.get("doc_type", self.doc_type)
+        if not doc_type:
+            doc_type = "unk"
         id_field = kwargs.get("id_field")
         for item in item_list:
             action = get_es_action_item(item, action_settings, doc_type, id_field)
             action_list.append(action)
         return action_list
                
-    def bulk_save(self, **kwargs):
+    def bulk_save(self, action_list, **kwargs):
         ''' sends a passed in action_list to elasticsearch '''
         
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
@@ -69,27 +70,8 @@ class EsBase():
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
         reset_index = kwargs.get("reset_index",self.reset_index)
-        doc_type = kwargs.get("doc_type")
-        action_list = kwargs.get("action_list",[])
-        reset_doc_type = kwargs.get("reset_doc_type",self.reset_doc_type)
-        es_mapping = kwargs.get('es_mapping', self.es_mapping)
-        if reset_index:
-            lg.warn("DELETING Elasticsearch INDEX => %s ******", es_index)
-            es.indices.delete(index=es_index + "_*", ignore=[400, 404])
-        if reset_index or not es.indices.exists(index=es_index):
-            es_settings = EsMappings().get_es_settings(es_index)
-            if es_settings:
-                es_mapping = None
-            es.indices.create(index=es_index+"_v1",
-                              body=es_settings,
-                              update_all_types=True) #,
-                              #ignore=[400])
-            es.indices.put_alias(index=[es_index+"_v1"], name=es_index)
-        if es_mapping:
-            es.indices.put_mapping(index=es_index+"_v1",
-                                   doc_type=doc_type,
-                                   body=es_mapping,
-                                   update_all_types=True)        
+        doc_type = kwargs.get("doc_type", self.doc_type)
+        self.create_index(**kwargs)      
              
         lg.info("Sending %s items to Elasticsearch",len(action_list))
 #        bulk_stream = helpers.streaming_bulk(es, 
@@ -364,7 +346,7 @@ class EsBase():
         es_mapping = kwargs.get('es_mapping', self.es_mapping)
         es_index = kwargs.get('es_index', self.es_index)
         es = kwargs.get("es", self.es)
-        pdb.set_trace()
+        #pdb.set_trace()
         if reset_index:
             lg.warn("DELETING Elasticsearch INDEX => %s ******", es_index)
             es.indices.delete(index=es_index + "*", ignore=[400, 404])
@@ -381,4 +363,5 @@ class EsBase():
             es.indices.put_mapping(index=es_index+"_v1",
                                    doc_type=doc_type,
                                    body=es_mapping,
-                                   update_all_types=True)      
+                                   update_all_types=True) 
+        self.reset_index = False     
