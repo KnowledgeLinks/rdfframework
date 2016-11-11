@@ -1,3 +1,4 @@
+import os
 import requests
 import copy
 from rdfframework import get_framework as rdfw
@@ -22,6 +23,7 @@ def run_sparql_query(sparql, **kwargs):
                 attached
     kwargs:
         mode: ['get','update']
+        namespace: the triplestore namespace to use
     """
     _prefix = NSM.prefix()
     if sparql is not None:
@@ -30,15 +32,19 @@ def run_sparql_query(sparql, **kwargs):
             query = _prefix + sparql
     else:
         return None
-    #print(query)
+    sparql_endpoint = config.TRIPLESTORE_URL
+    if kwargs.get("namespace"):
+        sparql_endpoint = os.path.join(sparql_endpoint.replace("sparql",""),
+                                       "namespace",
+                                       kwargs['namespace'],
+                                       "sparql")
     if kwargs.get("mode","get") == "get":
-        _results = requests.post(config.TRIPLESTORE_URL,
-                                 data={#"prefix": _prefix,
-                                       "query": query,
+        _results = requests.post(sparql_endpoint,
+                                 data={"query": query,
                                        "format": "json"})
         return _results.json().get('results', {}).get('bindings', [])
     elif kwargs.get("mode") == "update":
-        return requests.post(config.TRIPLESTORE_URL, data={"update":query})
+        return requests.post(sparql_endpoint, data={"update":query})
 
 def create_data_sparql_query(obj, **kwargs):
     ''' generates the sparql query for getting an object's data '''
@@ -311,8 +317,8 @@ def get_all_item_data(item_uri):
                                      item_uri=item_uri)
     return run_sparql_query(_sparql)
 
-def get_class_def_item_data(class_uri):
+def get_class_def_item_data(class_uri, **kwargs):
     _sparql = render_without_request("sparqlClassDefinitionDataTemplate.rq",
                                      prefix=NSM.prefix(),
                                      item_uri=class_uri)
-    return run_sparql_query(_sparql)
+    return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb"))    

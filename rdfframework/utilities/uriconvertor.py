@@ -98,7 +98,7 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False):
     args:
         obj: the dictionary object to convert
         ns_obj: RdfNsManager instance *optional
-        key_only: Default = False, True = convert only the dictionay keys
+        key_only: Default = False, True = convert only the dictionary keys
     """
     ns_obj = get_ns_obj(ns_obj)
 

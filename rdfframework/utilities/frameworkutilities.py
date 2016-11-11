@@ -487,6 +487,8 @@ def convert_spo_def(data, base_id, hash_ids=True):
         if re.match(r'^t\d+', key):
             blanknodes[key] = converted_data.pop(key)
     clean_nodes = bnode_nester(blanknodes, copy.deepcopy(blanknodes))
+    properties = bnode_nester(converted_data, clean_nodes)
+    rtn_obj[iri(base_id)]['kds_properties'] = properties
     # if hash_ids:
     #     rtn_obj['uri'] = iri(base_id)
     #     base_id = sha1(iri(base_id).encode()).hexdigest()
@@ -510,7 +512,7 @@ def convert_spo_def(data, base_id, hash_ids=True):
     #         else:
     #             if iri(r_value) == iri(key):
     #                 rtn_obj[r_key] = new_val
-    return clean_nodes
+    return rtn_obj
 
 def bnode_nester(obj, bnodes):
     ''' takes a dictionary object and a list of blanknodes and nests them where

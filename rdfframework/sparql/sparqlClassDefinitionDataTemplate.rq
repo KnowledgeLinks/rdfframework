@@ -1,49 +1,57 @@
 {{ prefix }}
 
+
+
 SELECT DISTINCT ?s ?p ?o
 {
-  	BIND({{ item_uri }} as ?item) .
-	{
-	  	# get all of the triples for the base item
+  BIND({{ item_uri }} as ?item) .
+    {
+        # get all of the triples for the base item
         ?item ?p ?o.
-	  	BIND(?item as ?s) .
-	} UNION {
-	  	?s ?p0 ?item .
-	  	?s ?p ?o .
-	  	Filter(?p0 != rdf:type).
-		Filter(isiri(?s)||isblank(?s))
-	} UNION {
-        # get the blanknodes tied by kds:classUri
-		?bn ?p0 ?item .
-  		?s ?p2 ?bn .
+        BIND(?item as ?s) .
+    } UNION {
+        # get the domain tied properties
+        ?s rdfs:domain ?item .
+        ?s ?p ?o .
+    } UNION {
+        # get the 1st level blanknodes tied by kds:classUri
+        ?prop rdfs:domain ?item .
+        ?prop ?p1 ?s .
         # selects only the base linked subjects
-        ?s kds:classUri {{ item_uri }}.
-        # get the triples for that item 
-		?s ?p ?o .
-  		FILTER isblank(?bn)
-  	} UNION {
-        # get 2nd level blanknodes
-		?s1 ?p0 ?item .
+        {
+          ?s kds:classUri kdr:AllClasses .  
+        } UNION {
+          ?s kds:classUri ?item .
+        }
+        ?s ?p ?o .
+        FILTER isblank(?s)
+    } UNION {
+        # get the 2nd level blanknodes tied by kds:classUri
+        ?prop rdfs:domain ?item .
+        ?prop ?p0 ?s1 .
         # selects only the base linked subjects
-        ?s1 kds:classUri {{ item_uri }}.
-        # get the triples for that item 
-		?s1 ?p3 ?s .
-      	?s ?p ?o .
-      	
-  		FILTER isblank(?s) .
-  	} UNION {
-        # get 3nd level blanknodes
-		?s1 ?p0 ?item .
+        {
+          ?s1 kds:classUri kdr:AllClasses .  
+        } UNION {
+          ?s1 kds:classUri ?item .
+        }
+        ?s1 ?p1 ?s .
+        ?s ?p ?o
+        FILTER isblank(?s)
+    } UNION {
+        # get the 3rd level blanknodes tied by kds:classUri
+        ?prop rdfs:domain ?item .
+        ?prop ?p0 ?s1 .
         # selects only the base linked subjects
-        ?s1 kds:classUri {{ item_uri }}.
-        # get the triples for that item 
-		?s1 ?p3 ?s2 .
-        ?s2 ?p4 ?s .
-      	?s ?p ?o .
-      	
-  		FILTER isblank(?s) .
-  	}UNION {
-  		?o ?p0 ?item .
-		?s ?p ?o .
-	}	
+        {
+          ?s1 kds:classUri kdr:AllClasses .  
+        } UNION {
+          ?s1 kds:classUri ?item .
+        }
+        ?s1 ?p1 ?s2 .
+        ?s2 ?p2 ?s .
+        ?s ?p ?o
+        FILTER isblank(?s)
+    }
 }
+ORDER BY ?s
