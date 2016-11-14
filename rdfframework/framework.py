@@ -17,13 +17,13 @@ from flask import json
 
 from .rdfproperty import RdfProperty
 from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
-        remove_null, clean_iri, convert_spo_to_dict, \
+        remove_null, clean_iri, convert_spo_to_dict, convert_ispo_to_dict, \
         render_without_request, create_namespace_obj, \
         convert_obj_to_rdf_namespace, pyuri, nouri, pp, iris_to_strings, \
-        JSON_LOCATION
-
+        JSON_LOCATION, convert_obj_to_rdf_namespace, convert_spo_def
 from rdfframework.processors import clean_processors, run_processor
-from rdfframework.sparql import get_data
+from rdfframework.sparql import get_data, get_linker_def_item_data, \
+        get_class_def_item_data
 from rdfframework.validators import OldPasswordValidator
 from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
@@ -58,6 +58,7 @@ class RdfFramework(object):
         
         self.root_file_path = root_file_path
         self._set_rdf_def_filelist()
+        self.form_list = {}
         # if the the definition files have been modified since the last json
         # files were saved reload the definition files
         if kwargs.get('reset',False) or self.last_def_mod > self.last_json_mod:
@@ -83,8 +84,8 @@ class RdfFramework(object):
             self._load_rdf_data(reset)
             self._load_app(reset)
             self._generate_classes(reset)
-            self._generate_forms(reset)
-            self._generate_apis(reset)
+            #self._generate_forms(reset)
+            #self._generate_apis(reset)
             lg.info("*** Framework Loaded ***")
 
     def load_default_data(self):
@@ -92,8 +93,7 @@ class RdfFramework(object):
             to the server core i.e. inital users and organizations'''
 
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
-        pdb.set_trace()      
+        lg.setLevel(self.log_level)     
         # test to see if the default data was already loaded
         sparql = '''
             SELECT ?default_loaded
@@ -766,27 +766,36 @@ class RdfFramework(object):
 
     def _load_rdf_class_defintions(self, reset):
         ''' Queries the triplestore for list of classes used in the app as
-            defined in the kl_app.ttl file'''
+            defined in the rdfw-definitions folders'''
         print("\tLoading rdf class definitions")
         if reset:
-            _sparql = render_without_request("jsonRDFclassDefinitions.rq",
-                                             graph=fw_config().get(\
-                                                    'RDF_DEFINITION_GRAPH'))
-            _class_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
-                                        data={"query": _sparql, "format": "json"})
-            _raw_json = _class_list.json().get(\
-                    'results').get('bindings')[0]['klClasses']['value']
-            _string_defs = _raw_json.replace('hasProperty":', 'properties":')
+            # get a list of all of the rdf classes being defined
+            prefix = self.ns_obj.prefix()
+            graph = fw_config().get('RDF_DEFINITION_GRAPH')
+            sparql = render_without_request("sparqlClassDefinitionList.rq",
+                                             graph=graph,
+                                             prefix=prefix)
+            class_qry = requests.post(fw_config().get('TRIPLESTORE_URL'),
+                                      data={"query": sparql, "format": "json"})
+            class_list = class_qry.json().get('results').get('bindings')
+            class_dict = {}
+            # cycle through the classes and query for the class definitions
+            for app_class in class_list:
+                class_uri = iri(app_class['kdsClass']['value'])
+                data = get_class_def_item_data(class_uri)
+                #pdb.set_trace()
+                class_dict[class_uri] = convert_ispo_to_dict(data, 
+                        base=class_uri)
+            class_dict = convert_obj_to_rdf_namespace(class_dict)
             with open(
                 os.path.join(JSON_LOCATION,"class_query.json"),
                 "w") as file_obj:
-                file_obj.write( _string_defs )
-            _json_defs = json.loads(_string_defs)
+                file_obj.write( json.dumps(class_dict, indent=4) )
         else:
             with open(
                 os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
-                _json_defs = json.loads(file_obj.read())
-        return _json_defs
+                class_dict = json.loads(file_obj.read())
+        return class_dict
 
     def _load_rdf_form_defintions(self, reset):
         ''' Queries the triplestore for list of forms used in the app as

@@ -19,7 +19,7 @@ from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import Namespace, XSD
 from dateutil.parser import parse
-from .uriconvertor import iri, clean_iri, uri
+from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 
 MNAME = inspect.stack()[0][1]
@@ -38,7 +38,7 @@ FRAMEWORK_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 JSON_LOCATION = os.path.join(FRAMEWORK_BASE, "json-definitions")
 
 ENV = Environment(loader=FileSystemLoader(
-    [os.path.join(FRAMEWORK_BASE, "sparql"),
+    [os.path.join(FRAMEWORK_BASE, "sparql", "queries"),
      os.path.join(FRAMEWORK_BASE, "turtle")]))
 
 def nz(value, none_value, strict=True):
@@ -203,7 +203,7 @@ def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
     from rdfframework import get_framework as rdfw
     if data_type:
         data_type = data_type.replace(str(XSD), "")
-    if not value:
+    if not value or isinstance(value, dict) or isinstance(value, list):
         return value
     elif rdf_type == "uri":
         return iri(value)
@@ -481,6 +481,9 @@ def convert_spo_def(data, base_id, hash_ids=True):
     converted_data = convert_spo_to_dict(data)
     rtn_obj = {}
     rtn_obj[iri(base_id)] = converted_data.pop(clean_iri(base_id))
+    if rtn_obj[iri(base_id)].get("rdfs_subClassOf"):
+        parent_class = rtn_obj[iri(base_id)].get("rdfs_subClassOf")
+        parent_data = converted_data.pop(clean_iri(parent_class))
     blanknodes = {}
     temp_data = copy.deepcopy(converted_data)
     for key, val in temp_data.items():
@@ -489,29 +492,6 @@ def convert_spo_def(data, base_id, hash_ids=True):
     clean_nodes = bnode_nester(blanknodes, copy.deepcopy(blanknodes))
     properties = bnode_nester(converted_data, clean_nodes)
     rtn_obj[iri(base_id)]['kds_properties'] = properties
-    # if hash_ids:
-    #     rtn_obj['uri'] = iri(base_id)
-    #     base_id = sha1(iri(base_id).encode()).hexdigest()
-    #     rtn_obj["id"] = base_id
-    # #pdb.set_trace()
-    # for key, value in converted_data.items():
-    #     new_val = value
-    #     if not re.match(r'^t\d+', key):
-    #         new_val['uri'] = iri(key)
-    #         new_val['id'] = sha1(key.encode()).hexdigest()
-    #     #pdb.set_trace()
-    #     for r_key, r_value in rtn_obj.items():
-    #         #pdb.set_trace()
-    #         if isinstance(r_value, list):
-    #             for i, item in enumerate(r_value):
-    #                 if not isinstance(item, dict) and iri(item) == iri(key):
-    #                     r_value[i] = new_val
-    #         elif isinstance(r_value, dict):
-    #             for sub_key, sub_value in r_value.items():
-
-    #         else:
-    #             if iri(r_value) == iri(key):
-    #                 rtn_obj[r_key] = new_val
     return rtn_obj
 
 def bnode_nester(obj, bnodes):
@@ -688,7 +668,6 @@ def mod_git_ignore(directory, ignore_item, action):
     # strip and clean the lines
     clean_items  = [line.strip("\n").strip() for line in items]
     clean_items = make_list(clean_items)
-    print(clean_items)
     if action == "add":
         if ignore_item not in clean_items:
             with open(ignore_filepath, "w") as ig_file:
@@ -974,3 +953,100 @@ class IsFirst():
             return true
         else:
             return false
+
+def convert_ispo_to_dict(data, mode="subject", base=None):
+    '''Takes the SPAQRL query results and converts them to a python Dict
+
+    Args:
+        data: the list of items
+        mode: subject --> groups based on subject
+        base: the base class for the  subClassOf inheritance
+
+    '''
+    if data is None:
+        return None
+    rtn_obj = {}
+    base = uri(clean_iri(base))
+    _list_obj = False
+    dbl_bn_list = []
+    sgl_bn_list = []
+    no_bn_list = []
+    new_data = []
+    for item in data:
+        if item['s']['type'] == "bnode" and item['o']['type'] == "bnode":
+            dbl_bn_list.append(item)
+        elif item['s']['type'] == "bnode":
+            sgl_bn_list.append(item)
+        else:
+            no_bn_list.append(item)
+    singles = convert_spo_to_dict(sgl_bn_list)
+    for item in dbl_bn_list:
+        item['o']['value'] = dict.copy(singles.get(item['o']['value'],{}))
+    doubles = convert_spo_to_dict(dbl_bn_list)
+    for key, value in doubles.items():
+        if singles.get(key):
+            for bn_key, bn_val in value.items():
+                if bn_key in singles[key].keys():
+                    if isinstance(singles[key][bn_key], list) and \
+                            bn_val not in singles[key][bn_key]:
+                        singles[key][bn_key].append(bn.val)
+                    elif bn_val != singles[key][bn_key]:
+                        singles[key][bn_key] = [singles[key][bn_key], bn_val]
+                else:
+                    singles[key][bn_key] = bn_val
+        else:
+            singles['key'] = value
+    subclass_list = []
+    subclass_uri = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+    for item in no_bn_list:
+        if item['o']['type'] == "bnode":
+            item['o']['value'] = singles.get(item['o']['value'])
+        if item['p']['value'] == subclass_uri:
+            subclass_list.append(item)
+    # find the subClassOf order
+    ordered_subclasses = []
+    
+    if base:
+        # group the query based on class
+        grouped_by_class =  {}
+        for item in no_bn_list:
+            if grouped_by_class.get(item['item']['value']):
+                grouped_by_class[item['item']['value']].append(item)
+            else:
+                grouped_by_class[item['item']['value']]= [item]
+        # convert each group to a dict
+        for key, value in grouped_by_class.items():
+            grouped_by_class[key]=convert_spo_def(value, key)[iri(key)]
+        # determine the subclass order
+        current_class = base
+        finished = False
+        while not finished:
+            found = False
+            for item in subclass_list:
+                if item['s']['value'] == current_class:
+                    ordered_subclasses.append(current_class)
+                    current_class = item['o']['value'];
+                    found = True
+                    break
+            if not found:
+                finished = True
+                ordered_subclasses.append(current_class)
+        # write each class to a final dict where the subclass overides any
+        # parent properties
+        rtn_obj = {}
+        first = IsFirst()
+        for subclass in reversed(ordered_subclasses):
+            if first.first():
+                rtn_obj = grouped_by_class[subclass]
+            else:
+
+                for key, value in grouped_by_class[subclass].items():
+                    if key == "kds_properties":
+                        if rtn_obj.get(key):
+                            for prop, data in value.items():
+                                rtn_obj[key][prop] = data
+                        else:
+                            rtn_obj[key] = value
+                    else:
+                        rtn_obj[key] = value
+    return rtn_obj

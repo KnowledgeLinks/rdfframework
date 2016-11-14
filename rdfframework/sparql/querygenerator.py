@@ -42,7 +42,10 @@ def run_sparql_query(sparql, **kwargs):
         _results = requests.post(sparql_endpoint,
                                  data={"query": query,
                                        "format": "json"})
-        return _results.json().get('results', {}).get('bindings', [])
+        if _results:
+            return _results.json().get('results', {}).get('bindings', [])
+        else:
+            return []
     elif kwargs.get("mode") == "update":
         return requests.post(sparql_endpoint, data={"update":query})
 
@@ -318,7 +321,20 @@ def get_all_item_data(item_uri):
     return run_sparql_query(_sparql)
 
 def get_class_def_item_data(class_uri, **kwargs):
+    definition_graph = kwargs.get("definition_graph",
+                                  config.RDF_DEFINITION_GRAPH)
     _sparql = render_without_request("sparqlClassDefinitionDataTemplate.rq",
                                      prefix=NSM.prefix(),
-                                     item_uri=class_uri)
+                                     item_uri=class_uri,
+                                     graph=definition_graph)
+    return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb")) 
+
+def get_linker_def_item_data(**kwargs):
+    definition_graph = kwargs.get("definition_graph",
+                                  config.RDF_DEFINITION_GRAPH)
+    if not definition_graph:
+        definition_graph = "bd:nullGraph"
+    _sparql = render_without_request("sparqlLinkerDefinitionDataTemplate.rq",
+                                     prefix=NSM.prefix(),
+                                     definition_graph=definition_graph)
     return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb"))    

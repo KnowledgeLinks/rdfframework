@@ -1,0 +1,19 @@
+{{ prefix }}
+
+# This query returns a list of all classes used in the application
+SELECT DISTINCT ?kdsClass
+{
+    # query only from the app definition graph
+    GRAPH {{ graph }}
+    {
+        {
+            # Get the list of classes that are a subClass of a kds:ControlledClass
+            ?base a kds:ControlledClass .
+            ?kdsClass rdfs:subClassOf+ ?base 
+            filter(?kdsClass!=rdfs:Class)   
+        } UNION {
+            # Get the kds:ControlledClasses
+            ?kdsClass a kds:ControlledClass
+        }
+    }
+}

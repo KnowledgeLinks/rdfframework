@@ -1,0 +1,21 @@
+{{ prefix }}
+
+# This query will pull all of the linkers and expand the properties out for
+# each kds:srcPropUri
+# <http://www.bigdata.com/rdf#nullGraph>
+SELECT *
+{
+    GRAPH {{ definition_graph }}
+    {
+        SELECT DISTINCT ?s ?p ?o
+        {
+          # get all of the linkers
+          ?linker a kds:PropertyLinker . 
+          # expand out of all of the properties for each kds:srcPropUri
+          ?linker kds:srcPropUri ?s .
+          ?linker ?p ?o .
+          # filter out all of the kds:srcPropUri since it is now the subject
+          filter(?p!=kds:srcPropUri)
+        }
+    }
+}
