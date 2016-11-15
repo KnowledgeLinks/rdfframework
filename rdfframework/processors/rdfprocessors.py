@@ -5,9 +5,16 @@ import re
 from base64 import b64encode
 from dateutil.parser import parse as parse_date
 from passlib.hash import sha256_crypt
-from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
-        slugify, clean_iri, iri, cbool, remove_null, pp, ttluri, get_attr
-from rdfframework import get_framework
+try:
+    from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
+            slugify, clean_iri, iri, cbool, remove_null, pp, ttluri, get_attr
+    from rdfframework import get_framework
+
+except ImportError:
+    # Try local import
+    from ..utilities import is_not_null, make_set, make_list, pyuri,\
+            slugify, clean_iri, iri, cbool, remove_null, pp, ttluri, get_attr
+    from .. import get_framework
 from .imageprocessor import image_processor
 
 __author__ = "Mike Stabile, Jeremy Nelson"

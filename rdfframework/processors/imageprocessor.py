@@ -1,11 +1,17 @@
+__author__ = "Mike Stabile, Jeremy Nelson"
+
 import os
 
-from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
+try:
+    from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
         slugify, clean_iri
-from rdfframework import get_framework
+    from rdfframework import get_framework
+except ImportError:
+    # Try Local Import
+    from ..utilities import is_not_null, make_set, make_list, pyuri,\
+        slugify, clean_iri
+    from .. import get_framework
 
-
-__author__ = "Mike Stabile, Jeremy Nelson"
 
 
 def image_processor(processor, obj, prop, mode="save"):

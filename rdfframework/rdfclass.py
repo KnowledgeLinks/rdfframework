@@ -5,16 +5,32 @@ import requests
 import copy
 from werkzeug.datastructures import FileStorage
 from jinja2 import Template
-from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, \
-    make_list, make_set, make_triple, remove_null, DeleteProperty, \
-    NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
-    pyuri, get_attr, slugify
+try:
+    from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, \
+        make_list, make_set, make_triple, remove_null, DeleteProperty, \
+        NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
+        pyuri, get_attr, slugify
+except ImportError:
+    # Try local imports
+    from .utilities import clean_iri, fw_config, iri, is_not_null, \
+        make_list, make_set, make_triple, remove_null, DeleteProperty, \
+        NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
+        pyuri, get_attr, slugify
+   
 
 from .getframework import get_framework as rdfw
-from rdfframework.rdfdatatype import RdfDataType
-from rdfframework.utilities.debug import dumpable_obj
-from rdfframework.processors import clean_processors, run_processor
-from rdfframework.sparql import save_file_to_repository
+try:
+    from rdfframework.rdfdatatype import RdfDataType
+    from rdfframework.utilities.debug import dumpable_obj
+    from rdfframework.processors import clean_processors, run_processor
+    from rdfframework.sparql import save_file_to_repository
+except ImportError:
+    # Try local imports
+    from .rdfdatatype import RdfDataType
+    from .utilities.debug import dumpable_obj
+    from .processors import clean_processors, run_processor
+    from .sparql import save_file_to_repository
+   
 # setting DEBUG to False will turn all the debug printing off in the module
 DEBUG = True
 class RdfClass(object):

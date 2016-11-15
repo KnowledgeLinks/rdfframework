@@ -1,10 +1,18 @@
 import os
 import requests
 import copy
-from rdfframework import get_framework as rdfw
-from rdfframework.utilities import make_triple, iri, uri,\
-        is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
-        RdfNsManager as NS_MGR
+try:
+    from rdfframework import get_framework as rdfw
+    from rdfframework.utilities import make_triple, iri, uri,\
+            is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
+            RdfNsManager as NS_MGR
+except ImportError:
+    # Try local import
+    from .. import get_framework as rdfw
+    from ..utilities import make_triple, iri, uri,\
+            is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
+            RdfNsManager as NS_MGR
+   
 from instance import config
 DEBUG = True
 

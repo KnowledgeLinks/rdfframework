@@ -1,6 +1,10 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-from rdfframework.utilities import fw_config
+try:
+    from rdfframework.utilities import fw_config
+except ImportError:
+    # Try local import  
+    from .utilities import fw_config
 
 
 def get_framework(**kwargs):
@@ -12,7 +16,10 @@ def get_framework(**kwargs):
     _reset = kwargs.get("reset")
     server_check = kwargs.get("server_check", True)
     if _reset:
-        from .framework import RdfFramework
+        try:
+            from .framework import RdfFramework
+        except ImportError:
+            from framework import RdfFramework
         RDF_GLOBAL = RdfFramework(root_file_path,
                                   reset=_reset,
                                   server_check=server_check)
@@ -21,7 +28,10 @@ def get_framework(**kwargs):
     except NameError:
         RDF_GLOBAL = None
     if RDF_GLOBAL is None:
-        from .framework import RdfFramework
+        try:
+            from .framework import RdfFramework
+        except ImportError:
+            from framework import Rdfframework
         RDF_GLOBAL = RdfFramework(root_file_path,
                                   reset=_reset,
                                   server_check=server_check)

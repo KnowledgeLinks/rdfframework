@@ -1,6 +1,11 @@
 import datetime
 import pytz
-from rdfframework.utilities import iri, uri
+try:
+    from rdfframework.utilities import iri, uri
+except ImportError:
+    # Try Local Import
+    from . import iri, uri
+
 
 def calculate_default_value(field):
     '''calculates the default value based on the field default input'''
