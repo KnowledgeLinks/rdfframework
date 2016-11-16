@@ -45,6 +45,7 @@ class RdfFramework(object):
     app_initialized = False   # states if the application has been initialized
     value_processors = []
     apis_initialized = False
+    linkers_initialized = False
 
     ln = "%s.RdfFramework" % MODULE_NAME
     # set specific logging handler for the module allows turning on and off
@@ -84,6 +85,7 @@ class RdfFramework(object):
             self._load_rdf_data(reset)
             self._load_app(reset)
             self._generate_classes(reset)
+            self._generate_linkers(reset)
             #self._generate_forms(reset)
             #self._generate_apis(reset)
             lg.info("*** Framework Loaded ***")
@@ -706,6 +708,15 @@ class RdfFramework(object):
                                  kds_saveLocation=kds_saveLocation,
                                  kds_subjectPattern=kds_subjectPattern))
 
+    def _generate_linkers(self, reset):
+        ''' generates a python RdfClass for each defined rdf class in
+            the app vocabulary '''
+        if self.linkers_initialized != True:
+            _linkers_json = self._load_rdf_linker_defintions(reset)
+            self.rdf_linker_dict = _linkers_json
+            print("\t\t%s objects" % len(self.rdf_linker_dict))
+            self.linkers_initialized = True
+            
     def _generate_forms(self, reset):
         ''' adds the dictionary of form definitions as an attribute of
             this class. The form python class uses this dictionary to
@@ -796,6 +807,24 @@ class RdfFramework(object):
                 os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
                 class_dict = json.loads(file_obj.read())
         return class_dict
+
+    def _load_rdf_linker_defintions(self, reset):
+        ''' Queries the triplestore for list of classes used in the app as
+            defined in the rdfw-definitions folders'''
+        print("\tLoading rdf linker definitions")
+        if reset:
+            # query the database for the linker defintions
+            linker_data = convert_spo_to_dict(get_linker_def_item_data())
+            linker_dict = convert_obj_to_rdf_namespace(linker_data)
+            with open(
+                os.path.join(JSON_LOCATION,"linker_query.json"),
+                "w") as file_obj:
+                file_obj.write(json.dumps(linker_dict, indent=4))
+        else:
+            with open(
+                os.path.join(JSON_LOCATION, "linker_query.json")) as file_obj:
+                linker_dict = json.loads(file_obj.read())
+        return linker_dict
 
     def _load_rdf_form_defintions(self, reset):
         ''' Queries the triplestore for list of forms used in the app as

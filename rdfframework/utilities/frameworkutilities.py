@@ -14,6 +14,7 @@ import pdb
 import logging
 import inspect
 
+from types import ModuleType
 from base64 import b64encode, b64decode
 from flask import current_app, json
 from jinja2 import Template, Environment, FileSystemLoader
@@ -170,6 +171,9 @@ def fw_config(**kwargs):
         FRAMEWORK_CONFIG = None
     if FRAMEWORK_CONFIG is None:
         if  kwargs.get("config"):
+            # if the config is in the form of Mudule convet to a dictionary
+            if isinstance(kwargs['config'], ModuleType):
+                kwargs['config'] = kwargs['config'].__dict__
             config = kwargs.get("config")
         else:
             try:
@@ -179,7 +183,6 @@ def fw_config(**kwargs):
         if not config is None:
             FRAMEWORK_CONFIG = config
         else:
-            #pdb.set_trace()
             print("framework not initialized")
             return "framework not initialized"
     return FRAMEWORK_CONFIG
