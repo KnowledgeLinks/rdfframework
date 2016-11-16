@@ -68,29 +68,6 @@ def convert_to_uri(value, ns_obj=None, strip_iri=False):
     else:
         return value
 
-def create_namespace_obj(obj):
-    ''' takes initial rdf application definitions and reads the namespaces '''
-    global NS_OBJ
-    _ns_obj = {}
-    # find the section of the obj that holds the all the namespaces
-    _key_string = "http://knowledgelinks.io/ns/data-structures/appNameSpace"
-    for _app_section in obj.values():
-        try:
-            for _section_key in _app_section.keys():
-                if _section_key == _key_string:
-                    _ns_obj = _app_section[_section_key]
-                    break
-        except AttributeError:
-            pass
-    return_obj = RdfNsManager()
-    # cylce through the namespace section and add to the return obj
-    for _ns in _ns_obj:
-        _prefix_key = "http://knowledgelinks.io/ns/data-structures/prefix"
-        _ns_key = 'http://knowledgelinks.io/ns/data-structures/nameSpaceUri'
-        return_obj.bind(_ns.get(_prefix_key), Namespace(_ns.get(_ns_key)))
-    NS_OBJ = return_obj
-    return return_obj
-
 def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False):
     """This function takes rdf json definitions and converts all of the
         uri strings to a ns_value format_
@@ -423,3 +400,32 @@ class RdfNsManager(NamespaceManager):
 
     def uri_prefix(self, value):
         return uri_prefix(value)
+
+
+def create_namespace_obj(obj=None, filepaths=None):
+    ''' takes initial rdf application definitions and reads the namespaces '''
+    global NS_OBJ
+    if not NS_OBJ:
+        NS_OBJ = RdfNsManager()
+    _ns_obj = {}
+    if obj:
+        # find the section of the obj that holds the all the namespaces
+        _key_string = "http://knowledgelinks.io/ns/data-structures/appNameSpace"
+        for _app_section in obj.values():
+            try:
+                for _section_key in _app_section.keys():
+                    if _section_key == _key_string:
+                        _ns_obj = _app_section[_section_key]
+                        break
+            except AttributeError:
+                pass
+        #return_obj = RdfNsManager()
+        # cylce through the namespace section and add to the return obj
+        for _ns in _ns_obj:
+            _prefix_key = "http://knowledgelinks.io/ns/data-structures/prefix"
+            _ns_key = 'http://knowledgelinks.io/ns/data-structures/nameSpaceUri'
+            NS_OBJ.bind(_ns.get(_prefix_key), Namespace(_ns.get(_ns_key)))
+    elif filepaths:
+        for path in filepaths:
+            NS_OBJ.load(path)
+    return NS_OBJ

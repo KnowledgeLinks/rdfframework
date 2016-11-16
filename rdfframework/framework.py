@@ -659,7 +659,14 @@ class RdfFramework(object):
             for the application defaults '''
         if self.app_initialized != True:
             _app_json = self._load_application_defaults(reset)
-            self.ns_obj = create_namespace_obj(_app_json)
+            self.ns_obj = create_namespace_obj(obj=_app_json)
+            filepaths = []
+            for key, flist in self.def_files.items():
+                for file in flist:
+                    filepaths.append(os.path.join(key, file))
+            self.ns_obj = create_namespace_obj(filepaths=filepaths)
+            if hasattr(fw_config(),"DEFAULT_RDF_NS"):
+                self.ns_obj.dict_load(fw_config().DEFAULT_RDF_NS)
             self.rdf_app_dict = convert_obj_to_rdf_namespace(_app_json,
                                                              self.ns_obj)
             print("\t\t%s objects" % len(self.rdf_app_dict))
@@ -981,7 +988,7 @@ class RdfFramework(object):
         def_files = {}
         latest_mod = 0
         for root, dirnames, filenames in os.walk(self.root_file_path):
-            if "rdfw-definitions" in root:
+            if "rdfw-definitions" in root or "custom" in root:
                 def_files[root] = filenames
                 for def_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,def_file))
