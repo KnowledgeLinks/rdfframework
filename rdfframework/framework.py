@@ -665,8 +665,8 @@ class RdfFramework(object):
                 for file in flist:
                     filepaths.append(os.path.join(key, file))
             self.ns_obj = create_namespace_obj(filepaths=filepaths)
-            if hasattr(fw_config(),"DEFAULT_RDF_NS"):
-                self.ns_obj.dict_load(fw_config().DEFAULT_RDF_NS)
+            if fw_config().get("DEFAULT_RDF_NS"):
+                self.ns_obj.dict_load(fw_config()['DEFAULT_RDF_NS'])
             self.rdf_app_dict = convert_obj_to_rdf_namespace(_app_json,
                                                              self.ns_obj)
             print("\t\t%s objects" % len(self.rdf_app_dict))
@@ -966,8 +966,6 @@ class RdfFramework(object):
                             path,
                             base_url=base_url))
                     rdf_resource_templates.append({template:path})
-
-            print
             # load the extensions in the triplestore
             context_uri = "http://knowledgelinks.io/ns/application-framework/"
             

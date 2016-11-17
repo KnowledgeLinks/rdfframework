@@ -2,6 +2,7 @@
 import re
 import inspect
 import logging
+import pdb
 
 from rdflib import Namespace, Graph
 from rdflib.namespace import NamespaceManager
@@ -302,6 +303,8 @@ class RdfNsManager(NamespaceManager):
             prefix == "graph1"
         if not isinstance(namespace, Namespace):
             namespace = Namespace(self.clean_iri(namespace))
+        if namespace in [ns for pre, ns in self.namespaces()]:
+            self.del_ns(namespace)
         super(RdfNsManager, self).bind(prefix, namespace, *args, **kwargs)
         # remove all namespace attributes from the class
         ns_attrs = inspect.getmembers(RdfNsManager,
@@ -355,7 +358,7 @@ class RdfNsManager(NamespaceManager):
                      as the uri
         """
         for prefix, uri in ns_dict.items():
-            self.bind(prefix, uri)
+            self.bind(prefix, uri, override=False)
 
     def _add_ttl_ns(self, line):
         """ takes one prefix line from the turtle file and binds the namespace
@@ -381,7 +384,24 @@ class RdfNsManager(NamespaceManager):
         uri = clean_iri(line[line.find(":")+1:].strip())
         # add the namespace to the class
         lg.debug("\nprefix: %s  uri: %s", prefix, uri)
-        self.bind(prefix, Namespace(uri))
+        self.bind(prefix, Namespace(uri), override=False)
+
+    def del_ns(self, namespace):
+        """ will remove a namespace ref from the manager. either Arg is 
+        optional.
+
+        args:
+            namespace: prefix, string or Namespace() to remove
+        """
+        # remove the item form the namespace dict 
+        namespace = str(namespace)
+        for ns in list(self.store._IOMemory__namespace.items()):
+            if str(ns[0]) == namespace or str(ns[1]) == namespace:
+                del self.store._IOMemory__namespace[ns[0]]
+        # remove the item form the namespace dict 
+        for ns in list(self.store._IOMemory__prefix.items()):
+            if str(ns[0]) == namespace or str(ns[1]) == namespace:
+                del self.store._IOMemory__prefix[ns[0]]
 
     def iri(self, uri_string):
         return iri(uri_string)
