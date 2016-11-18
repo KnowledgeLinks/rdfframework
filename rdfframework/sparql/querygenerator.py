@@ -1,6 +1,7 @@
 import os
 import requests
 import copy
+import pdb
 try:
     from rdfframework import get_framework as rdfw
     from rdfframework.utilities import make_triple, iri, uri,\
@@ -45,7 +46,7 @@ def run_sparql_query(sparql, **kwargs):
         sparql_endpoint = os.path.join(sparql_endpoint.replace("sparql",""),
                                        "namespace",
                                        kwargs['namespace'],
-                                       "sparql")
+                                       "sparql").replace("\\", "/")
     if kwargs.get("mode","get") == "get":
         _results = requests.post(sparql_endpoint,
                                  data={"query": query,
