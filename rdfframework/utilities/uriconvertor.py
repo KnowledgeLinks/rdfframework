@@ -317,11 +317,11 @@ class RdfNsManager(NamespaceManager):
         for prefix, namespace in self.store.namespaces():
             setattr(RdfNsManager, prefix, Namespace(namespace))
 
-    def prefix(self, format_type="sparql"):
+    def prefix(self, format="sparql"):
         ''' Generates a string of the rdf namespaces listed used in the
             framework
             
-            formatType: "sparql" or "turtle"
+            format: "sparql" or "turtle"
         '''
         
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
@@ -329,9 +329,9 @@ class RdfNsManager(NamespaceManager):
         
         _return_str = ""
         for _prefix, _ns in self.store.namespaces():
-            if format_type.lower() == "sparql":
+            if format.lower() == "sparql":
                 _return_str += "PREFIX {0}: <{1}>\n".format(_prefix, _ns)
-            elif format_type.lower() == "turtle":
+            elif format.lower() == "turtle":
                 _return_str += "@prefix {0}: <{1}> .\n".format(_prefix, _ns)
         return _return_str
 

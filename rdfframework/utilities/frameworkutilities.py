@@ -365,50 +365,69 @@ def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
     else:
         return value
 
-def convert_spo_to_dict(data, mode="subject", option="string"):
+def convert_spo_to_dict(data, mode="subject", option="string", method="t-store"):
     '''Takes the SPAQRL query results and converts them to a python Dict
 
     mode: subject --> groups based on subject
     '''
+
+    def get_o(item, method, option):
+        if method == "t-store":
+            return xsd_to_python(item['o']['value'], item['o'].get(\
+                                "datatype"), item['o']['type'], option)
+        elif method == "rdflib":
+            return str(item[len(item)-1])
+
+
     if data is None:
         return None
     _return_obj = {}
     _list_obj = False
+    if method != 'rdflib':
+        method = "t-store"
     if mode == "subject":
         for item in data:
             # determine data is list of objects
-            _sv = item['s']['value']
-            _pv = item['p']['value']
+            if method == "t-store":
+                _sv = item['s']['value']
+                _pv = item['p']['value']
+                item_id = item.get('itemID',{}).get('value',None)
+            elif method == "rdflib":
+                if len(item) > 3:
+                    item_id = item[0]
+                    _sv = str(item[1])
+                    _pv = str(item[2])
+                else:
+                    item_id = None
+                    _sv = str(item[0])
+                    _pv = str(item[1])
 
-            if item.get('itemID'):
+            if item_id:
                 _list_obj = True
-                _iv = item['itemID']['value']
+                _iv = item_id
                 if _return_obj.get(_iv):
                     if _return_obj[_iv].get(_sv):
                         if _return_obj[_iv][_sv].get(_pv):
                             _obj_list = make_list(\
                                     _return_obj[_iv][_sv][_pv])
-                            _obj_list.append(\
-                                    xsd_to_python(item['o']['value'], \
-                                    item['o'].get("datatype"), \
-                                    item['o']['type'],
-                                    option))
+                            _obj_list.append(get_o(item, method, option))
+                            # _obj_list.append(\
+                            #         xsd_to_python(item['o']['value'], \
+                            #         item['o'].get("datatype"), \
+                            #         item['o']['type'],
+                            #         option))
                             _return_obj[_iv][_sv][_pv] = _obj_list
                         else:
-                            _return_obj[_iv][_sv][_pv] = \
-                                xsd_to_python(item['o']['value'], item['o'].get(\
-                                        "datatype"), item['o']['type'], option)
+                            _return_obj[_iv][_sv][_pv] = get_o(item, 
+                                                               method,
+                                                               option)
                     else:
                         _return_obj[_iv][_sv] = {}
-                        _return_obj[_iv][_sv][_pv] = \
-                                xsd_to_python(item['o']['value'], item['o'].get(\
-                                "datatype"), item['o']['type'], option)
+                        _return_obj[_iv][_sv][_pv] = get_o(item, method, option)
                 else:
                     _return_obj[_iv] = {}
                     _return_obj[_iv][_sv] = {}
-                    _return_obj[_iv][_sv][_pv] = \
-                            xsd_to_python(item['o']['value'], item['o'].get(\
-                            "datatype"), item['o']['type'], option)
+                    _return_obj[_iv][_sv][_pv] = get_o(item, method, option)
 
             # if not a list of objects
             else:
@@ -416,18 +435,13 @@ def convert_spo_to_dict(data, mode="subject", option="string"):
                     if _return_obj[_sv].get(_pv):
                         _obj_list = make_list(\
                                 _return_obj[_sv][_pv])
-                        _obj_list.append(xsd_to_python(item['o']['value'], \
-                                item['o'].get("datatype"), item['o']['type'], option))
+                        _obj_list.append(get_o(item, method, option))
                         _return_obj[_sv][_pv] = _obj_list
                     else:
-                        _return_obj[_sv][_pv] = \
-                            xsd_to_python(item['o']['value'], item['o'].get(\
-                                    "datatype"), item['o']['type'], option)
+                        _return_obj[_sv][_pv] = get_o(item, method, option)
                 else:
                     _return_obj[_sv] = {}
-                    _return_obj[_sv][_pv] = \
-                            xsd_to_python(item['o']['value'], item['o'].get(\
-                            "datatype"), item['o']['type'], option)
+                    _return_obj[_sv][_pv] = get_o(item, method, option)
         if _list_obj:
             _return_list = []
             for _key, _value in _return_obj.items():

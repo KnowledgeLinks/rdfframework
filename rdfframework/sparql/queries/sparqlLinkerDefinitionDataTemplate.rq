@@ -2,7 +2,7 @@
 
 # This query will pull all of the linkers and expand the properties out for
 # each kds:srcPropUri
-# <http://www.bigdata.com/rdf#nullGraph>
+
 SELECT *
 {
     GRAPH {{ definition_graph }}

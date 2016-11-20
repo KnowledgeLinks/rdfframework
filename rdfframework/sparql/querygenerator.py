@@ -1,11 +1,13 @@
 import os
 import requests
 import copy
+import json
+import pdb
 try:
     from rdfframework import get_framework as rdfw
     from rdfframework.utilities import make_triple, iri, uri,\
             is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
-            RdfNsManager as NS_MGR
+            RdfNsManager as NS_MGR, convert_spo_to_dict
 except ImportError:
     # Try local import
     from .. import get_framework as rdfw
@@ -23,30 +25,60 @@ def get_data(obj, **kwargs):
     data = run_sparql_query(_sparql, **kwargs)
     return data
 
-def run_sparql_query(sparql, **kwargs):
+def create_tstore_namespace(namespace_name, **kwargs):
+    """ will send a request to the triplestore to create a new namespace
+
+    Args:
+        namespace_name: the name of the new namespace
+    """
+    data = render_without_request("namespace_quads_template.xml",
+                                  ns_name=namespace_name)
+    return requests.post(headers={"Content-Type":"application/xml"}, 
+                         data=data,
+                         url=config.TRIPLESTORE['ns_url'])
+
+def delete_tstore_namespace(namespace_name, **kwargs):
+    """ will send a request to the triplestore to delete a namespace
+
+    Args:
+        namespace_name: the name of the namespace
+    """
+    url = os.path.join(config.TRIPLESTORE['ns_url'],
+                       namespace_name).replace("\\","/")
+    return requests.delete(url=url)
+
+
+def run_sparql_query(sparql, mode='get', **kwargs):
     """ run the passed in sparql query and returns the results 
 
     Args:
         spaqrl: the sparl query to run. If a prefix is not provided one will be
                 attached
     kwargs:
-        mode: ['get','update']
+        mode: ['get','update','load']
         namespace: the triplestore namespace to use
+        graph: used with 'load' to define the graph to load data to
     """
-    _prefix = NSM.prefix()
+    if mode == 'load':
+        _prefix = NSM.prefix("turtle")
+    else:
+        _prefix = NSM.prefix()
     if sparql is not None:
         query = sparql
-        if not sparql.lower().startswith("prefix"):
-            query = _prefix + sparql
+        if not (sparql.lower().startswith("prefix") or \
+                sparql.lower().startswith("@prefix")):
+            query = "\n".join([_prefix, sparql])
     else:
         return None
-    sparql_endpoint = config.TRIPLESTORE_URL
+    sparql_endpoint = config.TRIPLESTORE['url']
+    
+
     if kwargs.get("namespace"):
         sparql_endpoint = os.path.join(sparql_endpoint.replace("sparql",""),
                                        "namespace",
                                        kwargs['namespace'],
-                                       "sparql")
-    if kwargs.get("mode","get") == "get":
+                                       "sparql").replace("\\","/")
+    if mode == "get":
         _results = requests.post(sparql_endpoint,
                                  data={"query": query,
                                        "format": "json"})
@@ -54,8 +86,16 @@ def run_sparql_query(sparql, **kwargs):
             return _results.json().get('results', {}).get('bindings', [])
         else:
             return []
-    elif kwargs.get("mode") == "update":
+    elif mode == "update":
         return requests.post(sparql_endpoint, data={"update":query})
+    elif mode == "load":
+        context_uri = kwargs.get("graph",
+                                 config.TRIPLESTORE['default_graph'])
+        return requests.post(url=sparql_endpoint,
+                             headers={"Content-Type": "text/turtle"},
+                             params={"context-uri": context_uri},
+                             data=sparql)
+
 
 def create_data_sparql_query(obj, **kwargs):
     ''' generates the sparql query for getting an object's data '''
@@ -339,10 +379,13 @@ def get_class_def_item_data(class_uri, **kwargs):
 
 def get_linker_def_item_data(**kwargs):
     definition_graph = kwargs.get("definition_graph",
-                                  config.RDF_DEFINITION_GRAPH)
+                                  config.RDF_DEFINITIONS.get("graph"))
     if not definition_graph:
         definition_graph = "bd:nullGraph"
-    _sparql = render_without_request("sparqlLinkerDefinitionDataTemplate.rq",
+    sparql = render_without_request("sparqlLinkerDefinitionDataTemplate.rq",
                                      prefix=NSM.prefix(),
                                      definition_graph=definition_graph)
-    return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb"))    
+    if kwargs.get("def_graph"):
+        return kwargs['def_graph'].query(_sparql)
+    else:
+        return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb"))    

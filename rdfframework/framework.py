@@ -11,6 +11,7 @@ import time
 import operator
 import requests
 import pdb
+import rdflib
 
 from werkzeug.datastructures import MultiDict
 from flask import json
@@ -23,7 +24,7 @@ from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
         JSON_LOCATION, convert_obj_to_rdf_namespace, convert_spo_def
 from rdfframework.processors import clean_processors, run_processor
 from rdfframework.sparql import get_data, get_linker_def_item_data, \
-        get_class_def_item_data
+        get_class_def_item_data, run_sparql_query, create_tstore_namespace
 from rdfframework.validators import OldPasswordValidator
 from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
@@ -659,16 +660,22 @@ class RdfFramework(object):
             for the application defaults '''
         if self.app_initialized != True:
             _app_json = self._load_application_defaults(reset)
+            print(1)
             self.ns_obj = create_namespace_obj(obj=_app_json)
+            print(2)
             filepaths = []
             for key, flist in self.def_files.items():
                 for file in flist:
                     filepaths.append(os.path.join(key, file))
+            print(3)
             self.ns_obj = create_namespace_obj(filepaths=filepaths)
+            print(4)
             if fw_config().get("DEFAULT_RDF_NS"):
                 self.ns_obj.dict_load(fw_config()['DEFAULT_RDF_NS'])
+            print(5)
             self.rdf_app_dict = convert_obj_to_rdf_namespace(_app_json,
                                                              self.ns_obj)
+            print(6)
             print("\t\t%s objects" % len(self.rdf_app_dict))
             # add the security attribute
             # add the app attribute
@@ -760,22 +767,19 @@ class RdfFramework(object):
 
         print("\tLoading application defaults")
         if reset:
-            _sparql = render_without_request(
-                "jsonApplicationDefaults.rq",
-                None,
-                graph=fw_config().get('RDF_DEFINITION_GRAPH'))
-            _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
-                                       data={"query": _sparql,
-                                             "format": "json"})
-           
-            _string_defs = _form_list.json().get(\
-                    'results').get('bindings')[0]['app']['value']
-        
+            sparql = render_without_request("jsonApplicationDefaults.rq",
+                                            None,
+                                            graph=iri(self.def_graph))
+            data = run_sparql_query(sparql, namespace=self.def_ns)
+            _string_defs = data[0]['app']['value']
+            print("end query")
             with open(
                 os.path.join(JSON_LOCATION, "app_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs )
+            print("end write")
             _json_defs = json.loads(_string_defs)
+            print("end load")
         else:
             with open(
                 os.path.join(JSON_LOCATION, "app_query.json")) as file_obj:
@@ -821,7 +825,13 @@ class RdfFramework(object):
         print("\tLoading rdf linker definitions")
         if reset:
             # query the database for the linker defintions
-            linker_data = convert_spo_to_dict(get_linker_def_item_data())
+            sparql = render_without_request(\
+                    "sparqlLinkerDefinitionDataTemplate.rq",
+                    prefix=self.ns_obj.prefix(),
+                    definition_graph=iri(self.def_graph))
+            linker_data = run_sparql_query(sparql, namespace=self.def_ns)
+            linker_data = convert_spo_to_dict(linker_data,
+                    method=self.def_config.get('triplestore'))
             linker_dict = convert_obj_to_rdf_namespace(linker_data)
             with open(
                 os.path.join(JSON_LOCATION,"linker_query.json"),
@@ -942,17 +952,32 @@ class RdfFramework(object):
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         
+        
+        self.base_url = fw_config().get('ORGANIZATION').get('url',"")
+        self.ts = fw_config().get('TRIPLESTORE', {})
+        self.def_config = fw_config().get('RDF_DEFINITIONS')
+        self.triplestore_url = self.ts['url']
+        self.def_ns = self.def_config.get('namespace',
+                                          self.ts.get("default_ns", "kb"))
+        create_tstore_namespace(self.def_ns)
+        create_tstore_namespace(self.ts['default_ns'])
+        # Strip off trailing forward slash for TTL template
+        if self.base_url.endswith("/"):
+            self.base_url = self.base_url[:-1]
+        # if the extensions exist in the triplestore drop the graph
+        self.def_graph = clean_iri(self.def_config.get('graph',
+                self.ts.get('default_graph', "")))
         if reset:
-            base_url = fw_config().get('ORGANIZATION').get('url')
-            triplestore_url = fw_config().get('TRIPLESTORE_URL')
-            # Strip off trailing forward slash for TTL template
-            if base_url.endswith("/"):
-                base_url = base_url[:-1]
-            # if the extensions exist in the triplestore drop the graph
-            stmt = "DROP GRAPH <http://knowledgelinks.io/ns/application-framework/>;"
-            drop_extensions = requests.post(
-                url=triplestore_url,
-                params={"update": stmt})
+            if self.def_config['method'] == "graph":
+                sparql = "DROP GRAPH %s;" % def_config['graph'] 
+                graph = clean_iri(self.def_config['graph'])
+            elif self.def_config['method'] == "namespace":
+                sparql = "DROP ALL;"
+                
+            drop_extensions = run_sparql_query(sparql, 
+                                               namespace=self.def_ns,
+                                               mode="update")
+
             # render the extensions with the base URL
             # must use a ***NON FLASK*** routing since flask is not completely
             # initiated
@@ -964,22 +989,27 @@ class RdfFramework(object):
                         render_without_request(
                             template,
                             path,
-                            base_url=base_url))
+                            base_url=self.base_url))
                     rdf_resource_templates.append({template:path})
             # load the extensions in the triplestore
             context_uri = "http://knowledgelinks.io/ns/application-framework/"
-            
+            #self.def_graph = rdflib.Graph()
             for i, data in enumerate(rdf_data):
                 lg.info("uploading file: %s",
                         list(rdf_resource_templates[i])[0]) 
-                result = requests.post(
-                    url=triplestore_url,
-                    headers={"Content-Type": "text/turtle"},
-                    params={"context-uri": context_uri},
-                    data=data)
+                result = run_sparql_query(data, 
+                                          mode="load",
+                                          graph=self.def_graph,
+                                          namespace=self.def_ns)
+                # file_path = "".join([os.path.join(value, key) for key, value in rdf_resource_templates[i].items()])
+                # try:
+                #     self.def_graph.parse(file_path, format='turtle')
+                # except:
+                #     print("Error loading: ", file_path)
                 if result.status_code > 399:
                     raise ValueError("Cannot load extensions {} into {}".format(
                         rdf_resource_templates[i], triplestore_url))
+            #print(len(self.def_graph))
 
     def _set_rdf_def_filelist(self):
         ''' does a directory search for rdf application definition files '''
