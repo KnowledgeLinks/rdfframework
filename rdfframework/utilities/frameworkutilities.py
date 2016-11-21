@@ -162,31 +162,6 @@ def uid_to_repo_uri(id_value):
                                           id_value)
         return _uri
 
-def fw_config(**kwargs):
-    ''' function returns the application configuration information '''
-    global FRAMEWORK_CONFIG
-    try:
-        FRAMEWORK_CONFIG
-    except NameError:
-        FRAMEWORK_CONFIG = None
-    if FRAMEWORK_CONFIG is None:
-        if  kwargs.get("config"):
-            # if the config is in the form of Mudule convet to a dictionary
-            if isinstance(kwargs['config'], ModuleType):
-                kwargs['config'] = kwargs['config'].__dict__
-            config = kwargs.get("config")
-        else:
-            try:
-                config = current_app.config
-            except:
-                config = None
-        if not config is None:
-            FRAMEWORK_CONFIG = config
-        else:
-            print("framework not initialized")
-            return "framework not initialized"
-    return FRAMEWORK_CONFIG
-
 def make_triple(sub, pred, obj):
     """Takes a subject predicate and object and joins them with a space
 	in between
@@ -1067,3 +1042,139 @@ def convert_ispo_to_dict(data, mode="subject", base=None):
                     else:
                         rtn_obj[key] = value
     return rtn_obj
+
+RESERVED_KEYS = ['dict', 
+                 'get', 
+                 'items', 
+                 'keys', 
+                 'values', 
+                 '_DictClass__reserved']
+class DictClass(object):
+    ''' takes a dictionary and converts it to a class '''
+    __reserved = RESERVED_KEYS
+
+    def __init__(self, obj=None, start=True):
+        if obj and start:
+            new_class = make_class(obj)
+            for attr in dir(new_class):
+                if not attr.startswith('__') and attr not in self.__reserved:
+                    setattr(self, attr, getattr(new_class,attr))
+
+    def __getattr__(self, attr):
+        return None
+
+    def __getitem__(self, item):
+        if hasattr(self, item):
+            return getattr(self, item)
+        else:
+            return None
+
+    def __str__(self):
+        return str(self.dict())
+
+    def dict(self):
+        """ converts the class to a dictionary object """
+        return_obj = {}
+        for attr in dir(self):
+            if not attr.startswith('__') and attr not in self.__reserved:
+                if isinstance(getattr(self, attr), list):
+                    return_val = []
+                    for item in getattr(self, attr):
+                        if isinstance(item, DictClass):
+                            return_val.append(dict(item))
+                        else:
+                            return_val.append(item)
+                elif isinstance(getattr(self, attr), dict):
+                    return_val = {}
+                    for key, item in getattr(self, attr).items():
+                        if isinstance(item, DictClass):
+                            return_val[key] = item.dict()
+                        else:
+                            return_val[key] = item
+                elif isinstance(getattr(self, attr), DictClass):
+                    return_val = getattr(self, attr).dict()
+                else:
+                    return_val = getattr(self, attr)
+                return_obj[attr] = return_val
+        return return_obj
+
+
+    def get(self, attr, none_val=None):
+        if hasattr(self, attr):
+            return getattr(self, attr)
+        else:
+            return none_val
+
+    def keys(self):
+        return [attr for attr in dir(self) if not attr.startswith("__") and \
+                attr not in self.__reserved]
+
+    def values(self):
+        return [getattr(self, attr) for attr in dir(self) if not attr.startswith("__") and \
+                attr not in self.__reserved]
+
+    def items(self):
+        return_list = []
+        for attr in dir(self):
+            if not attr.startswith("__") and attr not in self.__reserved:
+                return_list.append((attr, getattr(self, attr)))
+        return return_list
+
+def make_class(obj):
+    __reserved = RESERVED_KEYS
+    if isinstance(obj, list):
+        _return_list = []
+        for item in obj:
+            if isinstance(item, list):
+                _return_list.append(make_class(item))
+            elif isinstance(item, set):
+                _return_list.append(list(item))
+            elif isinstance(item, dict):
+                _return_list.append(make_class(item))
+            else:
+                _return_list.append(item)
+        return _return_list
+    elif isinstance(obj, set):
+        return list(obj)
+    elif isinstance(obj, dict):
+        new_dict = DictClass(start=False)
+        for key, item in obj.items():
+            if key in __reserved:
+                key += "_1"
+            if not key.startswith('__'):
+                if isinstance(item, list):
+                    setattr(new_dict, key, make_class(item))
+                elif isinstance(item, set):
+                    setattr(new_dict, key, list(item))
+                elif isinstance(item, dict):
+                    setattr(new_dict, key, make_class(item))
+                else:
+                    setattr(new_dict, key, item)
+        return new_dict
+    else:
+        return obj
+
+def fw_config(**kwargs):
+    ''' function returns the application configuration information '''
+    global FRAMEWORK_CONFIG
+    try:
+        FRAMEWORK_CONFIG
+    except NameError:
+        FRAMEWORK_CONFIG = None
+    if FRAMEWORK_CONFIG is None:
+        if  kwargs.get("config"):
+            # if the config is in the form of Mudule convet to a dictionary
+            if isinstance(kwargs['config'], ModuleType):
+                kwargs['config'] = kwargs['config'].__dict__
+            config = kwargs.get("config")
+        else:
+            try:
+                config = current_app.config
+            except:
+                config = None
+        if not config is None:
+            FRAMEWORK_CONFIG = make_class(config)
+        else:
+            print("framework not initialized")
+            return "framework not initialized"
+    return FRAMEWORK_CONFIG
