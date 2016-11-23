@@ -78,7 +78,8 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False):
         ns_obj: RdfNsManager instance *optional
         key_only: Default = False, True = convert only the dictionary keys
     """
-    ns_obj = get_ns_obj(ns_obj)
+    if not ns_obj:
+        ns_obj = get_ns_obj(ns_obj)
 
     if isinstance(obj, list):
         _return_list = []
@@ -142,9 +143,17 @@ def ttluri(value):
         return convert_to_ttl(convert_to_uri(value, ns_obj), ns_obj)
 
 def nouri(value):
+    """ removes all of the namespace portion of the uri 
+    i.e. http://www.schema.org/name  becomes name
+
+    Args:
+        value: the uri to convert
+    Returns:
+        stripped value from namespace
+    """
     ns_obj = get_ns_obj()
     _uri = None
-    if not str(value).startswith("http"):
+    if not clean_iri(str(value)).startswith("http"):
         _uri = convert_to_uri(value, ns_obj)
     else:
         _uri = value
@@ -162,25 +171,34 @@ def uri_prefix(value):
     if debug: print("START uri_prefix() uriconvertor.py -------------------\n")
     ns_obj = get_ns_obj()
     _uri = None
-    if not str(value).startswith("http"):
-        _uri = convert_to_uri(value, NS_OBJ)
+    if not clean_iri(str(value)).startswith("http"):
+        _uri = convert_to_uri(str(value), NS_OBJ)
     else:
-        _uri = value
+        _uri = str(value)
     _ns_uri = _uri.replace(re.sub(r"^(.*[#/])", "", str(_uri)),"")
     if debug: print("_uri: ", _uri)
     if debug: print("_ns_uri: ", _ns_uri)
     if _uri:
         for prefix, uri in NS_OBJ.namespaces():
             if debug: print("uri: ", uri, " prefix: ", prefix)
-            if _ns_uri == uri:
+            if _ns_uri == str(uri):
                 value = prefix
                 break
     if debug: print("END uri_prefix() uriconvertor.py -------------------\n")
     return value
 
-def uri(value):
-    ns_obj = get_ns_obj()
-    if str(value).startswith("http"):
+def uri(value, ns_obj=None):
+    """ Converts py_uri or ttl uri to a http://... full uri format 
+
+    Args:
+        value: the string to convert
+
+    Returns:
+        full uri of an abbreivated uri
+    """
+    if not ns_obj:
+        ns_obj = get_ns_obj()
+    if clean_iri(str(value)).startswith("http"):
         return value
     else:
         return convert_to_uri(value)
@@ -238,6 +256,7 @@ def iris_to_strings(obj, ns_obj=None):
 
 def clean_iri(uri_string):
     '''removes the <> signs from a string start and end'''
+    uri_string = str(uri_string)
     if isinstance(uri_string, str):
         uri_string = uri_string.strip()
         if uri_string[:1] == "<" and uri_string[len(uri_string)-1:] == ">":
@@ -253,7 +272,7 @@ def iri(uri_string):
     Returns:
         formated uri with <>
     """
-
+    uri_string = str(uri_string)
     if uri_string[:1] == "?":
         return uri_string
     if uri_string[:1] == "[":
@@ -404,22 +423,31 @@ class RdfNsManager(NamespaceManager):
                 del self.store._IOMemory__prefix[ns[0]]
 
     def iri(self, uri_string):
+        """ adds <> signs to a uri value """
         return iri(uri_string)
 
     def clean_iri(self, uri_string):
+        """ removes the <> signs from an uri value """
         return clean_iri(uri_string)
 
     def pyuri(self, value):
+        """ converts a ttl or full uri to an ns_value format """
         return pyuri(value)
 
     def ttluri(self, value):
+        """ converts ns_value of full uri to ttl format """
         return ttluri(value)
 
     def nouri(self, value):
+        """ returns the value portion of a uri ns:value -> value """
         return nouri(value)
 
     def uri_prefix(self, value):
+        """ returns the prefix protion from the ns:value -> ns """
         return uri_prefix(value)
+
+    def uri(self, value):
+        return uri(value, ns_obj=self)
 
 
 def create_namespace_obj(obj=None, filepaths=None):
