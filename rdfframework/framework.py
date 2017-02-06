@@ -1022,6 +1022,9 @@ class RdfFramework(object):
         latest_mod = 0
         for root, dirnames, filenames in os.walk(self.root_file_path):
             if "rdfw-definitions" in root or "custom" in root:
+                filenames = [x for x in filenames if x.endswith('ttl') or \
+                             x.endswith("xml") or x.endswith("nt") or \
+                             x.endswith("rdf")]
                 def_files[root] = filenames
                 for def_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,def_file))
