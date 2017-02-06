@@ -5,23 +5,21 @@ import json
 import pdb
 
 try:
-    from rdfframework import get_framework as rdfw
-    from rdfframework.utilities import make_triple, iri, uri,\
-            is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
-            RdfNsManager as NS_MGR, convert_spo_to_dict, make_class
+    from rdfframework.getframework import get_framework as rdfw, fw_config
+    from rdfframework.utilities import make_triple, iri, uri, is_not_null,\
+            render_without_request, make_list, pp, uid_to_repo_uri, \
+            get_ns_obj as NSM, convert_spo_to_dict, make_class
 except ImportError:
     # Try local import
-    from .. import get_framework as rdfw
-    from ..utilities import make_triple, iri, uri,\
-            is_not_null, render_without_request, make_list, pp, uid_to_repo_uri, \
-            RdfNsManager as NS_MGR, make_class
-   
-from instance import config as cf
-config = make_class(cf.__dict__)
+    from rdfframework.getframework import get_framework as rdfw, fw_config
+    from ..utilities import make_triple, iri, uri, is_not_null,\
+            render_without_request, make_list, pp, uid_to_repo_uri, \
+            get_ns_obj as NSM, convert_spo_to_dict, make_class
+
+config = fw_config
 
 DEBUG = True
 
-NSM = NS_MGR(config=config)
 def get_data(obj, **kwargs):
     ''' queries that datastore for the based on the supplied arguments '''
     _sparql = create_data_sparql_query(obj, **kwargs)
@@ -38,7 +36,7 @@ def create_tstore_namespace(namespace_name, **kwargs):
                                   ns_name=namespace_name)
     return requests.post(headers={"Content-Type":"application/xml"}, 
                          data=data,
-                         url=config.TRIPLESTORE.ns_url)
+                         url=config().TRIPLESTORE.ns_url)
 
 def delete_tstore_namespace(namespace_name, **kwargs):
     """ will send a request to the triplestore to delete a namespace
@@ -46,7 +44,7 @@ def delete_tstore_namespace(namespace_name, **kwargs):
     Args:
         namespace_name: the name of the namespace
     """
-    url = os.path.join(config.TRIPLESTORE.ns_url,
+    url = os.path.join(config().TRIPLESTORE.ns_url,
                        namespace_name).replace("\\","/")
     return requests.delete(url=url)
 
@@ -55,17 +53,18 @@ def run_sparql_query(sparql, mode='get', **kwargs):
     """ run the passed in sparql query and returns the results 
 
     Args:
-        spaqrl: the sparl query to run. If a prefix is not provided one will be
+        sparql: the sparl query to run. If a prefix is not provided one will be
                 attached
     kwargs:
         mode: ['get','update','load']
         namespace: the triplestore namespace to use
         graph: used with 'load' to define the graph to load data to
     """
+    ns = NSM()
     if mode == 'load':
-        _prefix = NSM.prefix("turtle")
+        _prefix = ns.prefix("turtle")
     else:
-        _prefix = NSM.prefix()
+        _prefix = ns.prefix()
     if sparql is not None:
         query = sparql
         if not (sparql.lower().startswith("prefix") or \
@@ -73,7 +72,7 @@ def run_sparql_query(sparql, mode='get', **kwargs):
             query = "\n".join([_prefix, sparql])
     else:
         return None
-    sparql_endpoint = config.TRIPLESTORE.url
+    sparql_endpoint = config().TRIPLESTORE.url
     
 
     if kwargs.get("namespace"):
@@ -93,7 +92,7 @@ def run_sparql_query(sparql, mode='get', **kwargs):
         return requests.post(sparql_endpoint, data={"update":query})
     elif mode == "load":
         context_uri = kwargs.get("graph",
-                                 config.TRIPLESTORE.default_graph)
+                                 config().TRIPLESTORE.default_graph)
         return requests.post(url=sparql_endpoint,
                              headers={"Content-Type": "text/turtle"},
                              params={"context-uri": context_uri},
@@ -335,7 +334,7 @@ def query_select_options(field):
     if _select_query:
         # send query to triplestore
         _select_list = requests.post(
-            config.TRIPLESTORE_URL,
+            config().TRIPLESTORE_URL,
             data={"query": _prefix + _select_query,
                   "format": "json"})
         _raw_options = _select_list.json().get('results', {}).get('bindings', [])
@@ -359,34 +358,37 @@ def save_file_to_repository(data, repo_item_address):
         print("~~~~~~~~ write code here")
     else:
         repository_result = requests.post(
-            config.REPOSITORY_URL,
+            config().REPOSITORY_URL,
             data=data.read(),
 			         headers={"Content-type":"'image/png'"})
         object_value = repository_result.text
     return iri(object_value)
 
 def get_all_item_data(item_uri):
+    ns = NSM()
     _sparql = render_without_request("sparqlAllItemDataTemplate.rq",
-                                     prefix=NSM.prefix(),
+                                     prefix=ns.prefix(),
                                      item_uri=item_uri)
     return run_sparql_query(_sparql)
 
 def get_class_def_item_data(class_uri, **kwargs):
+    ns = NSM()
     definition_graph = kwargs.get("definition_graph",
-                                  config.RDF_DEFINITIONS.graph)
+                                  config().RDF_DEFINITIONS.graph)
     _sparql = render_without_request("sparqlClassDefinitionDataTemplate.rq",
-                                     prefix=NSM.prefix(),
+                                     prefix=ns.prefix(),
                                      item_uri=class_uri,
                                      graph=definition_graph)
     return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb")) 
 
 def get_linker_def_item_data(**kwargs):
+    ns = NSM()
     definition_graph = kwargs.get("definition_graph",
-                                  config.RDF_DEFINITIONS.graph)
+                                  config().RDF_DEFINITIONS.graph)
     if not definition_graph:
         definition_graph = "bd:nullGraph"
     sparql = render_without_request("sparqlLinkerDefinitionDataTemplate.rq",
-                                     prefix=NSM.prefix(),
+                                     prefix=ns.prefix(),
                                      definition_graph=definition_graph)
     if kwargs.get("def_graph"):
         return kwargs['def_graph'].query(_sparql)

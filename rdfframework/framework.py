@@ -17,12 +17,15 @@ from werkzeug.datastructures import MultiDict
 from flask import json
 
 from .rdfproperty import RdfProperty
-from rdfframework.utilities import fw_config, iri, is_not_null, make_list, \
-        remove_null, clean_iri, convert_spo_to_dict, convert_ispo_to_dict, \
+from rdfframework.getframework import fw_config
+from rdfframework.utilities import iri, is_not_null, make_list
+from rdfframework.utilities import remove_null, clean_iri, convert_spo_to_dict, convert_ispo_to_dict, \
         render_without_request, create_namespace_obj, \
         convert_obj_to_rdf_namespace, pyuri, nouri, pp, iris_to_strings, \
-        JSON_LOCATION, convert_obj_to_rdf_namespace, convert_spo_def
+        JSON_LOCATION, convert_obj_to_rdf_namespace, convert_spo_def, \
+        make_class
 from rdfframework.processors import clean_processors, run_processor
+
 from rdfframework.sparql import get_data, get_linker_def_item_data, \
         get_class_def_item_data, run_sparql_query, create_tstore_namespace
 from rdfframework.validators import OldPasswordValidator
@@ -685,7 +688,7 @@ class RdfFramework(object):
                     for _section_key in _app_section.keys():
                         if _section_key == _key_string:
                             self.app_security = _app_section[_section_key]
-                            self.app = _app_section
+                            self.app = make_class(_app_section)
                             break
                 except AttributeError:
                     pass
@@ -832,7 +835,9 @@ class RdfFramework(object):
             linker_data = run_sparql_query(sparql, namespace=self.def_ns)
             linker_data = convert_spo_to_dict(linker_data,
                     method=self.def_config.get('triplestore'))
-            linker_dict = convert_obj_to_rdf_namespace(linker_data)
+            linker_dict = convert_obj_to_rdf_namespace(linker_data, 
+                                                       key_only=True,
+                                                       rdflib_uri=True)
             with open(
                 os.path.join(JSON_LOCATION,"linker_query.json"),
                 "w") as file_obj:
@@ -1008,7 +1013,7 @@ class RdfFramework(object):
                 #     print("Error loading: ", file_path)
                 if result.status_code > 399:
                     raise ValueError("Cannot load extensions {} into {}".format(
-                        rdf_resource_templates[i], triplestore_url))
+                        rdf_resource_templates[i], self.triplestore_url))
             #print(len(self.def_graph))
 
     def _set_rdf_def_filelist(self):

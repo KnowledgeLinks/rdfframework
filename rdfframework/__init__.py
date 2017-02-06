@@ -12,9 +12,10 @@ vocabulary.
 :copyright: Copyright (c) 2016 by Michael Stabile and Jeremy Nelson.
 :license: To be determined, see LICENSE.txt for details.
 """
-from .getframework import get_framework
-from .rdfclass import RdfClass
-from .rdfdatatype import *
-from .rdfproperty import *
+import rdfframework.getframework
+import rdfframework.rdfclass
+import rdfframework.rdfdatatype
+import rdfframework.framework
+# from .rdfproperty import *
 
 __version__ = '0.0.1'

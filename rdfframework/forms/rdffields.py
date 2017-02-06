@@ -9,7 +9,7 @@ from wtforms.fields import StringField, TextAreaField, PasswordField, \
         BooleanField, FileField, DateField, DateTimeField, SelectField, Field,\
         FormField, FieldList, HiddenField
 from wtforms.validators import InputRequired, Optional, URL
-from rdfframework import get_framework as rdfw
+from rdfframework.getframework import get_framework as rdfw
 from rdfframework.processors import clean_processors
 from rdfframework.validators import get_wtform_validators, OldPasswordValidator
 from rdfframework.utilities import make_list, make_set, cbool, \

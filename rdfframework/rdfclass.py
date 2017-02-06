@@ -5,14 +5,15 @@ import requests
 import copy
 from werkzeug.datastructures import FileStorage
 from jinja2 import Template
+#from rdfframework import fw_config
 try:
-    from rdfframework.utilities import clean_iri, fw_config, iri, is_not_null, \
+    from rdfframework.utilities import clean_iri, iri, is_not_null, \
         make_list, make_set, make_triple, remove_null, DeleteProperty, \
         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
         pyuri, get_attr, slugify
 except ImportError:
     # Try local imports
-    from .utilities import clean_iri, fw_config, iri, is_not_null, \
+    from .utilities import clean_iri, iri, is_not_null, \
         make_list, make_set, make_triple, remove_null, DeleteProperty, \
         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
         pyuri, get_attr, slugify

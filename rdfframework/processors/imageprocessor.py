@@ -5,12 +5,12 @@ import os
 try:
     from rdfframework.utilities import is_not_null, make_set, make_list, pyuri,\
         slugify, clean_iri
-    from rdfframework import get_framework
+    from rdfframework.getframework import get_framework
 except ImportError:
     # Try Local Import
     from ..utilities import is_not_null, make_set, make_list, pyuri,\
         slugify, clean_iri
-    from .. import get_framework
+    from rdfframework.getframework import get_framework
 
 
 

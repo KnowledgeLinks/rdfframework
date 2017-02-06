@@ -5,14 +5,20 @@ with open('VERSION') as v_fo:
 
 from setuptools import find_packages, setup
 
+def readme():
+    with open('README.md') as rm_fo:
+        return rm_fo.read()
+
 setup(
     name='rdfframework',
     version= __version__,
     author=__author__,
     author_email= ','.join(['jermnelson@gmail.com', 
-                             'mstabile75@gmail.com']),
-    description="RDFFramework for issuing OpenBadges",
-    long_description="",
+                            'mstabile75@gmail.com',
+                            'knowledgelinks.io@gmail.com']),
+    description="Application builder for KnowledgeLinks.io RDF vocabulary.",
+    long_description=readme(),
+    keywords='RDF linked data application builder',
     packages=find_packages(),
     include_package_data=True,
     platforms='any',
@@ -21,7 +27,8 @@ setup(
         'Flask-Login',
         'Flask-WTF',
         'passlib',
-        'requests'
+        'requests',
+        'dateutil'
     ],
     classifiers=[
         'Framework :: Flask',
@@ -34,5 +41,9 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application'
-    ]
+    ],
+    url='https://github.com/KnowledgeLinks/rdfframework/tree/development',
+    test_suite='nose.collector',
+    tests_require=['nose', 'nose-cover3'],
+    zip_safe=False
 )
