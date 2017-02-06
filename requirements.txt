@@ -10,4 +10,4 @@ Markdown
 passlib
 rdflib
 requests
-dateutil
+dateutils

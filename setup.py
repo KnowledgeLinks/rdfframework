@@ -28,7 +28,7 @@ setup(
         'Flask-WTF',
         'passlib',
         'requests',
-        'dateutil'
+        'dateutils'
     ],
     classifiers=[
         'Framework :: Flask',
