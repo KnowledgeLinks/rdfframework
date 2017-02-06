@@ -1,5 +1,7 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
+from types import ModuleType
+
 RDF_GLOBAL = None
 FRAMEWORK_CONFIG = None
 
