@@ -1,6 +1,7 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 from types import ModuleType
+from rdfframework.utilities import make_class
 
 RDF_GLOBAL = None
 FRAMEWORK_CONFIG = None
