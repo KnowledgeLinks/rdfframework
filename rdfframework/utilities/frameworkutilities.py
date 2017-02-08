@@ -15,19 +15,19 @@ from flask import current_app, json
 from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 from .debug import pp
-from rdfframework.getframework import fw_config
+#from rdfframework.getframework import fw_config
 
 try:    
     import rdfframework.datatypes as dt
 except:
-    print("************* IMPORT ERROR -rdf_format")
+    #print("************* IMPORT ERROR -rdf_format")
     pass
 
-try:
-    print(dt.rdf_format(123))
-    print("$$$$$$$$$$$$$$$$$$$ MONEY")
-except:
-    print("&&&&&&&&&&&&&&&&&&& NOPE")
+#try:
+    #print(dt.rdf_format(123))
+    #print("$$$$$$$$$$$$$$$$$$$ MONEY")
+#except:
+    #print("&&&&&&&&&&&&&&&&&&& NOPE")
 
 MNAME = inspect.stack()[0][1]
 

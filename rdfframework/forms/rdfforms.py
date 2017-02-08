@@ -10,7 +10,7 @@ import wtforms
 from wtforms.fields import StringField, FormField, FieldList, HiddenField
 import flask_wtf
 from rdfframework.utilities import cbool, make_list, make_set, code_timer, \
-        fw_config, iri, is_not_null, convert_spo_to_dict, uri, pp, \
+        iri, is_not_null, convert_spo_to_dict, uri, pp, \
         convert_obj_to_rdf_namespace, copy_obj, nz
 from rdfframework.getframework import get_framework as rdfw
 from rdfframework.forms.widgets import BsGridTableWidget, RepeatingSubFormWidget
@@ -477,7 +477,6 @@ def rdf_framework_form_factory(form_url, **kwargs):
     _has_subobj = False
     rdf_field_list = []
     for fld in fields:
-        #print(fld)
         field = get_field_json(fld, instructions, _instance, user_info)
         if field:
             field_item = get_wtform_field(field, _instance, **kwargs)
@@ -546,4 +545,4 @@ def rdf_framework_form_factory(form_url, **kwargs):
     return rdf_form
     #return rdf_form
 
-
+from rdfframework.getframework import fw_config

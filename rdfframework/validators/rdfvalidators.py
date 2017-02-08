@@ -4,7 +4,7 @@ from wtforms.validators import InputRequired, Email, URL, Length, EqualTo, \
 from wtforms import ValidationError
 from rdfframework.getframework import get_framework as rdfw
 from rdfframework.rdfdatatype import RdfDataType
-from rdfframework.utilities import make_triple, iri, clean_iri, fw_config,\
+from rdfframework.utilities import make_triple, iri, clean_iri,\
     make_list, uri, get_attr, is_not_null
 
 __author__ = "Mike Stabile, Jeremy Nelson"
@@ -208,3 +208,4 @@ class OldPasswordValidator(object):
                     setattr(_username, "errors", [" "])
                 raise ValidationError(self.message)
 
+from rdfframework.getframework import fw_config
