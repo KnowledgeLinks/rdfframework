@@ -1,13 +1,14 @@
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 from types import ModuleType
-from rdfframework.utilities import make_class
+
 
 RDF_GLOBAL = None
 FRAMEWORK_CONFIG = None
 
 def fw_config(**kwargs):
     ''' function returns the application configuration information '''
+    from rdfframework.utilities import make_class
     global FRAMEWORK_CONFIG
     try:
         FRAMEWORK_CONFIG

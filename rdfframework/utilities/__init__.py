@@ -1,5 +1,4 @@
 __author__ = "Mike Stabile"
-import pdb
 
 from .codetimer import *
 from .debug import *

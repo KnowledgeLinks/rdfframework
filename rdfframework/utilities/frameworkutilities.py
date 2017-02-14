@@ -15,10 +15,11 @@ from flask import current_app, json
 from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 from .debug import pp
-#from rdfframework.getframework import fw_config
+from rdfframework.getframework import fw_config
+import rdfframework.rdfdatatypes as dt
 
 try:    
-    import rdfframework.datatypes as dt
+    pass
 except:
     #print("************* IMPORT ERROR -rdf_format")
     pass

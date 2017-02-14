@@ -12,7 +12,7 @@ import flask_wtf
 from rdfframework.utilities import cbool, make_list, make_set, code_timer, \
         iri, is_not_null, convert_spo_to_dict, uri, pp, \
         convert_obj_to_rdf_namespace, copy_obj, nz
-from rdfframework.getframework import get_framework as rdfw
+from rdfframework.getframework import get_framework as rdfw, fw_config
 from rdfframework.forms.widgets import BsGridTableWidget, RepeatingSubFormWidget
 from rdfframework.sparql import query_select_options, get_data
 from rdfframework.processors import run_processor

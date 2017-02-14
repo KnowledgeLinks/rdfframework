@@ -5,6 +5,7 @@
 *.log
 *.bak
 *.pyc
+*.ses
 *.egg*
 data*
 build*
