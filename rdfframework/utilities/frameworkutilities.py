@@ -16,9 +16,9 @@ from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespa
 from hashlib import sha1
 from .debug import pp
 from rdfframework.getframework import fw_config
-
+import rdfframework.datatypes as dt
 try:    
-    import rdfframework.datatypes as dt
+    pass
 except:
     print("************* IMPORT ERROR -rdf_format")
     pass

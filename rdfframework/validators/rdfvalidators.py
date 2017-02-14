@@ -2,9 +2,9 @@ import requests
 from wtforms.validators import InputRequired, Email, URL, Length, EqualTo, \
         Optional
 from wtforms import ValidationError
-from rdfframework.getframework import get_framework as rdfw
+from rdfframework.getframework import get_framework as rdfw, fw_config
 from rdfframework.rdfdatatype import RdfDataType
-from rdfframework.utilities import make_triple, iri, clean_iri, fw_config,\
+from rdfframework.utilities import make_triple, iri, clean_iri, \
     make_list, uri, get_attr, is_not_null
 
 __author__ = "Mike Stabile, Jeremy Nelson"
