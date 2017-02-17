@@ -477,7 +477,6 @@ def rdf_framework_form_factory(form_url, **kwargs):
     _has_subobj = False
     rdf_field_list = []
     for fld in fields:
-        #print(fld)
         field = get_field_json(fld, instructions, _instance, user_info)
         if field:
             field_item = get_wtform_field(field, _instance, **kwargs)
@@ -546,4 +545,4 @@ def rdf_framework_form_factory(form_url, **kwargs):
     return rdf_form
     #return rdf_form
 
-
+from rdfframework.getframework import fw_config

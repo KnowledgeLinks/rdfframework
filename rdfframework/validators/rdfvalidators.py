@@ -208,3 +208,4 @@ class OldPasswordValidator(object):
                     setattr(_username, "errors", [" "])
                 raise ValidationError(self.message)
 
+from rdfframework.getframework import fw_config

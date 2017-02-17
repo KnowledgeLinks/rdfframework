@@ -1,5 +1,5 @@
 """Basic User Class for Applications"""
-from flask.ext.login import UserMixin
+from flask_login import UserMixin
 
 class User(UserMixin):
     loaded_users = {}
