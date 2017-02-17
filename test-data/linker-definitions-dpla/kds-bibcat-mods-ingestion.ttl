@@ -1,0 +1,238 @@
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix modsr: <http://knowledgelinks.io/ns/mods/> .
+@prefix schema: <http://schema.org/> .
+
+bc:mods-abstract a kds:PropertyLinker;
+    kds:srcPropXpath "mods:abstract" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Summary ;
+    kds:linkedRange bf:summary ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-adminNote a kds:PropertyLinker;
+    kds:srcPropXpath "mods:note[@type='admin']" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Note ;
+    kds:linkedRange bf:note ;
+    kds:hasIndividualNodes "true" ;
+    kds:destAdditionalPropUris [ bf:noteType "admin"@en ];
+    kds:linkedClass bf:Instance .
+
+bc:mods-alt-title a kds:PropertyLinker;
+    kds:srcPropXpath "mods:titleInfo[@type='alternative']/mods:title" ;
+    kds:destPropUri bf:mainTitle;
+    kds:destClassUri bf:VarientTitle;
+    kds:linkedRange bf:title;
+    kds:hasIndividualNodes "true";
+    kds:linkedClass bf:Instance .
+
+bc:mods-creator a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='creator']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:cre;
+    kds:linkedClass bf:Instance .
+
+bc:mods-corporate-creator a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='corporate']/mods:role[mods:roleTerm='creator']/../mods:namePart";
+    kds:destClassUri bf:Organization;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:cre;
+    kds:linkedClass bf:Instance .
+
+
+bc:mods-contributor a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='contributor']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:contributor;
+    kds:linkedClass bf:Instance .
+
+bc:mods-corporate-contributor a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='corporate']/mods:role[mods:roleTerm='contributor']/../mods:namePart";
+    kds:destClassUri bf:Organization;
+    kds:destPropUri rdfs:label ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:contributor;
+    kds:linkedClass bf:Instance .
+
+bc:mods-dateIssued a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:dateIssued";
+    kds:destPropUri bf:originDate ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-degreeName a kds:PropertyLinker;
+    kds:srcPropXpath "mods:note[@displayLabel='Degree Name']" ;
+    kds:destPropUri bf:degree ;
+    kds:destClassUri bf:Dissertation ;
+    kds:linkedRange bf:dissertation ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-degreeGrantor a kds:PropertyLinker; 
+    kds:srcPropXpath "mods:name/mods:role[mods:roleTerm='degree grantor']/../mods:namePart" ;
+    kds:destPropUri [
+        a bf:grantingInstitution ;
+        kds:destClassUri bf:Organization ;
+        kds:destPropUri rdfs:label 
+    ];
+    kds:destClassUri bf:Dissertation ;
+    kds:linkedRange bf:dissertation ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-InstanceElectronic a kds:PropertyLinker;
+    kds:srcPropXpath "mods:physicalDescription/[mods:form='electronic resource']";
+    kds:destClassUri bf:Electronic ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange rdf:type ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-extent a kds:PropertyLinker;
+    kds:srcPropXpath "mods:physicalDescription/mods:extent";
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Extent ;
+    kds:linkedRange bf:extent ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-genreForm a kds:PropertyLinker;
+    kds:srcPropXpath "mods:genre[@authority='marcgt']" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:GenreForm ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:genreForm ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-geographicTopic a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:subject/mods:geographic";
+    kds:destPropUri bf:geographicCoverage ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-interviewee a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='interviewee']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:ive;
+    kds:linkedClass bf:Instance .
+
+bc:mods-interviewer a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name[@type='personal']/mods:role[mods:roleTerm='interviewer']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:ivr;
+    kds:linkedClass bf:Instance .
+
+bc:mods-issuance a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:issuance";
+    kds:destPropUri rdf:value;
+    kds:destClassUri bf:Issuance;
+    kds:linkedRange bf:issuance ;
+    kds:linkedClass bf:Instance .
+
+bf:mods-language a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:language/mods:languageTerm" ;
+    kds:destPropUri rdf:value ;
+    kds:destClassUri bf:Language ;
+    kds:linkedRange bf:language ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-organizationTopic a kds:PropertyLinker; 
+    kds:srcPropXpath "mods:subject/mods:name[@type='corporate']/mods:namePart" ;
+    kds:destPropUri rdfs:label ;
+    kds:destClassUri bf:Organization;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-personTopic a kds:PropertyLinker; 
+    kds:srcPropXpath "mods:subject/mods:name[@type='personal']/mods:namePart" ;
+    kds:destPropUri rdfs:label ;
+    kds:destClassUri bf:Person ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-placeTerm a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:place/mods:placeTerm" ;
+    kds:destPropUri bf:originPlace ;
+    kds:destClassUri bf:Work ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+   
+bc:mods-publisher a kds:PropertyLinker;
+    kds:srcPropXpath "mods:originInfo/mods:publisher";
+    kds:destPropUri [
+        a bf:Publisher ;
+        kds:destClassUri bf:Organization ;
+        kds:destPropUri rdfs:label 
+    ];
+    kds:destClassUri bf:Publication;
+    kds:linkedRange bf:provisionActivity;
+    kds:linkedClass bf:Instance .
+
+bc:mods-temporalTopic a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:subject/mods:temporal";
+    kds:destClassUri bf:Temporal;
+    kds:destPropUri rdf:value ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-subjectTopic a kds:PropertyLinker ;
+    kds:srcPropXpath "mods:subject/mods:topic";
+    kds:destClassUri bf:Topic;
+    kds:destPropUri rdf:value ;
+    kds:hasIndividualNodes "true";
+    kds:linkedRange bf:subject ;
+    kds:linkedClass bf:Instance .
+
+bc:mods-title a kds:PropertyLinker;
+    kds:srcPropXpath "mods:titleInfo/mods:title" ;
+    kds:destPropUri bf:mainTitle;
+    kds:destClassUri bf:InstanceTitle;
+    kds:linkedRange bf:title;
+    kds:hasIndividualNodes "true";
+    kds:linkedClass bf:Instance .
+
+
+bc:mods-subTitle a kds:PropertyLinker;
+    kds:srcPropXpath "mods:titleInfo/mods:subTitle" ;
+    kds:destPropUri bf:subtitle;
+    kds:destClassUri bf:InstanceTitle;
+    kds:linkedRange bf:title;
+    kds:linkedClass bf:Instance .
+
+bc:mods-thesis-advisor a kds:PropertyLinker;
+    kds:srcPropXpath "mods:name/mods:role[mods:roleTerm='thesis advisor']/../mods:namePart";
+    kds:destClassUri bf:Person;
+    kds:destPropUri rdfs:label ;
+    kds:hasIndividualNodes "true" ;
+    kds:linkedRange relators:ths;
+    kds:linkedClass bf:Instance .
+
+bc:mods-url a kds:PropertyLinker;
+    kds:srcPropXpath "mods:location/mods:url" ;
+    kds:destPropUri bf:electronicLocation ;
+    kds:destClassUri bf:Item .
+
+bc:mods-work-text a kds:PropertyLinker;
+    kds:srcPropXpath "[mods:typeOfResource='text']/mods:typeOfResource";
+    kds:destPropUri rdf:type;
+    kds:destClassUri bf:Text ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .

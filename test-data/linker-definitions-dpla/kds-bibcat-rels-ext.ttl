@@ -1,0 +1,35 @@
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix relators: <http://id.loc.gov/vocabulary/relators/> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix schema: <http://schema.org/> .
+@prefix fedora: <info:fedora/fedora-system:def/relations-external#> .
+@prefix fedora-model: <info:fedora/fedora-system:def/model#> .
+@prefix islandora: <http://islandora.ca/ontology/relsext#> .
+
+bc:bf_Audio a kds:PropertyLinker;
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp-audioCModel> ];
+    kds:destClassUri bf:Audio ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+bc:bf_Image a kds:PropertyLinker;
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_basic_image>,
+                     <info:fedora/islandora:sp_large_image_cmodel> ];
+    kds:destClassUri bf:StillImage ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .
+
+bc:bf_Video a kds:PropertyLinker;
+    kds:srcPropUri [ fedora-model:hasModel <info:fedora/islandora:sp_videoCModel> ];
+    kds:destClassUri bf:MovingImage ;
+    kds:destPropUri rdf:type ;
+    kds:linkedRange bf:instanceOf ;
+    kds:linkedClass bf:Instance .

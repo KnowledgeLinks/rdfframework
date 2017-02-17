@@ -6,7 +6,7 @@ import pdb
 
 from rdflib import Namespace, Graph, URIRef
 from rdflib.namespace import NamespaceManager
-from rdfframework.utilities import iri, uri, pyuri, ttluri, nouri, uri_prefix, \
+from rdfframework.utilities.uriconvertor import iri, uri, pyuri, ttluri, nouri, uri_prefix, \
         clean_iri
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -17,11 +17,14 @@ DEBUG = True
 MNAME = inspect.stack()[0][1]
 
 
-def get_ns_obj(ns_obj=None):
+def get_ns_obj(ns_obj=None, config=None):
     """ returns an instance of the RdfNsManager
 
     Args:
-        ns_obj: an RdfNsManager instance or None
+        *ns_obj: an RdfNsManager instance or None
+        *config: the config dict/obj for the application
+
+    * Optional
     """
     global NS_OBJ
     if ns_obj is None and NS_OBJ is None:
@@ -29,13 +32,13 @@ def get_ns_obj(ns_obj=None):
             from rdfframework import get_framework
             ns_obj = get_framework().ns_obj
             if ns_obj is None:
-                ns_obj = RdfNsManager()
+                ns_obj = RdfNsManager(config=config)
                 NS_OBJ = ns_obj
         except:
             if isinstance(NS_OBJ, RdfNsManager):
                 ns_obj = NS_OBJ
             else:
-                ns_obj = RdfNsManager()
+                ns_obj = RdfNsManager(config=config)
                 NS_OBJ = ns_obj
     else:
         ns_obj = NS_OBJ

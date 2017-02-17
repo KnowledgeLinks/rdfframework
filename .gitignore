@@ -7,7 +7,6 @@
 *.pyc
 *.ses
 *.egg*
-data*
 build*
 dist*
 *egg-info*

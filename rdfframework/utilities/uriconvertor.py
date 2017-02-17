@@ -15,9 +15,13 @@ DEBUG = True
 # set the modulename
 MNAME = inspect.stack()[0][1]
 
-def convert_to_ns(value, ns_obj=None, rdflib_uri=False):
+def convert_to_ns(value):
     ''' converts a value to the prefixed rdf ns equivalent. If not found
-        returns the value as is '''
+        returns the value as is 
+    
+    args:
+        value: the value to convert
+    '''
     ns_obj = get_ns_obj(ns_obj)
     for _prefix, _ns_uri in ns_obj.namespaces():
         if str(value).startswith(_prefix + ":") or \
@@ -29,9 +33,13 @@ def convert_to_ns(value, ns_obj=None, rdflib_uri=False):
                     "<","").replace(">","")
     return value
 
-def convert_to_ttl(value, ns_obj=None):
+def convert_to_ttl(value):
     ''' converts a value to the prefixed rdf ns equivalent. If not found
-        returns the value as is '''
+        returns the value as is.
+
+    args:
+        value: the value to convert
+    '''
     ns_obj = get_ns_obj(ns_obj)
     for _prefix, _ns_uri in ns_obj.namespaces():
         _ns_uri = str(_ns_uri)
@@ -200,7 +208,7 @@ def nouri(value):
     else:
         _uri = value
     if _uri:
-        return re.sub(r"^(.*[#/])", "", str(_uri))
+        return re.sub(r"^(.*[#/])", "", clean_iri(str(_uri)))
     else:
         return value
 
@@ -217,7 +225,8 @@ def uri_prefix(value):
         _uri = convert_to_uri(str(value), NS_OBJ)
     else:
         _uri = str(value)
-    _ns_uri = _uri.replace(re.sub(r"^(.*[#/])", "", str(_uri)),"")
+    _ns_uri = clean_iri(
+            _uri.replace(re.sub(r"^(.*[#/])", "", clean_iri(str(_uri))),""))
     if debug: print("_uri: ", _uri)
     if debug: print("_ns_uri: ", _ns_uri)
     if _uri:
@@ -245,11 +254,14 @@ def uri(value, strip_iri=False, ns_obj=None):
     else:
         return convert_to_uri(value, strip_iri=strip_iri, ns_obj=ns_obj)
 
-def get_ns_obj(ns_obj=None):
+def get_ns_obj(ns_obj=None, config=None):
     """ returns an instance of the RdfNsManager
 
     Args:
-        ns_obj: an RdfNsManager instance or None
+        *ns_obj: an RdfNsManager instance or None
+        *config: the config dict/obj for the application
+
+    * Optional
     """
     global NS_OBJ
     if ns_obj is None and NS_OBJ is None:
@@ -257,13 +269,13 @@ def get_ns_obj(ns_obj=None):
             from rdfframework import get_framework
             ns_obj = get_framework().ns_obj
             if ns_obj is None:
-                ns_obj = RdfNsManager()
+                ns_obj = RdfNsManager(config=config)
                 NS_OBJ = ns_obj
         except:
             if isinstance(NS_OBJ, RdfNsManager):
                 ns_obj = NS_OBJ
             else:
-                ns_obj = RdfNsManager()
+                ns_obj = RdfNsManager(config=config)
                 NS_OBJ = ns_obj
     else:
         ns_obj = NS_OBJ
