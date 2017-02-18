@@ -14,6 +14,7 @@ from testconfig import config
 
 from rdfframework.getframework import fw_config as fwc, get_framework as fw
 from rdfframework.utilities import DictClass, pp, get_ns_obj
+from rdfframework.rdfdatatypes import rdfdatatypes as rdt
 
 print("CONFIG ---------------------------------------------------------------")
 pp.pprint(DictClass(config))
