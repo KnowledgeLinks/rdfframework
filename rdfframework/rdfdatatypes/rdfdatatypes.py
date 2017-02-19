@@ -5,6 +5,7 @@ from rdfframework.utilities import get_ns_obj as nsm
 class BaseRdfDataType(object):
     """ Base for all rdf datatypes. Not designed to be used alone """
     type = "literal"
+    default_method = "sparql"
 
     def __init__(self, value):
         self.value = value
@@ -16,25 +17,31 @@ class BaseRdfDataType(object):
             rtn_val = json.dumps(self.value)
         except:
             rtn_val = str(self.value)
-        if self.type == 'literal':
-            if hasattr(self, "datatype"):
-                if hasattr(self, "lang") and self.lang:
-                    rtn_val += "@%s" % self.lang
+        if method == "sparql":
+            if self.type == 'literal':
+                if hasattr(self, "datatype"):
+                    if hasattr(self, "lang") and self.lang:
+                        rtn_val += "@%s" % self.lang
+                    else:
+                        dt = self.datatype
+                        print("dt_format: ", dt_format)
+                        if dt_format == "uri":
+                            dt = nsm().uri(self.datatype)
+                        if method == "sparql":
+                            rtn_val += "^^%s" % dt
                 else:
-                    dt = self.datatype
-                    print("dt_format: ", dt_format)
-                    if dt_format == "uri":
-                        dt = nsm().uri(self.datatype)
-                    if method == "sparql":
-                        rtn_val += "^^%s" % dt
-            else:
-                rtn_val += "^^xsd:string"
-        elif self.type == 'uri':
-            rtn_val = nsm.ttluri(self.value)
+                    rtn_val += "^^xsd:string"
+            elif self.type == 'uri':
+                if dt_format == "turtle":
+                    rtn_val = nsm().ttluri(self.value)
+                else:
+                    rtn_val = nsm().iri(nsm().uri(self.value))
+        elif method == "pyuri":
+            rtn_val = nsm().pyuri(self.value)
         return rtn_val
 
     def __repr__(self):
-        return self._format(method="sparql")
+        return self._format(method=self.default_method)
 
     @property
     def sparql(self):
@@ -43,6 +50,26 @@ class BaseRdfDataType(object):
     @property
     def sparql_uri(self):
         return self._format(method="sparql", dt_format="uri")
+
+class Uri(BaseRdfDataType):
+    """ URI/IRI class for working with RDF data """
+    class_type = "Uri"
+    type = "uri"
+    default_method = "pyuri"
+
+    # def __new__(self, value):
+    #     pdb.set_trace()
+    #     if hasattr(value, "type") and value.type =="uri":
+    #         return value
+    #     else:
+    #         return  self #return str.__new__(cls, *args, **kwargs)
+
+    def __init__(self, value):
+        if hasattr(value, "type") and value.type == "uri":
+            self = value
+        else:
+            self.value = nsm().uri(value, strip_iri=True)
+
 
 class XsdString(str, BaseRdfDataType):
     """ String instance of rdf xsd:string type value"""
