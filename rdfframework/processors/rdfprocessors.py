@@ -78,7 +78,7 @@ def csv_to_multi_prop_processor(processor, obj, prop=None, mode="save"):
             obj['processedData'][obj['propUri']] = vals
         obj['prop']['calcValue'] = True
         return obj
-    elif mode == "load":
+    elif mode == "load" and prop is not None:
         prop_val = calculate_value("<<%s|%s>>" % \
                                (prop.kds_propUri, prop.kds_classUri),
                                obj,

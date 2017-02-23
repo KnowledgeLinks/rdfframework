@@ -15,12 +15,12 @@ import pdb
 import logging
 import inspect
 
+from base64 import b64decode
 from flask import json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import XSD
 from dateutil.parser import parse
 from rdfframework.utilities import pp
-
 
 MNAME = inspect.stack()[0][1]
 
@@ -163,7 +163,7 @@ def make_triple(sub, pred, obj):
 def xsd_to_python(value, data_type, rdf_type="literal", output="python"):
     ''' This will take a value and xsd data_type and convert it to a python
         variable'''
-    from rdfframework import get_framework as rdfw
+    from rdfframework.getframework import get_framework as rdfw
     if data_type:
         data_type = data_type.replace(str(XSD), "")
     if not value or isinstance(value, dict) or isinstance(value, list):
@@ -777,3 +777,5 @@ def make_class(obj):
         return new_dict
     else:
         return obj
+
+from rdfframework.utilities.uriconvertor import iri

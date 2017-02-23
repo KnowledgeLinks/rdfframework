@@ -13,10 +13,10 @@ class Test_csv_to_multi_prop_processor(unittest.TestCase):
     def test_load_mode(self):
         self.tags["prop"] = {"new": "orange"}
         self.tags["dataValue"] = ["red", "green", "blue", "yellow"]
-        result = csv_to_multi_prop_processor(None, self.tags, "load")
+        result = csv_to_multi_prop_processor(None, self.tags, mode="load")
         self.assertEqual(
             result,
-            "red, green, blue, yellow")
+            self.tags)
 ##
 ##
 ##    def test_save_mode(self):
