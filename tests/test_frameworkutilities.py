@@ -10,11 +10,17 @@ from unittest.mock import MagicMock, patch
 
 PROJECT_DIR = os.path.abspath(os.curdir)
 sys.path.append(PROJECT_DIR)
-
-from rdfframework.getframework import fw_config
-from rdfframework.utilities.baseutilities import *
-from rdfframework.utilities.uriconvertor import clean_iri
-from rdfframework.utilities.frameworkutilities import uid_to_repo_uri
+try:
+    from rdfframework.getframework import fw_config
+    from rdfframework.utilities.baseutilities import *
+    from rdfframework.utilities.uriconvertor import clean_iri
+    from rdfframework.utilities.frameworkutilities import uid_to_repo_uri
+except ImportError:
+    from .rdfframework.getframework import fw_config
+    from .rdfframework.utilities.baseutilities import *
+    from .rdfframework.utilities.uriconvertor import clean_iri
+    from .rdfframework.utilities.frameworkutilities import uid_to_repo_uri
+   
 
 class Test_cbool(unittest.TestCase):
 

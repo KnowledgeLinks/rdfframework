@@ -262,7 +262,7 @@ def get_ns_obj(ns_obj=None, config=None):
     global NS_OBJ
     if ns_obj is None and NS_OBJ is None:
         try:
-            from rdfframework import get_framework
+            from rdfframework.getframework import get_framework
             ns_obj = get_framework().ns_obj
             if ns_obj is None:
                 ns_obj = RdfNsManager(config=config)
@@ -343,7 +343,7 @@ class RdfNsManager(NamespaceManager):
         global NS_GRAPH
         graph = NS_GRAPH
         config = None
-        if kwargs.get("config"):
+        if 'config' in kwargs:
             config = kwargs.pop("config")
         super(RdfNsManager, self).__init__(graph, *args, **kwargs)
         # load default ns's from config info

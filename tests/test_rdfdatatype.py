@@ -4,7 +4,11 @@ import os
 import unittest
 
 import rdflib
-from rdfframework.rdfdatatypes.rdfdatatypes import BaseRdfDataType, nsm
+try:
+    from rdfframework.rdfdatatypes.rdfdatatypes import BaseRdfDataType, nsm
+except ImportError:
+    from .rdfframework.rdfdatatypes.rdfdatatypes import BaseRdfDataType, nsm
+
 from unittest.mock import MagicMock, patch
 
 DC = rdflib.Namespace("http://dublincore.org/documents/dcmi-namespace/")
@@ -32,7 +36,9 @@ class TestBaseRdfDatatype(unittest.TestCase):
         self.assertEqual(self.base_type._format(method=None),
                          '"This is a literal value"')
 
-    def test_format_pyuri(self):
+    @patch("rdfframework.framework.RdfFramework")
+    def test_format_pyuri(self, mock_rdfw):
+        mock_rdfw.root = os.path.abspath(__name__)
         self.assertEqual(self.base_type._format(method='pyuri'),
                          "<This is a literal value>")
 
