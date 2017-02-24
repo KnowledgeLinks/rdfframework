@@ -10,4 +10,5 @@ if __name__ == '__main__':
     from test_processors import *
     from test_rdfapifields import *
     from test_rdfdatatype import *
+    from rdfdatatypes.test_rdfdatatypes import *
     unittest.main()

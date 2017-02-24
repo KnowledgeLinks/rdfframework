@@ -16,14 +16,18 @@ import testinitialization as ti
 
 
 class Test_XsdString(unittest.TestCase):
-    test_values = ["1",
-                   1,
-                   "how are you"
-                   {"lang":"en", "value":"Hello"},
-                   rdt.XsdString("xsd instance")]
+
+    def setUp(self): 
+        self.test_values = ["1",
+                            1,
+                            "how are you",
+                            {"lang":"en", "value":"Hello"},
+                            rdt.XsdString("xsd instance")]
 
     def test_str_instance(self):
         ''' Does the XsdClass test as an instance of the python str class '''
-        self.assertTrue(isinstance(rdt.XsdString(self.test_values[0])))
+        self.assertTrue(isinstance(self.test_values[-1],
+                                   rdt.XsdString))
 
-
+if __name__ == '__main__':
+    unittest.main()
