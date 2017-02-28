@@ -38,10 +38,11 @@ MNAME = inspect.stack()[0][1]
 # FOAF = Namespace("http://xmlns.com/foaf/spec/")
 # SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 DEBUG = True
+CONFIG = fw_config()
 
 def uid_to_repo_uri(id_value):
     if id_value:
-        _uri = "{}/{}/{}/{}/{}/{}".format(fw_config().get('REPOSITORY_URL'),
+        _uri = "{}/{}/{}/{}/{}/{}".format(CONFIG.get('REPOSITORY_URL'),
                                           id_value[:2],
                                           id_value[2:4],
                                           id_value[4:6],

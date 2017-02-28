@@ -4,7 +4,8 @@ import json
 #        BooleanField, FileField, DateField, DateTimeField, SelectField, Field,\
 #        apiField, FieldList
 #from wtapis.validators import InputRequired, Optional, URL
-from rdfframework import RdfProperty, get_framework as rdfw
+from rdfframework.rdfproperty import RdfProperty
+from rdfframework.getframework import get_framework as rdfw
 from rdfframework.processors import clean_processors
 #from rdfframework.validators import get_wtapi_validators
 from rdfframework.utilities import make_list, make_set, cbool, \
