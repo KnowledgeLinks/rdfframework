@@ -66,7 +66,7 @@ class Uri(BaseRdfDataType):
 
     def __init__(self, value):
         if hasattr(value, "type") and value.type == "uri":
-            self = value
+            self.value = value.value
         else:
             self.value = nsm().uri(value, strip_iri=True)
 

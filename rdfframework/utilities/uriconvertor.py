@@ -3,7 +3,7 @@ import re
 import inspect
 import logging
 import pdb
-
+import base64
 from rdflib import Namespace, Graph, URIRef
 from rdflib.namespace import NamespaceManager
 
@@ -64,6 +64,9 @@ def convert_to_uri(value, strip_iri=False, rdflib_uri=False):
 
     ns_obj = get_ns_obj()
     value = str(value).replace("<","").replace(">","")
+    if value.startswith("pyuri_"):
+        parts = value.split("_")
+        value = base64.b64decode(parts[1]).decode() + parts[2]
     for _prefix, _ns_uri in ns_obj.namespaces():
         if str(value).startswith(_prefix + "_") or \
                 str(value).startswith("<%s_" % _prefix):
@@ -177,9 +180,25 @@ def pyuri(value):
         in a python accessable format. i.e. schema:name or
         http:schema.org/name  --> schema_name '''
     if str(value).startswith("http"):
-        return convert_to_ns(value)
+        rtn_val =  convert_to_ns(value)
     else:
-        return convert_to_ns(convert_to_uri(value))
+        rtn_val = convert_to_ns(convert_to_uri(value))
+    if rtn_val.startswith("http"):
+        rtn_val = pyhttp(rtn_val)
+    return rtn_val
+
+def pyhttp(value):
+    """ converts a no namespaces uri to a python excessable name """
+
+    ending = re.sub(r"^(.*[#/])", "", clean_iri(str(value)))
+    trim_val = len(ending)
+    if trim_val == 0:
+        start = value
+    else:
+        start = value[:-trim_val]
+    return "pyuri_%s_%s" % (base64.b64encode(bytes(start,"utf-8")).decode(),
+                            ending)
+
 
 def ttluri(value):
     ''' converts an iri to the app defined rdf namespaces in the framework
