@@ -11,12 +11,15 @@ import logging
 import inspect
 
 from types import ModuleType
+from uuid import uuid1, uuid4, uuid5
 from flask import current_app, json
 from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 from .debug import pp
 from rdfframework.getframework import fw_config
-import rdfframework.rdfdatatypes as dt
+
+#import rdfframework.rdfdatatypes as dt
+
 
 try:    
     pass
@@ -433,4 +436,14 @@ def convert_ispo_to_dict(data, mode="subject", base=None):
                         rtn_obj[key] = value
     return rtn_obj
 
+def new_id(method="uuid"):
+    """ Generates a unique identifier to be used with any dataset. The 
+        default method will use a random generated uuid based on computer
+        and a random generated uuid. 
 
+        Args:
+            method: "uuid" -> default random uuid generation
+                    ???? -> other methods can be added later
+    """
+    if method == "uuid":
+        return str(uuid5(uuid1(),str(uuid4())).hex)

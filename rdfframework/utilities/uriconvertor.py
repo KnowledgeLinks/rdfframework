@@ -22,7 +22,7 @@ def convert_to_ns(value):
     args:
         value: the value to convert
     '''
-    ns_obj = get_ns_obj()
+    ns_obj = RdfNsManager()
     for _prefix, _ns_uri in ns_obj.namespaces():
         if str(value).startswith(_prefix + ":") or \
                 str(value).startswith("<%s:" % _prefix):
@@ -40,7 +40,7 @@ def convert_to_ttl(value):
     args:
         value: the value to convert
     '''
-    ns_obj = get_ns_obj()
+    ns_obj = RdfNsManager()
     for _prefix, _ns_uri in ns_obj.namespaces():
         _ns_uri = str(_ns_uri)
         if str(value).startswith(_prefix + "_") or \
@@ -62,7 +62,8 @@ def convert_to_uri(value, strip_iri=False, rdflib_uri=False):
             rdflib_uri: returns an rdflib URIRef
     '''
 
-    ns_obj = get_ns_obj()
+    ns_obj = RdfNsManager()
+
     value = str(value).replace("<","").replace(">","")
     if value.startswith("pyuri_"):
         parts = value.split("_")
@@ -101,8 +102,8 @@ def convert_to_uri(value, strip_iri=False, rdflib_uri=False):
         else:
             return iri(value)
 
-def convert_obj_to_rdf_namespace(obj, 
-                                 ns_obj=None, 
+def convert_obj_to_rdf_namespace(obj,
+                                 ns_obj=None,
                                  key_only=False,
                                  rdflib_uri=False):
     """This function takes rdf json definitions and converts all of the
@@ -114,7 +115,7 @@ def convert_obj_to_rdf_namespace(obj,
             key_only: Default = False, True = convert only the dictionary keys
     """
     if not ns_obj:
-        ns_obj = get_ns_obj()
+        ns_obj = RdfNsManager()
 
     if isinstance(obj, list):
         _return_list = []
@@ -138,12 +139,12 @@ def convert_obj_to_rdf_namespace(obj,
                     else:
                         _return_list.append(item)
                 else:
-                    _return_list.append(convert_to_ns(item, ns_obj))
+                    _return_list.append(convert_to_ns(item))
         return _return_list
     elif isinstance(obj, dict):
         _return_obj = {}
         for key, item in obj.items():
-            nkey = convert_to_ns(key, ns_obj)
+            nkey = convert_to_ns(key)
             if isinstance(item, list):
                 _return_obj[nkey] = convert_obj_to_rdf_namespace(item,
                                                                  ns_obj,
@@ -163,7 +164,7 @@ def convert_obj_to_rdf_namespace(obj,
                     else:
                         _return_obj[nkey] = item
                 else:
-                    _return_obj[nkey] = convert_to_ns(item, ns_obj, rdflib_uri)
+                    _return_obj[nkey] = convert_to_ns(item)
         return _return_obj
     else:
         if key_only: 
@@ -173,7 +174,7 @@ def convert_obj_to_rdf_namespace(obj,
             else:
                 return obj
         else:
-            return convert_to_ns(obj, ns_obj, rdflib_uri)
+            return convert_to_ns(obj)
 
 def pyuri(value):
     ''' converts an iri to the app defined rdf namespaces in the framework
@@ -265,39 +266,46 @@ def uri(value, strip_iri=False):
     """
 
     if clean_iri(str(value)).startswith("http"):
-        return value
+        if strip_iri:
+            return clean_iri(str(value))
+        else:
+            return iri(value)
     else:
         return convert_to_uri(value, strip_iri=strip_iri)
 
-def get_ns_obj(ns_obj=None, config=None):
-    """ returns an instance of the RdfNsManager
+# def get_ns_obj(ns_obj=None, config=None):
+#     """ returns an instance of the RdfNsManager
 
-    Args:
-        *ns_obj: an RdfNsManager instance or None
-        *config: the config dict/obj for the application
+#     Args:
+#         *ns_obj: an RdfNsManager instance or None
+#         *config: the config dict/obj for the application
 
-    * Optional
-    """
-    global NS_OBJ
-    if ns_obj is None and NS_OBJ is None:
-        try:
-            from rdfframework.getframework import get_framework
-            ns_obj = get_framework().ns_obj
-            if ns_obj is None:
-                ns_obj = RdfNsManager(config=config)
-                NS_OBJ = ns_obj
-        except:
-            if isinstance(NS_OBJ, RdfNsManager):
-                ns_obj = NS_OBJ
-            else:
-                ns_obj = RdfNsManager(config=config)
-                NS_OBJ = ns_obj
-    else:
-        ns_obj = NS_OBJ
-    return ns_obj
+#     * Optional
+#     """
+#     global NS_OBJ
+#     if ns_obj is None and NS_OBJ is None:
+#         try:
+#             from rdfframework.getframework import get_framework
+#             ns_obj = get_framework().ns_obj
+#             if ns_obj is None:
+#                 ns_obj = RdfNsManager(config=config)
+#                 NS_OBJ = ns_obj
+#         except:
+#             if isinstance(NS_OBJ, RdfNsManager):
+#                 ns_obj = NS_OBJ
+#             else:
+#                 ns_obj = RdfNsManager(config=config)
+#                 NS_OBJ = ns_obj
+#     else:
+#         ns_obj = NS_OBJ
+#     if config and hasattr(config, "DEFAULT_RDF_NS"):
+#         ns_obj.dict_load(config.DEFAULT_RDF_NS)
+#         NS_OBJ = NS_OBJ
+#     return ns_obj
 
 def iris_to_strings(obj, ns_obj=None):
-    ns_obj = get_ns_obj(ns_obj)
+    #ns_obj = get_ns_obj(ns_obj)
+    ns_obj = RdfNsManager()
 
     if isinstance(obj, list):
         _return_list = []
@@ -352,9 +360,30 @@ def iri(uri_string):
         uri_string = "{}>".format(uri_string.strip())
     return uri_string
 
-class RdfNsManager(NamespaceManager):
+class NsmSingleton(type):
+    """Singleton class for the RdfNsManager that will allow for only one
+    instance of the RdfNsManager to be created. In addition the app config
+    can be sent to the RdfNsManger even after instantiation so the the 
+    default RDF namespaces can be loaded. """
+
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(NsmSingleton, 
+                    cls).__call__(*args, **kwargs)
+        else:
+            if 'config' in kwargs and hasattr(kwargs['config'], 
+                                              "DEFAULT_RDF_NS"):
+                cls._instances[cls].dict_load(kwargs['config'].DEFAULT_RDF_NS)
+        return cls._instances[cls]
+
+class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
     """ Extends the the rdflib Namespace Manager. Provides additional methods
-    to easily generate prefixes in use thoughout the application """
+    to easily generate prefixes in use thoughout the application 
+
+    *** Of Note: this is a singleton class and only one instance of it will
+    every exisit. """
+
     ln = "%s-RdfNsManager" % MNAME
     log_level = logging.CRITICAL
 
@@ -366,7 +395,7 @@ class RdfNsManager(NamespaceManager):
             config = kwargs.pop("config")
         super(RdfNsManager, self).__init__(graph, *args, **kwargs)
         # load default ns's from config info
-        
+
         if config and hasattr(config, "DEFAULT_RDF_NS"):
             self.dict_load(config.DEFAULT_RDF_NS)
 

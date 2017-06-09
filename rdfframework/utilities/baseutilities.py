@@ -94,7 +94,7 @@ def cbool(value, strict=True):
         elif isinstance(value, str):
             if value.lower() in ['true', '1', 't', 'y', 'yes']:
                 return_val = True
-            elif value.lower() in ['false', '0', 'n', 'no']:
+            elif value.lower() in ['false', '0', 'n', 'no', 'f']:
                 return_val = False
             else:
                 if strict:
@@ -664,7 +664,8 @@ RESERVED_KEYS = ['dict',
                  'items', 
                  'keys', 
                  'values', 
-                 '_DictClass__reserved']
+                 '_DictClass__reserved',
+                 'debug']
 class DictClass(object):
     ''' takes a dictionary and converts it to a class '''
     __reserved = RESERVED_KEYS

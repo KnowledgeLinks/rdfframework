@@ -8,13 +8,13 @@ try:
     from rdfframework.getframework import get_framework as rdfw, fw_config
     from rdfframework.utilities import make_triple, iri, uri, is_not_null,\
             render_without_request, make_list, pp, uid_to_repo_uri, \
-            get_ns_obj as NSM, convert_spo_to_dict, make_class
+            RdfNsManager as NSM, convert_spo_to_dict, make_class
 except ImportError:
     # Try local import
     from rdfframework.getframework import get_framework as rdfw, fw_config
     from ..utilities import make_triple, iri, uri, is_not_null,\
             render_without_request, make_list, pp, uid_to_repo_uri, \
-            get_ns_obj as NSM, convert_spo_to_dict, make_class
+            RdfNsManager as NSM, convert_spo_to_dict, make_class
 
 config = fw_config
 
