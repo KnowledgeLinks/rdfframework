@@ -512,12 +512,15 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
         args:
             namespace: prefix, string or Namespace() to remove
         """
-        # remove the item form the namespace dict 
+        # remove the item from the namespace dict 
         namespace = str(namespace)
+        attr_name = None
         for ns in list(self.store._IOMemory__namespace.items()):
             if str(ns[0]) == namespace or str(ns[1]) == namespace:
                 del self.store._IOMemory__namespace[ns[0]]
-        # remove the item form the namespace dict 
+                # remove the attribute from the class
+                delattr(RdfNsManager, ns[0])
+        # remove the item from the namespace dict 
         for ns in list(self.store._IOMemory__prefix.items()):
             if str(ns[0]) == namespace or str(ns[1]) == namespace:
                 del self.store._IOMemory__prefix[ns[0]]

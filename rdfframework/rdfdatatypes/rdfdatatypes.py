@@ -63,7 +63,7 @@ class BaseRdfDataType(object):
     def debug(self):
         return DictClass(self)
 
-class Uri(BaseRdfDataType):
+class Uri(BaseRdfDataType, str):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
     type = "uri"
@@ -92,8 +92,11 @@ class Uri(BaseRdfDataType):
     def __str__(self):
         return self.sparql_uri
 
-class BlankNode(BaseRdfDataType):
-    """ URI/IRI class for working with RDF data """
+    def __hash__(self):
+        return hash(self._format(method=self.default_method))
+
+class BlankNode(BaseRdfDataType, str):
+    """ blankNode URI/IRI class for working with RDF data """
     class_type = "BlankNode"
     type = "bnode"    
 
