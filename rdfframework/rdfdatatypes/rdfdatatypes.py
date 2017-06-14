@@ -482,6 +482,7 @@ class XsdDecimal(Decimal, BaseRdfDataType):
 
 
 xsd_class_list = [Uri,
+                  BlankNode,
                   XsdBoolean,
                   XsdDate,
                   XsdDatetime,
@@ -501,3 +502,30 @@ for xsd_class in xsd_class_list:
         DT_LOOKUP[NSM.pyuri(xsd_class.datatype)] = xsd_class
         DT_LOOKUP[NSM.ttluri(xsd_class.datatype)] = xsd_class
     DT_LOOKUP[xsd_class] = xsd_class
+
+def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
+    """ Coverts an input to one of the rdfdatatypes classes
+
+        Args:
+            value: any rdfdatatype, json dict or vlaue
+            class_type: "literal", "uri" or "blanknode"
+            datatype: "xsd:string", "xsd:int" , etc
+    """
+
+    if isinstance(value, BaseRdfDataType):
+        return value
+    elif isinstance(value, dict):
+        # test to see if the type is a literal, a literal will have a another
+        # dictionary key call datatype. Feed the datatype to the lookup to
+        # retrun the value else convert it to a XsdString
+        if value.get('type') == "literal":
+            if not value.get("datatype"):
+                return XsdString(value['value'])
+            else:
+                # The lang keyword only applies to XsdString types
+                return DT_LOOKUP[value['datatype']](value['value'],
+                                                    lang=value.get("lang")) 
+        else:    
+            return DT_LOOKUP[value['type']](value['value'])
+
+

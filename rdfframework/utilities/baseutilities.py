@@ -665,10 +665,15 @@ RESERVED_KEYS = ['dict',
                  'keys', 
                  'values', 
                  '_DictClass__reserved',
-                 'debug']
+                 '_RdfConfigManager__reserved',
+                 '_RdfConfigManager__type',
+                 '_DictClass__type',
+                 'debug',
+                 '_RdfConfigManager__load_config']
 class DictClass(object):
     ''' takes a dictionary and converts it to a class '''
     __reserved = RESERVED_KEYS
+    __type = 'DictClass'
 
     def __init__(self, obj=None, start=True):
         if obj and start:

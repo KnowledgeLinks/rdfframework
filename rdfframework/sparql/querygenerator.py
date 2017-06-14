@@ -8,15 +8,15 @@ try:
     from rdfframework.getframework import get_framework as rdfw, fw_config
     from rdfframework.utilities import make_triple, iri, uri, is_not_null,\
             render_without_request, make_list, pp, uid_to_repo_uri, \
-            RdfNsManager as NSM, convert_spo_to_dict, make_class
+            RdfNsManager as NSM, convert_spo_to_dict, make_class, RdfConfigManager
 except ImportError:
     # Try local import
     from rdfframework.getframework import get_framework as rdfw, fw_config
     from ..utilities import make_triple, iri, uri, is_not_null,\
             render_without_request, make_list, pp, uid_to_repo_uri, \
-            RdfNsManager as NSM, convert_spo_to_dict, make_class
+            RdfNsManager as NSM, convert_spo_to_dict, make_class, RdfConfigManager
 
-config = fw_config
+config = RdfConfigManager()
 
 DEBUG = True
 
@@ -24,6 +24,7 @@ def get_data(obj, **kwargs):
     ''' queries that datastore for the based on the supplied arguments '''
     _sparql = create_data_sparql_query(obj, **kwargs)
     data = run_sparql_query(_sparql, **kwargs)
+    pdb.set_trace()
     return data
 
 def create_tstore_namespace(namespace_name, **kwargs):
@@ -36,7 +37,7 @@ def create_tstore_namespace(namespace_name, **kwargs):
                                   ns_name=namespace_name)
     return requests.post(headers={"Content-Type":"application/xml"}, 
                          data=data,
-                         url=config().TRIPLESTORE.ns_url)
+                         url=config.TRIPLESTORE.ns_url)
 
 def delete_tstore_namespace(namespace_name, **kwargs):
     """ will send a request to the triplestore to delete a namespace
@@ -44,7 +45,7 @@ def delete_tstore_namespace(namespace_name, **kwargs):
     Args:
         namespace_name: the name of the namespace
     """
-    url = os.path.join(config().TRIPLESTORE.ns_url,
+    url = os.path.join(config.TRIPLESTORE.ns_url,
                        namespace_name).replace("\\","/")
     return requests.delete(url=url)
 
@@ -72,7 +73,7 @@ def run_sparql_query(sparql, mode='get', **kwargs):
             query = "\n".join([_prefix, sparql])
     else:
         return None
-    sparql_endpoint = config().TRIPLESTORE.url
+    sparql_endpoint = config.TRIPLESTORE.url
     
 
     if kwargs.get("namespace"):
@@ -92,7 +93,7 @@ def run_sparql_query(sparql, mode='get', **kwargs):
         return requests.post(sparql_endpoint, data={"update":query})
     elif mode == "load":
         context_uri = kwargs.get("graph",
-                                 config().TRIPLESTORE.default_graph)
+                                 config.TRIPLESTORE.default_graph)
         return requests.post(url=sparql_endpoint,
                              headers={"Content-Type": "text/turtle"},
                              params={"context-uri": context_uri},
@@ -334,7 +335,7 @@ def query_select_options(field):
     if _select_query:
         # send query to triplestore
         _select_list = requests.post(
-            config().TRIPLESTORE_URL,
+            config.TRIPLESTORE_URL,
             data={"query": _prefix + _select_query,
                   "format": "json"})
         _raw_options = _select_list.json().get('results', {}).get('bindings', [])
@@ -358,7 +359,7 @@ def save_file_to_repository(data, repo_item_address):
         print("~~~~~~~~ write code here")
     else:
         repository_result = requests.post(
-            config().REPOSITORY_URL,
+            config.REPOSITORY_URL,
             data=data.read(),
 			         headers={"Content-type":"'image/png'"})
         object_value = repository_result.text
@@ -374,7 +375,7 @@ def get_all_item_data(item_uri):
 def get_class_def_item_data(class_uri, **kwargs):
     ns = NSM()
     definition_graph = kwargs.get("definition_graph",
-                                  config().RDF_DEFINITIONS.graph)
+                                  config.RDF_DEFINITIONS.graph)
     _sparql = render_without_request("sparqlClassDefinitionDataTemplate.rq",
                                      prefix=ns.prefix(),
                                      item_uri=class_uri,
@@ -384,7 +385,7 @@ def get_class_def_item_data(class_uri, **kwargs):
 def get_linker_def_item_data(**kwargs):
     ns = NSM()
     definition_graph = kwargs.get("definition_graph",
-                                  config().RDF_DEFINITIONS.graph)
+                                  config.RDF_DEFINITIONS.graph)
     if not definition_graph:
         definition_graph = "bd:nullGraph"
     sparql = render_without_request("sparqlLinkerDefinitionDataTemplate.rq",
