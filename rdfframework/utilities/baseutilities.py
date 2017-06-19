@@ -675,9 +675,9 @@ class DictClass(object):
     __reserved = RESERVED_KEYS
     __type = 'DictClass'
 
-    def __init__(self, obj=None, start=True):
+    def __init__(self, obj=None, start=True, debug=False):
         if obj and start:
-            new_class = make_class(obj)
+            new_class = make_class(obj, debug)
             for attr in dir(new_class):
                 if not attr.startswith('__') and attr not in self.__reserved:
                     setattr(self, attr, getattr(new_class,attr))
@@ -686,6 +686,7 @@ class DictClass(object):
         return None
 
     def __getitem__(self, item):
+        item = str(item)
         if hasattr(self, item):
             return getattr(self, item)
         else:
@@ -750,17 +751,17 @@ class DictClass(object):
                 return_list.append((attr, getattr(self, attr)))
         return return_list
 
-def make_class(obj):
+def make_class(obj, debug=False):
     __reserved = RESERVED_KEYS
     if isinstance(obj, list):
         _return_list = []
         for item in obj:
             if isinstance(item, list):
-                _return_list.append(make_class(item))
+                _return_list.append(make_class(item, debug))
             elif isinstance(item, set):
                 _return_list.append(list(item))
             elif isinstance(item, dict):
-                _return_list.append(make_class(item))
+                _return_list.append(make_class(item, debug))
             else:
                 _return_list.append(item)
         return _return_list
@@ -769,16 +770,22 @@ def make_class(obj):
     elif isinstance(obj, dict):
         new_dict = DictClass(start=False)
         for key, item in obj.items():
+            if debug: pdb.set_trace()
             if key in __reserved:
                 key += "_1"
             if not key.startswith('__'):
+                if debug: pdb.set_trace()
                 if isinstance(item, list):
-                    setattr(new_dict, key, make_class(item))
+                    if debug: pdb.set_trace()
+                    setattr(new_dict, key, make_class(item, debug))
                 elif isinstance(item, set):
+                    if debug: pdb.set_trace()
                     setattr(new_dict, key, list(item))
                 elif isinstance(item, dict):
-                    setattr(new_dict, key, make_class(item))
+                    if debug: pdb.set_trace()
+                    setattr(new_dict, key, make_class(item, debug))
                 else:
+                    if debug: pdb.set_trace()
                     setattr(new_dict, key, item)
         return new_dict
     else:

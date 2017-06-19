@@ -56,7 +56,8 @@ DEFAULT_RDF_NS = {
     "dbo": "http://dbpedia.org/ontology/",
     "dbp": "http://dbpedia.org/property/",
     "dbr": "http://dbpedia.org/resource/",
-    "m21": "<http://knowledgelinks.io/ns/marc21/>"
+    "m21": "<http://knowledgelinks.io/ns/marc21/>",
+    "acl": "<http://www.w3.org/ns/auth/acl#>"
 }
 
 RDF_REFERENCE_GRAPH = "<http://knowledgelinks.io/ns/bibframe/reference/>"
