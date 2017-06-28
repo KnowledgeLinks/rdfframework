@@ -30,7 +30,7 @@ FRAMEWORK_BASE = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 # if not os.path.exists(FRAMEWORK_BASE):
 #     #! Quick hack to get running on Docker container -- jpn 2016-03-08
 #     FRAMEWORK_BASE = "/opt/intro2libsys/ebadges/rdfframework/rdfframework"
-JSON_LOCATION = os.path.join(FRAMEWORK_BASE, "json-definitions")
+
 
 ENV = Environment(loader=FileSystemLoader(
     [os.path.join(FRAMEWORK_BASE, "sparql", "queries"),
@@ -659,6 +659,24 @@ class IsFirst():
         else:
             return false
 
+class DictClassMeta(type):
+    """ Used to handle list generation """
+
+    def __call__(cls, *args, **kwargs):
+
+        new_class = False
+        if len(args) > 0:
+            new_class = make_class(args[0], kwargs.get('debug',False))
+        if new_class and isinstance(new_class, list):
+            return new_class
+        elif len(args) > 0: 
+            vals = list(args)
+            vals[0] = new_class
+            vals = tuple(vals)
+        else:
+            vals = args
+        return super().__call__(*vals, **kwargs)
+
 RESERVED_KEYS = ['dict', 
                  'get', 
                  'items', 
@@ -670,17 +688,17 @@ RESERVED_KEYS = ['dict',
                  '_DictClass__type',
                  'debug',
                  '_RdfConfigManager__load_config']
-class DictClass(object):
+
+class DictClass(metaclass=DictClassMeta):
     ''' takes a dictionary and converts it to a class '''
     __reserved = RESERVED_KEYS
     __type = 'DictClass'
 
     def __init__(self, obj=None, start=True, debug=False):
         if obj and start:
-            new_class = make_class(obj, debug)
-            for attr in dir(new_class):
+            for attr in dir(obj):
                 if not attr.startswith('__') and attr not in self.__reserved:
-                    setattr(self, attr, getattr(new_class,attr))
+                    setattr(self, attr, getattr(obj,attr))
 
     def __getattr__(self, attr):
         return None
@@ -764,6 +782,7 @@ def make_class(obj, debug=False):
                 _return_list.append(make_class(item, debug))
             else:
                 _return_list.append(item)
+        #pdb.set_trace()
         return _return_list
     elif isinstance(obj, set):
         return list(obj)

@@ -2,6 +2,10 @@
 # enter a secret key for the flask application instance
 SECRET_KEY = "enter_a_secret_key_here"
 
+# Enter the root file path for application files. If left blank the application
+# will use the file path that originally called RdfConfigManager
+ROOT_FILE_PATH = "/home/stabiledev/git/rdfframework"
+
 # URL used in generating IRIs
 BASE_URL = "http://bibcat.org/"
 
@@ -57,7 +61,8 @@ DEFAULT_RDF_NS = {
     "dbp": "http://dbpedia.org/property/",
     "dbr": "http://dbpedia.org/resource/",
     "m21": "<http://knowledgelinks.io/ns/marc21/>",
-    "acl": "<http://www.w3.org/ns/auth/acl#>"
+    "acl": "<http://www.w3.org/ns/auth/acl#>",
+    "bd": "<http://www.bigdata.com/rdf#>"
 }
 
 RDF_REFERENCE_GRAPH = "<http://knowledgelinks.io/ns/bibframe/reference/>"

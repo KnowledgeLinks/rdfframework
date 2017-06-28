@@ -102,10 +102,7 @@ def convert_to_uri(value, strip_iri=False, rdflib_uri=False):
         else:
             return iri(value)
 
-def convert_obj_to_rdf_namespace(obj,
-                                 ns_obj=None,
-                                 key_only=False,
-                                 rdflib_uri=False):
+def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=False):
     """This function takes rdf json definitions and converts all of the
         uri strings to a ns_value format_
 
@@ -272,36 +269,6 @@ def uri(value, strip_iri=False):
             return iri(value)
     else:
         return convert_to_uri(value, strip_iri=strip_iri)
-
-# def get_ns_obj(ns_obj=None, config=None):
-#     """ returns an instance of the RdfNsManager
-
-#     Args:
-#         *ns_obj: an RdfNsManager instance or None
-#         *config: the config dict/obj for the application
-
-#     * Optional
-#     """
-#     global NS_OBJ
-#     if ns_obj is None and NS_OBJ is None:
-#         try:
-#             from rdfframework.getframework import get_framework
-#             ns_obj = get_framework().ns_obj
-#             if ns_obj is None:
-#                 ns_obj = RdfNsManager(config=config)
-#                 NS_OBJ = ns_obj
-#         except:
-#             if isinstance(NS_OBJ, RdfNsManager):
-#                 ns_obj = NS_OBJ
-#             else:
-#                 ns_obj = RdfNsManager(config=config)
-#                 NS_OBJ = ns_obj
-#     else:
-#         ns_obj = NS_OBJ
-#     if config and hasattr(config, "DEFAULT_RDF_NS"):
-#         ns_obj.dict_load(config.DEFAULT_RDF_NS)
-#         NS_OBJ = NS_OBJ
-#     return ns_obj
 
 def iris_to_strings(obj, ns_obj=None):
     #ns_obj = get_ns_obj(ns_obj)
@@ -580,3 +547,6 @@ def create_namespace_obj(obj=None, filepaths=None):
         for path in filepaths:
             NS_OBJ.load(path)
     return NS_OBJ
+
+
+#*************** OLD CO

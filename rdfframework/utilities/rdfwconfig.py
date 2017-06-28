@@ -1,6 +1,7 @@
 ''' Application Configuration Manager '''
 import inspect
 import logging
+import os
 import pdb 
 
 from rdfframework.utilities import DictClass, make_class, pp
@@ -22,16 +23,29 @@ class ConfigSingleton(type):
                     cls).__call__(*args, **kwargs)
         else:
             if 'config' in kwargs:
-                cls._instances[cls]._RdfConfigManager__load_config(kwargs['config'])
+                cls._instances[cls]._RdfConfigManager__load_config(\
+                        kwargs['config'])
+                cls._instances[cls].is_initialized = True
         return cls._instances[cls]
+
+def initialized(func):
+    """ decorator for testing if the configmanager has been initialized
+        prior to calling any attribute """
+
+    def wrapper(self, *args, **kwargs):
+        if not self.is_initialized:
+            return "RdfConfigManager has not been initializied"
+        else:
+            return func(self, *args, **kwargs)
+    return(wrapper)
 
 
 class RdfConfigManager(metaclass=ConfigSingleton):
-    """ Extends the the rdflib Namespace Manager. Provides additional methods
-    to easily generate prefixes in use thoughout the application 
+    """ Configuration Manager for the application. 
 
     *** Of Note: this is a singleton class and only one instance of it will
-    every exisit. """
+                 exisit. 
+    """
 
     ln = "%s-RdfConfigManager" % MNAME
     log_level = logging.CRITICAL
@@ -42,8 +56,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                  'keys', 
                  'values', 
                  '_RdfConfigManager__reserved',
+                 'is_intialized',
                  '_DictClass__type',
                  'debug']
+    is_initialized = False
 
     def __init__(self, obj=None, start=True):
         self.__load_config(obj)
@@ -60,49 +76,60 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             for attr in dir(new_class):
                 if not attr.startswith("_") and attr not in self.__reserved:
                     setattr(self, attr, getattr(new_class,attr))
-
+        self.JSON_LOCATION = os.path.join(self.ROOT_FILE_PATH, 
+                                          "json-definitions")
+    
+    @initialized
     def __repr__(self):
         return "<%s.%s object at %s> (\n%s)" % (self.__class__.__module__,
                                          self.__class__.__name__,
                                          hex(id(self)),
                                          pp.pformat(DictClass(self).dict()))
-
+    
+    @initialized
     def __getattr__(self, attr):
         return None
-
+    
+    @initialized
     def __getitem__(self, item):
         if hasattr(self, item):
             return getattr(self, item)
         else:
             return None
-
+    
+    @initialized
     def __str__(self):
         return str(self.dict())
+
 
     def __setattr__(self, attr, value):
         if isinstance(value, dict) or isinstance(value, list):
             value = DictClass(value)
         self.__dict__[attr] = value
 
+    @initialized
     def dict(self):
         """ converts the class to a dictionary object """
         return DictClass(self).dict()
 
-
+    @initialized
     def get(self, attr, none_val=None):
         if attr in self.keys():
             return getattr(self, attr)
         else:
             return none_val
-
+    
+    @initialized
     def keys(self):
         return [attr for attr in dir(self) if not attr.startswith("__") and \
                 attr not in self.__reserved]
-
+    
+    @initialized
     def values(self):
-        return [getattr(self, attr) for attr in dir(self) if not attr.startswith("__") and \
-                attr not in self.__reserved]
-
+        return [getattr(self, attr) for attr in dir(self) \
+                if not attr.startswith("__") and attr not in self.__reserved]
+    
+    @initialized
     def items(self):
         return_list = []
         for attr in dir(self):

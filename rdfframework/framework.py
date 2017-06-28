@@ -17,13 +17,12 @@ from werkzeug.datastructures import MultiDict
 from flask import json
 
 from .rdfproperty import RdfProperty
-from rdfframework.getframework import fw_config
-from rdfframework.utilities import iri, is_not_null, make_list
-from rdfframework.utilities import remove_null, clean_iri, convert_spo_to_dict, convert_ispo_to_dict, \
+from rdfframework.utilities import iri, is_not_null, make_list, \
+        remove_null, clean_iri, convert_spo_to_dict, convert_ispo_to_dict, \
         render_without_request, create_namespace_obj, \
         convert_obj_to_rdf_namespace, pyuri, nouri, pp, iris_to_strings, \
-        JSON_LOCATION, convert_obj_to_rdf_namespace, convert_spo_def, \
-        make_class
+        convert_obj_to_rdf_namespace, convert_spo_def, \
+        make_class, RdfConfigManager, RdfNsManager
 from rdfframework.processors import clean_processors, run_processor
 
 from rdfframework.sparql import get_data, get_linker_def_item_data, \
@@ -33,8 +32,23 @@ from rdfframework.security import User, get_app_security
 from rdfframework.forms import rdf_framework_form_factory
 
 MODULE_NAME = os.path.basename(inspect.stack()[0][1])
+CFG = RdfConfigManager()
+NSM = RdfNsManager()
 
-class RdfFramework(object):
+class RdfFrameworkSingleton(type):
+    """Singleton class for the RdfFramewodk that will allow for only one
+    instance of the RdfFramework to be created."""
+
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if not CFG.is_initialized:
+            print("The RdfConfigManager has not been initialized!")
+        if cls not in cls._instances:
+            cls._instances[cls] = super(RdfFrameworkSingleton, 
+                    cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class RdfFramework(metaclass=RdfFrameworkSingleton):
     ''' base class for Knowledge Links' Graph database RDF vocabulary
         framework'''
 
@@ -56,12 +70,12 @@ class RdfFramework(object):
     # debug as required
     log_level = logging.DEBUG
     
-    def __init__(self, root_file_path, **kwargs):
+    def __init__(self, **kwargs):
         
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         
-        self.root_file_path = root_file_path
+        self.root_file_path = CFG.ROOT_FILE_PATH
         self._set_rdf_def_filelist()
         self.form_list = {}
         # if the the definition files have been modified since the last json
@@ -70,11 +84,12 @@ class RdfFramework(object):
             reset = True
         else:
             reset = False
-        if not os.path.isdir(JSON_LOCATION):
+        if not os.path.isdir(CFG.JSON_LOCATION):
             print("JSON cache directory not found.\nCreating directory")
             reset = True
-            os.makedirs(JSON_LOCATION)
-        if not os.path.exists(os.path.join(JSON_LOCATION, "app_query.json")):
+            os.makedirs(CFG.JSON_LOCATION)
+        if not os.path.exists(os.path.join(CFG.JSON_LOCATION,
+                                           "app_query.json")):
             reset = True
         # verify that the server core is up and running
         servers_up = True
@@ -106,13 +121,13 @@ class RdfFramework(object):
             WHERE {
                 ?uri kds:defaultLoaded ?default_loaded .
             }'''
-        result = requests.post(fw_config().get('TRIPLESTORE_URL'),
-                                 data={"query": self.get_prefix() + sparql,
-                                       "format": "json"})
+        result = requests.post(CFG.TRIPLESTORE.url,
+                               data={"query": self.get_prefix() + sparql,
+                                     "format": "json"})
         value = result.json().get('results', {}).get('bindings', [])
         if len(value) == 0:
             # if not loaded save the data
-            data_list = make_list(fw_config().get('FRAMEWORK_DEFAULT'))
+            data_list = make_list(CFG.FRAMEWORK_DEFAULT)
             for data in data_list:
                 form_class = rdf_framework_form_factory(data['form_path'])
                 form_data = data['form_data']
@@ -131,7 +146,7 @@ class RdfFramework(object):
             #               data=save_query,
             #               headers={"Content-type": "text/turtle"})
             triplestore_result = requests.post(
-                                url=fw_config().get("TRIPLESTORE_URL"),
+                                url=CFG.TRIPLESTORE.url,
                                 headers={"Content-Type":
                                          "text/turtle"},
                                 data=save_query)
@@ -673,8 +688,8 @@ class RdfFramework(object):
             print(3)
             self.ns_obj = create_namespace_obj(filepaths=filepaths)
             print(4)
-            if fw_config().get("DEFAULT_RDF_NS"):
-                self.ns_obj.dict_load(fw_config()['DEFAULT_RDF_NS'])
+            if CFG.DEFAULT_RDF_NS:
+                self.ns_obj.dict_load(CFG.DEFAULT_RDF_NS)
             print(5)
             self.rdf_app_dict = convert_obj_to_rdf_namespace(_app_json,
                                                              self.ns_obj)
@@ -777,7 +792,7 @@ class RdfFramework(object):
             _string_defs = data[0]['app']['value']
             print("end query")
             with open(
-                os.path.join(JSON_LOCATION, "app_query.json"),
+                os.path.join(CFG.JSON_LOCATION, "app_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs )
             print("end write")
@@ -785,7 +800,7 @@ class RdfFramework(object):
             print("end load")
         else:
             with open(
-                os.path.join(JSON_LOCATION, "app_query.json")) as file_obj:
+                os.path.join(CFG.JSON_LOCATION, "app_query.json")) as file_obj:
                 _json_defs = json.loads(file_obj.read())
         return _json_defs
 
@@ -796,11 +811,12 @@ class RdfFramework(object):
         if reset:
             # get a list of all of the rdf classes being defined
             prefix = self.ns_obj.prefix()
-            graph = fw_config().get('RDF_DEFINITION_GRAPH')
+            graph = CFG.RDF_DEFINITION_GRAPH
             sparql = render_without_request("sparqlClassDefinitionList.rq",
                                              graph=graph,
                                              prefix=prefix)
-            class_qry = requests.post(fw_config().get('TRIPLESTORE_URL'),
+            pdb.set_trace()
+            class_qry = requests.post(CFG.TRIPLESTORE.url,
                                       data={"query": sparql, "format": "json"})
             class_list = class_qry.json().get('results').get('bindings')
             class_dict = {}
@@ -813,12 +829,12 @@ class RdfFramework(object):
                         base=class_uri)
             class_dict = convert_obj_to_rdf_namespace(class_dict)
             with open(
-                os.path.join(JSON_LOCATION,"class_query.json"),
+                os.path.join(CFG.JSON_LOCATION,"class_query.json"),
                 "w") as file_obj:
                 file_obj.write( json.dumps(class_dict, indent=4) )
         else:
             with open(
-                os.path.join(JSON_LOCATION, "class_query.json")) as file_obj:
+                os.path.join(CFG.JSON_LOCATION, "class_query.json")) as file_obj:
                 class_dict = json.loads(file_obj.read())
         return class_dict
 
@@ -839,12 +855,12 @@ class RdfFramework(object):
                                                        key_only=True,
                                                        rdflib_uri=True)
             with open(
-                os.path.join(JSON_LOCATION,"linker_query.json"),
+                os.path.join(CFG.JSON_LOCATION,"linker_query.json"),
                 "w") as file_obj:
                 file_obj.write(json.dumps(linker_dict, indent=4))
         else:
             with open(
-                os.path.join(JSON_LOCATION, "linker_query.json")) as file_obj:
+                os.path.join(CFG.JSON_LOCATION, "linker_query.json")) as file_obj:
                 linker_dict = json.loads(file_obj.read())
         return linker_dict
 
@@ -854,22 +870,21 @@ class RdfFramework(object):
         print("\tLoading form definitions")
         if reset:
             _sparql = render_without_request("jsonFormQueryTemplate.rq",
-                                             graph=fw_config().get(\
-                                                    'RDF_DEFINITION_GRAPH'))
-            _form_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
+                                             graph=CFG.RDF_DEFINITION_GRAPH)
+            _form_list = requests.post(CFG.TRIPLESTORE_URL,
                                        data={"query": _sparql, "format": "json"})
             _raw_json = _form_list.json().get('results').get('bindings'\
                     )[0]['appForms']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
 
             with open(
-                os.path.join(JSON_LOCATION, "form_query.json"),
+                os.path.join(CFG.JSON_LOCATION, "form_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs)
             _json_defs = json.loads(_string_defs)
         else:
             with open(
-                os.path.join(JSON_LOCATION, "form_query.json")) as file_obj:
+                os.path.join(CFG.JSON_LOCATION, "form_query.json")) as file_obj:
                 _json_defs = json.loads(file_obj.read())
         return _json_defs
 
@@ -879,21 +894,20 @@ class RdfFramework(object):
         print("\tLoading api definitions")
         if reset:
             _sparql = render_without_request("jsonApiQueryTemplate.rq",
-                                             graph=fw_config().get(\
-                                                    'RDF_DEFINITION_GRAPH'))
-            _api_list = requests.post(fw_config().get('TRIPLESTORE_URL'),
+                                             graph=CFG.RDF_DEFINITION_GRAPH)
+            _api_list = requests.post(CFG.TRIPLESTORE.url,
                                        data={"query": _sparql, "format": "json"})
             _raw_json = _api_list.json().get('results').get('bindings'\
                     )[0]['appApis']['value']
             _string_defs = _raw_json.replace('hasProperty":', 'properties":')
             _json_defs = json.loads(_string_defs)
             with open(
-                os.path.join(JSON_LOCATION, "api_query.json"),
+                os.path.join(CFG.JSON_LOCATION, "api_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs )
         else:
             with open(
-                os.path.join(JSON_LOCATION, "api_query.json")) as file_obj:
+                os.path.join(CFG.JSON_LOCATION, "api_query.json")) as file_obj:
                 _json_defs = json.loads(file_obj.read())
         return _json_defs
 
@@ -958,25 +972,24 @@ class RdfFramework(object):
         lg.setLevel(self.log_level)
         
         
-        self.base_url = fw_config().get('ORGANIZATION').get('url',"")
-        self.ts = fw_config().get('TRIPLESTORE', {})
-        self.def_config = fw_config().get('RDF_DEFINITIONS')
-        self.triplestore_url = self.ts['url']
-        self.def_ns = self.def_config.get('namespace',
-                                          self.ts.get("default_ns", "kb"))
+        self.base_url = CFG.ORGANIZATION.get('url',"")
+        self.def_config = CFG.RDF_DEFINITIONS
+        self.triplestore_url = CFG.TRIPLESTORE.url
+        self.def_ns = CFG.RDF_DEFINITIONS.get('namespace',
+                CFG.TRIPLESTORE.get("default_ns", "kb"))
         create_tstore_namespace(self.def_ns)
-        create_tstore_namespace(self.ts['default_ns'])
+        create_tstore_namespace(CFG.TRIPLESTORE.default_ns)
         # Strip off trailing forward slash for TTL template
         if self.base_url.endswith("/"):
             self.base_url = self.base_url[:-1]
         # if the extensions exist in the triplestore drop the graph
         self.def_graph = clean_iri(self.def_config.get('graph',
-                self.ts.get('default_graph', "")))
+                CFG.TRIPLESTORE.get('default_graph', "")))
         if reset:
             if self.def_config['method'] == "graph":
-                sparql = "DROP GRAPH %s;" % def_config['graph'] 
-                graph = clean_iri(self.def_config['graph'])
-            elif self.def_config['method'] == "namespace":
+                sparql = "DROP GRAPH %s;" % self.def_config.graph
+                graph = clean_iri(self.def_config.graph)
+            elif self.def_config.method == "namespace":
                 sparql = "DROP ALL;"
                 
             drop_extensions = run_sparql_query(sparql, 
@@ -1033,8 +1046,8 @@ class RdfFramework(object):
         self.last_def_mod = latest_mod
         self.def_files = def_files
         json_mod = 0
-        if os.path.isdir(JSON_LOCATION):
-            for root, dirnames, filenames in os.walk(JSON_LOCATION):
+        if os.path.isdir(CFG.JSON_LOCATION):
+            for root, dirnames, filenames in os.walk(CFG.JSON_LOCATION):
                 for json_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,json_file))
                     if file_mod > json_mod:
@@ -1072,19 +1085,19 @@ def verify_server_core(timeout=120, start_delay=90):
                     int((time.time()-timestamp)))
             last_check = time.time()
             try:
-                repo = requests.get(fw_config().get('REPOSITORY_URL'))
+                repo = requests.get(CFG.REPOSITORY_URL)
                 repo_code = repo.status_code
-                print ("\t", fw_config().get('REPOSITORY_URL'), " - ", repo_code)
+                print ("\t", CFG.REPOSITORY_URL, " - ", repo_code)
             except:
                 repo_code = 400
-                print ("\t", fw_config().get('REPOSITORY_URL'), " - DOWN")
+                print ("\t", CFG.REPOSITORY_URL, " - DOWN")
             try:
-                triple = requests.get(fw_config().get('TRIPLESTORE_URL'))
+                triple = requests.get(CFG.TRIPLESTORE_URL)
                 triple_code = triple.status_code
-                print ("\t", fw_config().get('TRIPLESTORE_URL'), " - ", triple_code)
+                print ("\t", CFG.TRIPLESTORE_URL, " - ", triple_code)
             except:
                 triple_code = 400
-                print ("\t", fw_config().get('TRIPLESTORE_URL'), " - down")
+                print ("\t", CFG.TRIPLESTORE_URL, " - down")
             if repo_code == 200 and triple_code == 200:
                 server_down = False
                 return_val = True

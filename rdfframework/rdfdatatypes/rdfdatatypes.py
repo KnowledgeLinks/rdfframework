@@ -13,6 +13,7 @@ class BaseRdfDataType(object):
     type = "literal"
     default_method = "sparql"
     py_type = None
+    class_type = "RdfDataType"
 
     def __init__(self, value):
         self.value = value
@@ -24,7 +25,7 @@ class BaseRdfDataType(object):
             rtn_val = json.dumps(str(self.value))
         except:
             rtn_val = str(self.value)
-        if method == "sparql":
+        if method in ['json', 'sparql']:
             if self.type == 'literal':
                 if hasattr(self, "datatype"):
                     if hasattr(self, "lang") and self.lang:
@@ -35,10 +36,14 @@ class BaseRdfDataType(object):
                             dt = NSM.uri(self.datatype)
                         if method == "sparql":
                             rtn_val += "^^%s" % dt
+                elif method == "json":
+                    pass
                 else:
                     rtn_val += "^^xsd:string"
             elif self.type == 'uri':
-                if dt_format == "turtle":
+                if method == 'json':
+                    rtn_val = NSM.iri(NSM.uri(self.value))
+                elif dt_format == "turtle":
                     rtn_val = NSM.ttluri(self.value)
                 else:
                     rtn_val = NSM.iri(NSM.uri(self.value))
@@ -60,22 +65,32 @@ class BaseRdfDataType(object):
         return self._format(method="sparql", dt_format="uri")
 
     @property
+    def pyuri(self):
+        return self._format(method="pyuri")
+
+    @property
     def debug(self):
         return DictClass(self)
+
+    @property
+    def to_json(self):
+        return self._format(method="json")
 
 class Uri(BaseRdfDataType, str):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
     type = "uri"
     default_method = "pyuri"
-    
 
-    # def __new__(self, value):
-    #     pdb.set_trace()
-    #     if hasattr(value, "type") and value.type =="uri":
-    #         return value
-    #     else:
-    #         return  self #return str.__new__(cls, *args, **kwargs)
+    def __new__(cls, *args, **kwargs):
+        if hasattr(args[0], "class_type") and args[0].class_type == "Uri":
+            return args[0]
+        else: 
+            vals = list(args)
+            vals[0] = NSM.pyuri(vals[0])
+            vals = tuple(vals)
+            newobj = str.__new__(cls, *vals, **kwargs)
+        return newobj
 
     def __init__(self, value):
         if hasattr(value, "type") and value.type == "uri":
@@ -90,7 +105,7 @@ class Uri(BaseRdfDataType, str):
         return False
 
     def __str__(self):
-        return self.sparql_uri
+        return self.__repr__()
 
     def __hash__(self):
         return hash(self._format(method=self.default_method))
@@ -143,7 +158,7 @@ class XsdString(str, BaseRdfDataType):
     def __add__(self, other):
         if hasattr(other, "datatype"):
             rtn_lang = None
-            pdb.set_trace()
+            #pdb.set_trace()
             if other.datatype == "xsd:string":
                 rtn_val = self.value + other.value 
                 if other.lang and self.lang and other.lang != self.lang:
@@ -179,7 +194,7 @@ class XsdBoolean(BaseRdfDataType):
             return False
 
     def __bool__(self):
-        pdb.set_trace()
+        #pdb.set_trace()
         if self.value is None:
             return False
         return self.value
@@ -320,7 +335,6 @@ class XsdInteger(int, BaseRdfDataType):
 
     def __radd__(self, other):
         return self._internal_add(other)
-
 
 class XsdDecimal(Decimal, BaseRdfDataType):
     """ Integer instance of rdf xsd:string type value"""
