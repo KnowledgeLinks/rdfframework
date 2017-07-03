@@ -160,15 +160,69 @@ class RdfDataset(dict):
                     rtn_list.append((sub, pred, obj))
         rtn_list.sort(key=lambda tup: tup[0]+tup[1]+tup[2])
         if output:
+            def size(value):
+                spaces = 25 - len(value)
+                return "%s%s" %(value," " * spaces)
             if output == "view":
                 print("\n".join(
-                        ["%s  %s             %s             %s" % 
-                         (i, trip[0].sparql, trip[1].sparql, trip[2].sparql) 
+                        ["%s  %s%s%s" % 
+                         (i, size(trip[0].sparql), size(trip[1].sparql), trip[2].sparql) 
                          for i, trip in enumerate(rtn_list)]))
         else:        
             return rtn_list
 
+    @property
+    def classes(self):
+        def add_class(key, value):
+            nonlocal rtn_obj
+            try:
+                #pdb.set_trace()
+                rtn_obj[value].append(key)
+            except AttributeError:
+                #pdb.set_trace()
+                rtn_obj[value] = [rtn_obj[value['rdf_type']]]
+                rtn_obj[value].append(key)
+            except KeyError:
+                #pdb.set_trace()
+                rtn_obj[value] = [key]
+            except TypeError:
+                #pdb.set_trace()
+                for item in value:
+                    add_class(key, item)
+        rtn_obj = {}
+        for key, value in self.items():
+            #pdb.set_trace()
+            try:
+                add_class(key, value['rdf_type'])
+            except KeyError:
+                pass
 
+        return rtn_obj
+
+    @property
+    def classes2(self):
+        rtn_obj = {}
+        for t in self.triples():
+            if t[1] == 'rdf_type':
+                try:
+                    rtn_obj[t[2]].append(t[0])
+                except KeyError:
+                    rtn_obj[t[2]] = [t[0]]
+
+        return rtn_obj
+
+    @property
+    def classes3(self):
+        rtn_obj = {}
+        expand = [[(i,key) for i in value['rdf_type']] 
+                  for key, value in self.items() if value.get('rdf_type')]
+        for item in expand:
+            rtn_obj[item[0][0]] = []
+        for item in expand:
+            rtn_obj[item[0][0]].append(item[0][1])
+
+        return rtn_obj
+        
     @staticmethod
     def _get_classtypes(data):
         """ returns all of the triples where rdf:type is the predicate and 

@@ -45,7 +45,8 @@ z = run_sparql_query(_sparql, namespace=rdf_defs.namespace)
 
 
 
-# ds = RdfDataset()
-# ds.load_data(z, strip_orphans=True, obj_method="list")
+ds = RdfDataset()
+ds.load_data(z, strip_orphans=True, obj_method="list")
+ds.classes
 #print(json.dumps(ds, indent=4))
 RdfFramework(reset=True)
