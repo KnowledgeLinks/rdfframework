@@ -3,7 +3,7 @@ the rdfframework """
 
 import pdb
 import json
-
+import copy
 
 from rdfframework.utilities import DictClass, pp, make_list
 from rdfframework.rdfdatatypes import pyrdf, BaseRdfDataType
@@ -93,22 +93,40 @@ class RdfDataset(dict):
         pretty = kwargs.get('pretty', False)
         remove = make_list(kwargs.get('remove', None))
         compress = kwargs.get('compress', False)
+        sort = kwargs.get('sort', False)
 
-
-
+        if compress:
+            new_obj = copy.deepcopy(self)
+            for key, value in new_obj.items():
+                for skey, svalue in value.items():
+                    if isinstance(svalue, list) and len(svalue) == 1:
+                        new_obj[key][skey] = svalue[0]
+            format_obj = new_obj
+        else:
+            format_obj = self
         if remove:
             remove = make_list(remove)
 
         conv_data = {key: value.conv_json(uri_format)
-                     for key, value in self.items()
+                     for key, value in format_obj.items()
                      if value._subject['s'].type not in remove}
         if output.lower() == 'json':
             indent = None
             if pretty:
                 indent = 4
-            return json.dumps(conv_data, indent=indent)
+            return json.dumps(conv_data, indent=indent, sort_keys=sort)
         elif output.lower() == 'dict':
             return conv_data
+
+    @property
+    def view(self):
+        """ prints the dataset in an easy to read format """
+        print(self.format(remove='bnode', 
+                          sort=True,
+                          pretty=True,
+                          compress=True,
+                          output='json'))
+
 
     def load_data(self, data, **kwargs):
         """ Bulk adds rdf data to the class
