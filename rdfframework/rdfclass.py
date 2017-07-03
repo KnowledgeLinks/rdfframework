@@ -10,17 +10,18 @@ try:
     from rdfframework.utilities import clean_iri, iri, is_not_null, \
         make_list, make_set, make_triple, remove_null, DeleteProperty, \
         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
-        pyuri, get_attr, slugify
+        pyuri, get_attr, slugify, RdfConfigManager
 except ImportError:
     # Try local imports
     from .utilities import clean_iri, iri, is_not_null, \
         make_list, make_set, make_triple, remove_null, DeleteProperty, \
         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
-        pyuri, get_attr, slugify
+        pyuri, get_attr, slugify, RdfConfigManager
    
 
 from .getframework import get_framework as rdfw
 try:
+    from rdfframework.rdfdatatypes import BaseRdfDataType
     from rdfframework.rdfdatatype import RdfDataType
     from rdfframework.utilities.debug import dumpable_obj
     from rdfframework.processors import clean_processors, run_processor
@@ -31,8 +32,70 @@ except ImportError:
     from .utilities.debug import dumpable_obj
     from .processors import clean_processors, run_processor
     from .sparql import save_file_to_repository
+    from .rdfdatatypes import BaseRdfDataType
    
 # setting DEBUG to False will turn all the debug printing off in the module
+
+class RdfBaseClass(dict):
+    _reserved = ['add_property',
+                 '_format',
+                 '_reserved',
+                 '_subject',
+                 '_type',
+                 'to_json',
+                 'uri_format',
+                 'conv_json']
+
+    uri_format = 'sparql_uri'
+
+    def __init__(self, sub, **kwargs):
+        if isinstance(sub, dict):
+            self._subject = sub
+            self.add_property(sub['p'], sub['o'], kwargs.get("obj_method"))
+        else:
+            self._subject = {"s":sub, "p":None, "o":None}
+            
+
+    def add_property(self, pred, obj, obj_method=None):
+        try:
+            self[pred].append(obj)
+        except AttributeError:
+            new_list = [self[pred]]
+            new_list.append(obj)
+            self[pred] = new_list
+        except KeyError:
+            if obj_method != "list":
+                self[pred] = obj
+            else:
+                self[pred] = [obj]
+
+    @property
+    def to_json(self, start=True):
+        return self.conv_json(self.uri_format)
+
+    def conv_json(self, uri_format="sparql_uri"):
+
+        def convert_item(ivalue):
+            nvalue = ivalue
+            if isinstance(ivalue, BaseRdfDataType):
+                if ivalue.type == 'uri':
+                    nvalue = getattr(ivalue, uri_format)
+                else:
+                    nvalue = ivalue.to_json
+            elif isinstance(ivalue, RdfBaseClass):
+                if ivalue._subject['s'].type == "uri":
+                    nvalue = getattr(value._subject['s'], uri_format)
+                elif ivalue._subject['s'].type == "bnode":
+                    nvalue = ivalue.conv_json(uri_format)
+            elif isinstance(ivalue, list):
+                nvalue = []
+                for item in ivalue:
+                    temp = convert_item(item)
+                    nvalue.append(temp)
+            return nvalue
+
+        return {key: convert_item(value) for key, value in self.items()}
+
 DEBUG = True
 class RdfClass(object):
     '''RDF Class for an RDF Class object.

@@ -815,7 +815,6 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             sparql = render_without_request("sparqlClassDefinitionList.rq",
                                              graph=graph,
                                              prefix=prefix)
-            pdb.set_trace()
             class_qry = requests.post(CFG.TRIPLESTORE.url,
                                       data={"query": sparql, "format": "json"})
             class_list = class_qry.json().get('results').get('bindings')
@@ -1011,7 +1010,6 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
                     rdf_resource_templates.append({template:path})
             # load the extensions in the triplestore
             context_uri = "http://knowledgelinks.io/ns/application-framework/"
-            #self.def_graph = rdflib.Graph()
             for i, data in enumerate(rdf_data):
                 lg.info("uploading file: %s",
                         list(rdf_resource_templates[i])[0]) 
@@ -1019,15 +1017,9 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
                                           mode="load",
                                           graph=self.def_graph,
                                           namespace=self.def_ns)
-                # file_path = "".join([os.path.join(value, key) for key, value in rdf_resource_templates[i].items()])
-                # try:
-                #     self.def_graph.parse(file_path, format='turtle')
-                # except:
-                #     print("Error loading: ", file_path)
                 if result.status_code > 399:
                     raise ValueError("Cannot load extensions {} into {}".format(
                         rdf_resource_templates[i], self.triplestore_url))
-            #print(len(self.def_graph))
 
     def _set_rdf_def_filelist(self):
         ''' does a directory search for rdf application definition files '''

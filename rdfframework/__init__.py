@@ -16,6 +16,7 @@ import rdfframework.getframework
 import rdfframework.rdfclass
 import rdfframework.rdfdatatype
 import rdfframework.framework
+import rdfframework.rdfdatasets
 # from .rdfproperty import *
 
 __version__ = '0.0.1'
