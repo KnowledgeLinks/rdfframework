@@ -90,16 +90,20 @@ class Uri(BaseRdfDataType, str):
             vals[0] = NSM.pyuri(vals[0])
             vals = tuple(vals)
             newobj = str.__new__(cls, *vals, **kwargs)
+            newobj.value = NSM.ns_dict[vals[0][:vals[0].index('_')]] + \
+                           vals[0][vals[0].index('_')+1:]
         return newobj
 
     def __init__(self, value):
-        if hasattr(value, "type") and value.type == "uri":
-            self.value = value.value
-        else:
-            self.value = NSM.uri(value, strip_iri=True)
+        pass
+    # def __init__(self, value):
+    #     if hasattr(value, "type") and value.type == "uri":
+    #         self.value = value.value
+    #     else:
+    #         self.value = NSM.uri(value)
 
     def __eq__(self, value):
-        test_val = NSM.uri(str(value), strip_iri=True)
+        test_val = NSM.uri(value)
         if self.value == test_val:
             return True
         return False
@@ -136,6 +140,8 @@ class XsdString(str, BaseRdfDataType):
     datatype = "xsd:string"
     class_type = "XsdString"
     py_type = str
+
+    __slots__ = []
 
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and args[0].class_type == "XsdString":

@@ -39,6 +39,9 @@ def initialized(func):
             return func(self, *args, **kwargs)
     return(wrapper)
 
+class DictDot(dict):
+    def __getattr__(self, value):
+        return self[value]
 
 class RdfConfigManager(metaclass=ConfigSingleton):
     """ Configuration Manager for the application. 
@@ -102,8 +105,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         return str(self.dict())
 
 
-    def __setattr__(self, attr, value):
-        if isinstance(value, dict) or isinstance(value, list):
+    def __setattr__(self, attr, value, override=False):
+        if override:
+            pass
+        elif isinstance(value, dict) or isinstance(value, list):
             value = DictClass(value)
         self.__dict__[attr] = value
 

@@ -46,6 +46,12 @@ class RdfDataset(dict):
                   '',
                   ]
 
+    __slots__ = ['classes', 'subj_list', 'non_defined']
+    
+    def __init__(self, data=None):
+        if data:
+            self.load_data(data)
+
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
         """ Adds a triple to the dataset 
 
@@ -190,7 +196,7 @@ class RdfDataset(dict):
             return rtn_list
 
     @property
-    def classes(self):
+    def set_classes(self):
         def add_class(key, value):
             nonlocal rtn_obj
             try:
@@ -214,32 +220,32 @@ class RdfDataset(dict):
                 add_class(key, value['rdf_type'])
             except KeyError:
                 pass
+        self.classes = rtn_obj
+        #return rtn_obj
 
-        return rtn_obj
+    # @property
+    # def classes2(self):
+    #     rtn_obj = {}
+    #     for t in self.triples():
+    #         if t[1] == 'rdf_type':
+    #             try:
+    #                 rtn_obj[t[2]].append(t[0])
+    #             except KeyError:
+    #                 rtn_obj[t[2]] = [t[0]]
 
-    @property
-    def classes2(self):
-        rtn_obj = {}
-        for t in self.triples():
-            if t[1] == 'rdf_type':
-                try:
-                    rtn_obj[t[2]].append(t[0])
-                except KeyError:
-                    rtn_obj[t[2]] = [t[0]]
+    #     return rtn_obj
 
-        return rtn_obj
+    # @property
+    # def classes3(self):
+    #     rtn_obj = {}
+    #     expand = [[(i,key) for i in value['rdf_type']] 
+    #               for key, value in self.items() if value.get('rdf_type')]
+    #     for item in expand:
+    #         rtn_obj[item[0][0]] = []
+    #     for item in expand:
+    #         rtn_obj[item[0][0]].append(item[0][1])
 
-    @property
-    def classes3(self):
-        rtn_obj = {}
-        expand = [[(i,key) for i in value['rdf_type']] 
-                  for key, value in self.items() if value.get('rdf_type')]
-        for item in expand:
-            rtn_obj[item[0][0]] = []
-        for item in expand:
-            rtn_obj[item[0][0]].append(item[0][1])
-
-        return rtn_obj
+    #     return rtn_obj
         
     @staticmethod
     def _get_classtypes(data):
@@ -266,6 +272,7 @@ class RdfDataset(dict):
         for class_type in non_defined:
             self[class_type] = RdfBaseClass(class_type, **kwargs)
             #setattr(self, class_type, RdfBaseClass(class_type))
+        self.set_classes
 
 
     @staticmethod

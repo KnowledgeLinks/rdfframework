@@ -46,6 +46,8 @@ class RdfBaseClass(dict):
                  'uri_format',
                  'conv_json']
 
+    __slots__ = ['_subject']
+
     uri_format = 'sparql_uri'
 
     def __init__(self, sub, **kwargs):
@@ -98,8 +100,9 @@ class RdfBaseClass(dict):
 
 DEBUG = True
 class RdfClass(object):
-    '''RDF Class for an RDF Class object.
-       Used for manipulating and validating an RDF Class subject'''
+    ''' RDF Class for an RDF Class object.
+        Used for manipulating and validating an RDF Class subject'''
+
 
     def __init__(self, json_obj, class_name, **kwargs):
         if not DEBUG:
@@ -1197,3 +1200,6 @@ class RdfClass(object):
                         break
 
         return _old_class_data
+
+def test():
+    print(bf_Topic)

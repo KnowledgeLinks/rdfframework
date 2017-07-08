@@ -62,7 +62,9 @@ DEFAULT_RDF_NS = {
     "dbr": "http://dbpedia.org/resource/",
     "m21": "<http://knowledgelinks.io/ns/marc21/>",
     "acl": "<http://www.w3.org/ns/auth/acl#>",
-    "bd": "<http://www.bigdata.com/rdf#>"
+    "bd": "<http://www.bigdata.com/rdf#>",
+    "relator": "http://id.loc.gov/vocabulary/relators/",
+    "foaf": "http://xmlns.com/foaf/0.1/"
 }
 
 RDF_REFERENCE_GRAPH = "<http://knowledgelinks.io/ns/bibframe/reference/>"
