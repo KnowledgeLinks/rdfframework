@@ -1013,8 +1013,10 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             for i, data in enumerate(rdf_data):
                 lg.info("uploading file: %s",
                         list(rdf_resource_templates[i])[0]) 
+                data_type = list(rdf_resource_templates[i])[0].split('.')[-1]
                 result = run_sparql_query(data, 
                                           mode="load",
+                                          data_type=data_type,
                                           graph=self.def_graph,
                                           namespace=self.def_ns)
                 if result.status_code > 399:

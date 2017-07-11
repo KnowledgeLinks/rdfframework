@@ -61,9 +61,15 @@ def run_sparql_query(sparql, mode='get', **kwargs):
         namespace: the triplestore namespace to use
         graph: used with 'load' to define the graph to load data to
     """
+    data_type = kwargs.get("data_type")
     ns = NSM()
+    content_type = "text/turtle"
     if mode == 'load':
-        _prefix = ns.prefix("turtle")
+        if data_type.lower() in ['rdf', 'xml']:
+            _prefix = ""
+            content_type = 'application/rdf+xml'
+        else:
+            _prefix = ns.prefix("turtle")
     else:
         _prefix = ns.prefix()
     if sparql is not None:
@@ -95,9 +101,9 @@ def run_sparql_query(sparql, mode='get', **kwargs):
         context_uri = kwargs.get("graph",
                                  config.TRIPLESTORE.default_graph)
         return requests.post(url=sparql_endpoint,
-                             headers={"Content-Type": "text/turtle"},
+                             headers={"Content-Type": content_type},
                              params={"context-uri": context_uri},
-                             data=sparql)
+                             data=sparql.encode('utf-8'))
 
 
 def create_data_sparql_query(obj, **kwargs):

@@ -20,6 +20,8 @@ def parse_uri(value):
     lookup = None
     end = None
     #pdb.set_trace()
+    # if value.lower().startswith("pyuri_"):
+
     try:
         lookup = value[:value.rindex('#')+1]
         end = value[value.rindex('#')+1:]
@@ -53,9 +55,9 @@ def convert_to_ns(value):
     try:
         rtn_val = "%s_%s" % (ns_obj.uri_dict[parsed[0]], parsed[1])
     except KeyError:
-        rtn_val = "pyuri_%s_%s" % \
-                (base64.b64encode(bytes(parsed[0],"utf-8")).decode(), parsed[1])
-
+        # rtn_val = "pyuri_%s_%s" % \
+        #         (base64.b64encode(bytes(parsed[0],"utf-8")).decode(), parsed[1])
+        rtn_val = pyhttp(value)
     return rtn_val
 
     # for _prefix, _ns_uri in ns_obj.namespaces():
@@ -81,7 +83,7 @@ def convert_to_ttl(value):
     try:
         rtn_val = "%s:%s" % (ns_obj.uri_dict[parsed[0]], parsed[1])
     except KeyError:
-        rtn_val = value
+        rtn_val = iri(rpyhttp(value))
 
     return rtn_val   
     # ns_obj = RdfNsManager()
@@ -110,7 +112,7 @@ def convert_to_uri(value):
     try:
         return "%s%s" % (ns_obj.ns_dict[parsed[0]], parsed[1])
     except KeyError:
-        return value
+        return rpyhttp(value)
 
     # ns_obj = RdfNsManager()
 
@@ -238,7 +240,8 @@ pyuri = convert_to_ns
 
 def pyhttp(value):
     """ converts a no namespaces uri to a python excessable name """
-
+    if value.startswith("pyuri_"):
+        return value
     ending = re.sub(r"^(.*[#/])", "", clean_iri(str(value)))
     trim_val = len(ending)
     if trim_val == 0:
@@ -247,6 +250,14 @@ def pyhttp(value):
         start = value[:-trim_val]
     return "pyuri_%s_%s" % (base64.b64encode(bytes(start,"utf-8")).decode(),
                             ending)
+
+def rpyhttp(value):
+    """ converts a no namespace pyuri back to a standard uri """
+
+    parts = value.split("_")
+    del parts[0]
+    _uri = base64.b64decode(parts.pop(0)).decode()
+    return _uri + "_".join(parts)
 
 
 def ttluri(value):

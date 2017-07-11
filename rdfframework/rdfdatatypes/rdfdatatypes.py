@@ -90,8 +90,12 @@ class Uri(BaseRdfDataType, str):
             vals[0] = NSM.pyuri(vals[0])
             vals = tuple(vals)
             newobj = str.__new__(cls, *vals, **kwargs)
-            newobj.value = NSM.ns_dict[vals[0][:vals[0].index('_')]] + \
-                           vals[0][vals[0].index('_')+1:]
+            newobj.value = NSM.uri(vals[0])
+            # try:
+            #     newobj.value = NSM.ns_dict[vals[0][:vals[0].index('_')]] + \
+            #                    vals[0][vals[0].index('_')+1:]
+            # except KeyError:
+            #     newobj.value = vals[0]
         return newobj
 
     def __init__(self, value):
