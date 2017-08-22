@@ -35,6 +35,8 @@ SELECT DISTINCT ?RdfClass ?item ?s ?p ?o
       	?RdfClass rdf:type rdfs:Class .
       } UNION {
         ?RdfClass rdf:type owl:Class .
+      } UNION {
+        ?RdfClass rdfs:subClassOf ?ignore .
       }
       filter(isiri(?RdfClass))
     }
@@ -76,6 +78,49 @@ SELECT DISTINCT ?RdfClass ?item ?s ?p ?o
   } UNION {
       # get the 3rd level blanknodes tied by kds:classUri
       ?prop rdfs:domain ?item .
+      ?prop ?p0 ?s1 .
+      # selects only the base linked subjects
+      {
+        ?s1 kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s1 kds:classUri ?item .
+      }
+      ?s1 ?p1 ?s2 .
+      ?s2 ?p2 ?s .
+      ?s ?p ?o
+      FILTER isblank(?s)
+  } UNION {
+      # get the domain tied properties
+      ?s schema:domainIncludes ?item .
+      ?s ?p ?o .
+  } UNION {
+      # get the 1st level blanknodes tied by kds:classUri
+      ?prop schema:domainIncludes ?item .
+      ?prop ?p1 ?s .
+      # selects only the base linked subjects
+      {
+        ?s kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s kds:classUri ?item .
+      }
+      ?s ?p ?o .
+      FILTER isblank(?s)
+  } UNION {
+      # get the 2nd level blanknodes tied by kds:classUri
+      ?prop schema:domainIncludes ?item .
+      ?prop ?p0 ?s1 .
+      # selects only the base linked subjects
+      {
+        ?s1 kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s1 kds:classUri ?item .
+      }
+      ?s1 ?p1 ?s .
+      ?s ?p ?o
+      FILTER isblank(?s)
+  } UNION {
+      # get the 3rd level blanknodes tied by kds:classUri
+      ?prop schema:domainIncludes ?item .
       ?prop ?p0 ?s1 .
       # selects only the base linked subjects
       {

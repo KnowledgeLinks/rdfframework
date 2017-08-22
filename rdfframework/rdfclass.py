@@ -37,16 +37,16 @@ except ImportError:
 # setting DEBUG to False will turn all the debug printing off in the module
 
 class RdfBaseClass(dict):
-    _reserved = ['add_property',
-                 '_format',
-                 '_reserved',
-                 '_subject',
-                 '_type',
-                 'to_json',
-                 'uri_format',
-                 'conv_json']
+    # _reserved = ['add_property',
+    #              '_format',
+    #              '_reserved',
+    #              '_subject',
+    #              '_type',
+    #              'to_json',
+    #              'uri_format',
+    #              'conv_json']
 
-    __slots__ = ['_subject']
+    # __slots__ = ['_subject']
 
     uri_format = 'sparql_uri'
 
@@ -1200,6 +1200,3 @@ class RdfClass(object):
                         break
 
         return _old_class_data
-
-def test():
-    print(bf_Topic)

@@ -50,7 +50,7 @@ def delete_tstore_namespace(namespace_name, **kwargs):
     return requests.delete(url=url)
 
 
-def run_sparql_query(sparql, mode='get', **kwargs):
+def run_sparql_query(sparql, mode='get', config=RdfConfigManager(), **kwargs):
     """ run the passed in sparql query and returns the results 
 
     Args:
@@ -60,6 +60,9 @@ def run_sparql_query(sparql, mode='get', **kwargs):
         mode: ['get','update','load']
         namespace: the triplestore namespace to use
         graph: used with 'load' to define the graph to load data to
+        config: a class with the following attributes
+                TRIPLESTORE.url: url to the triplestore API
+                TRIPLESTORE.default_graph: uri of the default graph
     """
     data_type = kwargs.get("data_type")
     ns = NSM()
