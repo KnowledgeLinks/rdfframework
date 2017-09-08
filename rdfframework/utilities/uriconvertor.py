@@ -86,17 +86,7 @@ def convert_to_ttl(value):
         rtn_val = iri(rpyhttp(value))
 
     return rtn_val   
-    # ns_obj = RdfNsManager()
-    # for _prefix, _ns_uri in ns_obj.namespaces():
-    #     _ns_uri = str(_ns_uri)
-    #     if str(value).startswith(_prefix + "_") or \
-    #             str(value).startswith("<%s_" % _prefix):
-    #         return value.replace(_prefix + "_", _prefix + ":").replace(\
-    #                 "<","").replace(">","")
-    #     if str(value).startswith(_ns_uri) or str(value).startswith("<"+_ns_uri):
-    #         return value.replace(_ns_uri, _prefix + ":").replace(\
-    #                 "<","").replace(">","")
-    # return iri(value)
+
 
 def convert_to_uri(value):
     ''' converts a prefixed rdf ns equivalent value to its uri form.
@@ -113,46 +103,6 @@ def convert_to_uri(value):
         return "%s%s" % (ns_obj.ns_dict[parsed[0]], parsed[1])
     except KeyError:
         return rpyhttp(value)
-
-    # ns_obj = RdfNsManager()
-
-    # value = str(value).replace("<","").replace(">","")
-    # if value.startswith("pyuri_"):
-    #     parts = value.split("_")
-    #     value = base64.b64decode(parts[1]).decode() + parts[2]
-    # for _prefix, _ns_uri in ns_obj.namespaces():
-    #     if str(value).startswith(_prefix + "_") or \
-    #             str(value).startswith("<%s_" % _prefix):
-    #         #pdb.set_trace()
-    #         if strip_iri or rdflib_uri:
-    #             return_val = value.replace("%s_" % _prefix, str(_ns_uri)).replace(\
-    #                     "<","").replace(">","")
-    #             if rdflib_uri:
-    #                 return_val = URIRef(return_val)
-    #             return return_val
-    #         else:
-    #             return iri(value.replace("%s_" % _prefix, str(_ns_uri)))
-    #     if str(value).startswith(_prefix + ":") or \
-    #             str(value).startswith("<%s:" % _prefix):
-    #         #pdb.set_trace()
-    #         if strip_iri or rdflib_uri:
-    #             return_val = value.replace("%s:" % _prefix, str(_ns_uri)).replace(\
-    #                     "<","").replace(">","")
-    #             #pdb.set_trace()
-    #             if rdflib_uri:
-    #                 return_val = URIRef(return_val)
-    #             return return_val
-    #         else:
-    #             return iri(value.replace("%s:" % _prefix, str(_ns_uri)))
-    # if str(value).lower() == "none":
-    #     return ""
-    # else:
-    #     if rdflib_uri:
-    #         URIRef(value)
-    #     elif strip_iri:
-    #         return value
-    #     else:
-    #         return iri(value)
 
 def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=False):
     """This function takes rdf json definitions and converts all of the
@@ -226,23 +176,14 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=Fa
             return convert_to_ns(obj)
 
 pyuri = convert_to_ns
-# def pyuri(value):
-#     ''' converts an iri to the app defined rdf namespaces in the framework
-#         in a python accessable format. i.e. schema:name or
-#         http:schema.org/name  --> schema_name '''
-#     if str(value).startswith("http"):
-#         rtn_val =  convert_to_ns(value)
-#     else:
-#         rtn_val = convert_to_ns(value)
-#     if rtn_val.startswith("http"):
-#         rtn_val = pyhttp(rtn_val)
-#     return rtn_val
+
 
 def pyhttp(value):
     """ converts a no namespaces uri to a python excessable name """
     if value.startswith("pyuri_"):
         return value
-    ending = re.sub(r"^(.*[#/])", "", clean_iri(str(value)))
+    value = clean_iri(str(value))
+    ending = re.sub(r"^(.*[#/])", "", value)
     trim_val = len(ending)
     if trim_val == 0:
         start = value
@@ -253,11 +194,16 @@ def pyhttp(value):
 
 def rpyhttp(value):
     """ converts a no namespace pyuri back to a standard uri """
-
-    parts = value.split("_")
-    del parts[0]
-    _uri = base64.b64decode(parts.pop(0)).decode()
-    return _uri + "_".join(parts)
+    if value.startswith("http"):
+        return value
+    try:
+        parts = value.split("_")
+        del parts[0]
+        _uri = base64.b64decode(parts.pop(0)).decode()
+        return _uri + "_".join(parts)
+    except (IndexError, UnicodeDecodeError):
+        # if the value is not a pyuri return the value
+        return value
 
 
 def ttluri(value):

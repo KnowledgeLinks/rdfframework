@@ -17,7 +17,7 @@ from .baseutilities import xsd_to_python, make_list
 from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 from .debug import pp
-from rdfframework.getframework import fw_config
+from .rdfwconfig import RdfConfigManager
 
 #import rdfframework.rdfdatatypes as dt
 
@@ -42,7 +42,26 @@ MNAME = inspect.stack()[0][1]
 # FOAF = Namespace("http://xmlns.com/foaf/spec/")
 # SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 DEBUG = True
-CONFIG = fw_config()
+CONFIG = RdfConfigManager()
+
+class RdfJsonEncoder(json.JSONEncoder):
+    # def __init__(self, *args, **kwargs):
+    #     if kwargs.get("uri_format"):
+    #         self.uri_format = kwargs.pop("uri_format")
+    #     else:
+    #         self.uri_format = 'sparql_uri'
+    #     super(RdfJsonEncoder, self).__init__(*args, **kwargs)
+    uri_format = 'sparql_uri'
+
+    def default(self, obj):
+        if isinstance(obj, RdfBaseClass):
+            obj.uri_format = self.uri_format
+            temp = obj.conv_json(self.uri_format)
+            return temp
+        elif isinstance(obj, RdfDataset):
+            return obj._format(self.uri_format)
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
 
 def uid_to_repo_uri(id_value):
     if id_value:

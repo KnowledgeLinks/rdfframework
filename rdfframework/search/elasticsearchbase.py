@@ -13,15 +13,16 @@ import json
 
 from elasticsearch import Elasticsearch, helpers
 from rdfframework.utilities import make_list, pp, IsFirst, nz, \
-        make_set, get2, Dot
-from instance import config
+        make_set, get2, Dot, RdfConfigManager
 from rdfframework.search import get_es_action_item, EsMappings
 
 MODULE_NAME = "%s.%s" % \
         (os.path.basename(os.path.split(inspect.stack()[0][1])[0]),
          os.path.basename(inspect.stack()[0][1]))
-         
-ES = Elasticsearch([config.ES_URL])
+
+config = RdfConfigManager()
+
+
 
 class EsBase():
     ''' Base elasticsearch rdfframework class for common es operations'''
@@ -30,12 +31,8 @@ class EsBase():
     log_level = logging.INFO
         
     def __init__(self, **kwargs):
-        global ES
         self.es_url = kwargs.get('es_url', config.ES_URL)
-        if self.es_url == config.ES_URL:
-            self.es = kwargs.get("es",ES)
-        else:
-            self.es = kwargs.get("es",Elasticsearch([self.es_url]))
+        self.es = kwargs.get("es",Elasticsearch([self.es_url]))
         self.op_type = kwargs.get("op_type", "index")
         self.es_index = kwargs.get("es_index")
         self.doc_type = kwargs.get("doc_type")
@@ -70,8 +67,7 @@ class EsBase():
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
         reset_index = kwargs.get("reset_index",self.reset_index)
-        doc_type = kwargs.get("doc_type", self.doc_type)
-        self.create_index(**kwargs)      
+        doc_type = kwargs.get("doc_type", self.doc_type)    
              
         lg.info("Sending %s items to Elasticsearch",len(action_list))
 #        bulk_stream = helpers.streaming_bulk(es, 

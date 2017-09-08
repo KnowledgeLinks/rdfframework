@@ -5,21 +5,22 @@ import json
 import pdb
 
 try:
-    from rdfframework.getframework import get_framework as rdfw, fw_config
     from rdfframework.utilities import make_triple, iri, uri, is_not_null,\
             render_without_request, make_list, pp, uid_to_repo_uri, \
-            RdfNsManager as NSM, convert_spo_to_dict, make_class, RdfConfigManager
+            RdfNsManager, convert_spo_to_dict, make_class, RdfConfigManager
 except ImportError:
     # Try local import
-    from rdfframework.getframework import get_framework as rdfw, fw_config
     from ..utilities import make_triple, iri, uri, is_not_null,\
             render_without_request, make_list, pp, uid_to_repo_uri, \
             RdfNsManager as NSM, convert_spo_to_dict, make_class, RdfConfigManager
 
 config = RdfConfigManager()
-
+NSM = RdfNsManager()
 DEBUG = True
 
+def rdfw ():
+    pass
+    
 def get_data(obj, **kwargs):
     ''' queries that datastore for the based on the supplied arguments '''
     _sparql = create_data_sparql_query(obj, **kwargs)
@@ -65,7 +66,7 @@ def run_sparql_query(sparql, mode='get', config=RdfConfigManager(), **kwargs):
                 TRIPLESTORE.default_graph: uri of the default graph
     """
     data_type = kwargs.get("data_type")
-    ns = NSM()
+    ns = NSM
     content_type = "text/turtle"
     if mode == 'load':
         if data_type.lower() in ['rdf', 'xml']:
@@ -375,14 +376,14 @@ def save_file_to_repository(data, repo_item_address):
     return iri(object_value)
 
 def get_all_item_data(item_uri):
-    ns = NSM()
+    ns = NSM
     _sparql = render_without_request("sparqlAllItemDataTemplate.rq",
                                      prefix=ns.prefix(),
                                      item_uri=item_uri)
     return run_sparql_query(_sparql)
 
 def get_class_def_item_data(class_uri, **kwargs):
-    ns = NSM()
+    ns = NSM
     definition_graph = kwargs.get("definition_graph",
                                   config.RDF_DEFINITIONS.graph)
     _sparql = render_without_request("sparqlClassDefinitionDataTemplate.rq",
@@ -392,7 +393,7 @@ def get_class_def_item_data(class_uri, **kwargs):
     return run_sparql_query(_sparql, namespace=kwargs.get("namespace","kb")) 
 
 def get_linker_def_item_data(**kwargs):
-    ns = NSM()
+    ns = NSM
     definition_graph = kwargs.get("definition_graph",
                                   config.RDF_DEFINITIONS.graph)
     if not definition_graph:

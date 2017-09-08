@@ -3,31 +3,59 @@
 SELECT DISTINCT ?s ?p ?o
 {
   	BIND({{ item_uri }} as ?item) .
-	{
+	{ # Gather all primary triples
 	  	?item ?p ?o.
 	  	BIND(?item as ?s) .
-	} UNION {
+	} UNION { # selet Triples where the URI is the Subject 1 level deep
 	  	?item ?p0 ?s.
 	  	?s ?p ?o .
 	  	Filter(?p0 != rdf:type).
 		Filter(isiri(?s)||isblank(?s))
-	} UNION {
+	} UNION { # selet Triples where the URI is the Subject 2 levels deep
+	  	?item ?p0 ?s1.
+	  	?s1 ?p1 ?s .
+      	?s ?p ?o .
+	  	Filter(?p0 != rdf:type).
+	  	Filter(?p1 != rdf:type).
+		Filter(isiri(?s)||isblank(?s))
+      	Filter(isiri(?s1)||isblank(?s1))
+	} UNION { # selet Triples where the URI is the Subject 3 levels deep
+	  	?item ?p0 ?s1.
+	  	?s1 ?p1 ?s2 .
+      	?s2 ?p2 ?s .
+      	?s ?p ?o .
+	  	Filter(?p0 != rdf:type).
+	  	Filter(?p1 != rdf:type).
+	  	Filter(?p2 != rdf:type).
+		Filter(isiri(?s)||isblank(?s))
+      	Filter(isiri(?s1)||isblank(?s1))
+      	Filter(isblank(?s2))
+	} UNION { # Select Triples where the URI is the Object
 	  	?s ?p0 ?item .
 	  	?s ?p ?o .
 	  	Filter(?p0 != rdf:type).
 		Filter(isiri(?s)||isblank(?s))
 	  	Filter(?p != ?p0)
-	} UNION {
-		?bn ?p0 ?item .
-  		?bn ?p1 ?o1 .
-  		?s ?p2 ?bn .
-		?s ?p ?o .
-  		FILTER isblank(?bn)
-  	} UNION {
-  		?o ?p0 ?item .
-		?s ?p ?o .
-	}
-	# hide all of the repository generated data
+	} UNION { # Select Triples where the URI is the Object one level deep
+      	?s0 ?p0 ?item .
+	  	?s0 ?p1 ?s .
+      	?s ?p ?o .
+      	Filter(isiri(?s)||isBlank(?s)) .
+	  	Filter(?p0 != rdf:type).
+		Filter(isiri(?s0)||isblank(?s0)) .
+	  	Filter(?p1 != ?p0) .
+    } UNION { # Select Triples where the URI is the Object two levels deep
+      	?s0 ?p0 ?item .
+	  	?s0 ?p1 ?s1 .
+      	?s1 ?p2 ?s .
+      	?s ?p ?o .
+      	Filter(isiri(?s)||isBlank(?s)) .
+        Filter(isiri(?s1)||isBlank(?s1)) .
+	  	Filter(?p0 != rdf:type).
+		Filter(isiri(?s0)||isblank(?s0)) .
+	  	Filter(?p1 != ?p0) .
+    }
+    # hide all of the repository generated data
 	BIND(IF(isblank(?o),"",STR(?o)) as ?o_)
 	BIND(IF(isblank(?p),"",STR(?p)) as ?p_)
 	FILTER(!(

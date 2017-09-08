@@ -64,7 +64,8 @@ DEFAULT_RDF_NS = {
     "acl": "<http://www.w3.org/ns/auth/acl#>",
     "bd": "<http://www.bigdata.com/rdf#>",
     "relator": "http://id.loc.gov/vocabulary/relators/",
-    "foaf": "http://xmlns.com/foaf/0.1/"
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "mads": "<http://www.loc.gov/mads/rdf/v1#>"
 }
 
 RDF_REFERENCE_GRAPH = "<http://knowledgelinks.io/ns/bibframe/reference/>"
@@ -81,3 +82,8 @@ ORGANIZATION = {
 
 # Default data to load at initial application creation
 FRAMEWORK_DEFAULT = []
+
+DATE_FORMAT = {
+    "python": "",
+    "json": ""
+}

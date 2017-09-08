@@ -22,9 +22,13 @@ class BaseRdfDataType(object):
         """ formats the value """
 
         try:
-            rtn_val = json.dumps(str(self.value))
+            rtn_val = json.dumps(self.value)
         except:
-            rtn_val = str(self.value)
+            if 'time' in self.class_type.lower() \
+                    or 'date' in self.class_type.lower():
+                rtn_val = self.value.isoformat()
+            else:
+                rtn_val = str(self.value)
         if method in ['json', 'sparql']:
             if self.type == 'literal':
                 if hasattr(self, "datatype"):
@@ -35,7 +39,7 @@ class BaseRdfDataType(object):
                         if dt_format == "uri":
                             dt = NSM.uri(self.datatype)
                         if method == "sparql":
-                            rtn_val += "^^%s" % dt
+                            rtn_val += "^^%s" % dt.sparql
                 elif method == "json":
                     pass
                 else:
@@ -81,6 +85,7 @@ class Uri(BaseRdfDataType, str):
     class_type = "Uri"
     type = "uri"
     default_method = "pyuri"
+    es_type = "text"
 
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and args[0].class_type == "Uri":
@@ -91,20 +96,10 @@ class Uri(BaseRdfDataType, str):
             vals = tuple(vals)
             newobj = str.__new__(cls, *vals, **kwargs)
             newobj.value = NSM.uri(vals[0])
-            # try:
-            #     newobj.value = NSM.ns_dict[vals[0][:vals[0].index('_')]] + \
-            #                    vals[0][vals[0].index('_')+1:]
-            # except KeyError:
-            #     newobj.value = vals[0]
         return newobj
 
     def __init__(self, value):
         pass
-    # def __init__(self, value):
-    #     if hasattr(value, "type") and value.type == "uri":
-    #         self.value = value.value
-    #     else:
-    #         self.value = NSM.uri(value)
 
     def __eq__(self, value):
         test_val = NSM.uri(value)
@@ -122,28 +117,33 @@ class BlankNode(BaseRdfDataType, str):
     """ blankNode URI/IRI class for working with RDF data """
     class_type = "BlankNode"
     type = "bnode"    
-
-    # def __new__(self, value):
-    #     pdb.set_trace()
-    #     if hasattr(value, "type") and value.type =="uri":
-    #         return value
-    #     else:
-    #         return  self #return str.__new__(cls, *args, **kwargs)
+    es_type = "text"
+    
+    def __new__(cls, *args, **kwargs):
+        if hasattr(args[0], "class_type") and args[0].class_type == "bnode":
+            return args[0]
+        else: 
+            vals = list(args)
+            if is_not_null(vals[0]):
+                if not vals[0].startswith("_:"):
+                    vals[0] = "_:" + vals[0]
+            else:
+                vals[0] = "_:" + new_id()
+            vals = tuple(vals)
+            newobj = str.__new__(cls, *vals, **kwargs)
+            newobj.value = vals[0]
+        return newobj
 
     def __init__(self, value=None):
-        if hasattr(value, "type") and value.type == "bnode":
-            self.value = value.value
-        elif is_not_null(value):
-            self.value = value
-        else:
-            self.value = "_bn_" + new_id()
+        pass
 
 class XsdString(str, BaseRdfDataType):
     """ String instance of rdf xsd:string type value"""
 
-    datatype = "xsd:string"
+    datatype = Uri("xsd:string")
     class_type = "XsdString"
     py_type = str
+    es_type = "text"
 
     __slots__ = []
 
@@ -187,9 +187,10 @@ class XsdString(str, BaseRdfDataType):
 class XsdBoolean(BaseRdfDataType):
     """ Boolean instance of rdf xsd:boolean type value"""
 
-    datatype = "xsd:boolean"
+    datatype = Uri("xsd:boolean")
     class_type = "XsdBoolean"
     py_type = bool
+    es_type = "boolean"
 
     def __init__(self, value):
         if hasattr(value, "class_type") and value.class_type == "XsdBoolean":
@@ -212,9 +213,11 @@ class XsdBoolean(BaseRdfDataType):
 class XsdDate(date, BaseRdfDataType):
     """ Datetime Date instacne of rdf xsd:date type value"""
 
-    datatype = "xsd:date"
+    datatype = Uri("xsd:date")
     class_type = "XsdDate"
     py_type = date
+    es_type = "date"
+    es_format = "strict_date_optional_time||epoch_millis"
 
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and args[0].class_type == "XsdDate":
@@ -237,9 +240,11 @@ class XsdDate(date, BaseRdfDataType):
 class XsdDatetime(datetime, BaseRdfDataType):
     """ Datetime Datetime instance of rdf xsd:datetime type value"""
 
-    datatype = "xsd:datetime"
-    class_type = "XsdDatetime"
+    datatype = Uri("xsd:dateTime")
+    class_type = "XsdDateTime"
     py_type = datetime
+    es_type = "date"
+    es_format = "strict_date_optional_time||epoch_millis"
 
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and \
@@ -275,7 +280,7 @@ class XsdDatetime(datetime, BaseRdfDataType):
 class XsdTime(time, BaseRdfDataType):
     """ Datetime Datetime instance of rdf xsd:datetime type value"""
 
-    datatype = "xsd:time"
+    datatype = Uri("xsd:time")
     class_type = "XsdTime"
     py_type = time
 
@@ -306,9 +311,10 @@ class XsdTime(time, BaseRdfDataType):
 class XsdInteger(int, BaseRdfDataType):
     """ Integer instance of rdf xsd:string type value"""
 
-    datatype = "xsd:integer"
+    datatype = Uri("xsd:integer")
     class_type = "XsdInteger"
     py_type = int
+    es_type = "long"
 
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and \
@@ -349,10 +355,11 @@ class XsdInteger(int, BaseRdfDataType):
 class XsdDecimal(Decimal, BaseRdfDataType):
     """ Integer instance of rdf xsd:string type value"""
 
-    datatype = "xsd:decimal"
+    datatype = Uri("xsd:decimal")
     class_type = "XsdDecimal"
     py_type = int
-
+    es_type = "long"
+    
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and \
                 args[0].class_type == "XsdDecimal":
@@ -516,7 +523,7 @@ xsd_class_list = [Uri,
 
 DT_LOOKUP = {}
 for xsd_class in xsd_class_list:
-    attr_list = ["type", "py_type", "class_type"]
+    attr_list = ["type", "py_type", "class_type", "datatype"]
     for attr in attr_list:
         if hasattr(xsd_class, attr):
             DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
@@ -535,7 +542,13 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
             class_type: "literal", "uri" or "blanknode"
             datatype: "xsd:string", "xsd:int" , etc
     """
-
+    if datatype == "xsd:dateTime":
+        pdb.set_trace()
+    try:
+        if value.get("datatype") == "xsd:dateTime":
+            pdb.set_trace()
+    except:
+        pass
     if isinstance(value, BaseRdfDataType):
         return value
     elif isinstance(value, dict):
@@ -545,10 +558,18 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
         if value.get('type') == "literal":
             if not value.get("datatype"):
                 return XsdString(value['value'])
-            else:
-                # The lang keyword only applies to XsdString types
-                return DT_LOOKUP[value['datatype']](value['value'],
-                                                    lang=value.get("lang")) 
+            else:  
+                try:
+                    if value.get("lang"):
+                        # The lang keyword only applies to XsdString types
+                        return DT_LOOKUP[value['datatype']](value['value'],
+                                lang=value.get("lang"))
+                    else:
+                        return DT_LOOKUP[value['datatype']](value['value'])
+                except:
+                    rtn_val = BaseRdfDataType(value['value'])
+                    rtn_val.datatype = Uri(value['datatype'])
+                    return rtn_val
         else:    
             return DT_LOOKUP[value['type']](value['value'])
 
