@@ -1,5 +1,8 @@
 """OMNIBUS CONFIG file for KnowlegeLinks.io applications"""
 # enter a secret key for the flask application instance
+import os
+
+LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
 SECRET_KEY = "enter_a_secret_key_here"
 
 # Enter the root file path for application files. If left blank the application
@@ -16,7 +19,8 @@ TRIPLESTORE = {
     "ns_url":  "http://localhost:9999/blazegraph/namespace",
     "vendor": "blazegraph",
     "default_graph": "bd:nullGraph",
-    "default_ns": "kb"
+    "default_ns": "kb",
+    "container_dir": "local_data"
 }
 REPOSITORY_URL = "http://localhost:8080/rest"
 ES_URL = "http://localhost:9200"

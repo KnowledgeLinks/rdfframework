@@ -748,9 +748,12 @@ class DictClass(metaclass=DictClassMeta):
         return return_obj
 
 
-    def get(self, attr, none_val=None):
+    def get(self, attr, none_val=None, strict=False):
         if attr in self.keys():
-            return getattr(self, attr)
+            if strict and self[attr] is None:
+                return none_val
+            else:
+                return getattr(self, attr)
         else:
             return none_val
 

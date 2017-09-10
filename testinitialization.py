@@ -20,7 +20,8 @@ from testconfig import config
 from rdfframework.utilities import DictClass, pp, RdfNsManager, pp, \
                                    render_without_request, RdfConfigManager, \
                                    make_list, p_args, string_wrap, \
-                                   make_doc_string, format_doc_vals
+                                   make_doc_string, format_doc_vals, \
+                                   list_files
 from rdfframework.rdfdatatypes import rdfdatatypes as rdt, BaseRdfDataType, Uri
 from rdfframework.sparql import run_sparql_query
 from rdfframework.framework import RdfFramework
