@@ -2,44 +2,57 @@
 # enter a secret key for the flask application instance
 import os
 
-LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
 SECRET_KEY = "enter_a_secret_key_here"
 
-# Enter the root file path for application files. If left blank the application
-# will use the file path that originally called RdfConfigManager
-ROOT_FILE_PATH = "/home/stabiledev/git/rdfframework"
+# Enter the root file path for where the RDF defintioins are stored. The
+# application will search this path for all folders titled 'rdfw-definitions'
+# and load those files into the RDF_DEFINITIONS triplestore.
+#! If left blank the application will use the file path that originally called
+#! RdfConfigManager
+RDF_DEFINITION_FILE_PATH = "/home/stabiledev/git/rdfframework"
+
+# Path to where local data files are stored, as python sees the file path.
+# This variable is paired with the 'container_dir' in a TRIPLESTORE declaration.
+# Without this linkage the only way to send a file through to the triplestore
+# is via a REST call that does not work well for large and large numbers of
+# files
+#! The docker container should be volume mapped to this location.
+#! Example: -v {python_dir}:{docker_container_dir}
+#!          -v /home/username/local_data:/local_data
+LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
 
 # URL used in generating IRIs
 BASE_URL = "http://bibcat.org/"
 
-TRIPLESTORE_URL = "http://localhost:9999/blazegraph/sparql"
-# Database REST urls
-TRIPLESTORE = {
-    "url": "http://localhost:9999/blazegraph/sparql",
-    "ns_url":  "http://localhost:9999/blazegraph/namespace",
-    "vendor": "blazegraph",
-    "default_graph": "bd:nullGraph",
-    "default_ns": "kb",
-    "container_dir": "local_data"
-}
-REPOSITORY_URL = "http://localhost:8080/rest"
+# url to elasticsearch
 ES_URL = "http://localhost:9200"
 
-# Triplestore Setup
-RDF_DEFINITIONS = {
-    # this is the graph name where application definitions are stored
+# Declaration for the triplestore that stores data for the application
+DATA_TRIPLESTORE = {
+    "vendor": "blazegraph",
+    "url": "http://localhost:9999/blazegraph",
+    # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
+    # This is how the triplestore see the file path.
+    "container_dir": "local_data",
+    "namespace": "kb"
+}
+
+# Declaration for the triplestore storing the rdf vocab and rdfframework files
+# that define the applications classes, forms, and APIs
+DEFINITION_TRIPLESTORE = {
+    "vendor": "blazegraph",
+    "url": "http://localhost:9999/blazegraph",
+    "container_dir": "local_data",
     "graph": "<http://knowledgelinks.io/ns/application-framework/>",
-    "method": "namespace",
-    "triplestore": "blazegraph",
     "namespace": "rdf_defs"
 }
-# this is the graph name where application definitions are stored
-RDF_DEFINITION_GRAPH = "<http://knowledgelinks.io/ns/application-framework/>"
+
+REPOSITORY_URL = "http://localhost:8080/rest"
 
 # Dictionary of web accessibale datasets
 DATASET_URLS = {
     "loc_subjects_skos.nt.gz": "http://id.loc.gov/static/data/authoritiessubjects.nt.skos.gz",
-    "marc_relatoes_nt": "http://id.loc.gov/static/data/vocabularyrelators.nt.zip",
+    "marc_relators_nt": "http://id.loc.gov/static/data/vocabularyrelators.nt.zip",
     "bibframe_vocab_rdf": "http://id.loc.gov/ontologies/bibframe.rdf"
 }
 
@@ -51,7 +64,6 @@ DEFAULT_RDF_NS = {
     "skos": "http://www.w3.org/2004/02/skos/core#",
     "loc": "http://id.loc.gov/authorities/",
     "mods": "http://www.loc.gov/mods/v3",
-    "dc": "http://purl.org/dc/terms/",
     "es": "http://knowledgelinks.io/ns/elasticsearch/",
     "edm": "http://www.europeana.eu/schemas/edm/",
     "schema": "http://schema.org/",
@@ -72,16 +84,14 @@ DEFAULT_RDF_NS = {
     "mads": "<http://www.loc.gov/mads/rdf/v1#>"
 }
 
-RDF_REFERENCE_GRAPH = "<http://knowledgelinks.io/ns/bibframe/reference/>"
-RDF_LOC_SUBJECT_GRAPH = "<http://knowledgelinks.io/ns/bibframe/loc_subject/>"
 # The name used the site
 SITE_NAME = "DPLA-SERVICE-HUB"
 
 # Organzation information for the hosting org.
 ORGANIZATION = {
-   "name": "knowledgeLinks.io",
-   "url": "http://knowledgelinks.io/",
-   "description": ""
+    "name": "knowledgeLinks.io",
+    "url": "http://knowledgelinks.io/",
+    "description": ""
 }
 
 # Default data to load at initial application creation

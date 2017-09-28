@@ -23,6 +23,7 @@ class BaseRdfDataType(object):
 
         try:
             rtn_val = json.dumps(self.value)
+            rtn_val = self.value
         except:
             if 'time' in self.class_type.lower() \
                     or 'date' in self.class_type.lower():
@@ -80,6 +81,25 @@ class BaseRdfDataType(object):
     def to_json(self):
         return self._format(method="json")
 
+class memorize():
+    def __init__(self, function):
+        self.function = function
+        self.memorized = {}
+
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.memorized[args]
+        except KeyError:
+            self.memorized[args] = self.function(*args, **kwargs)
+            return self.memorized[args]
+        except TypeError:
+            try:
+                return self.memorized[str(args)]
+            except KeyError:
+                self.memorized[str(args)] = self.function(*args, **kwargs)
+                return self.memorized[str(args)]
+
+@memorize
 class Uri(BaseRdfDataType, str):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
@@ -96,6 +116,7 @@ class Uri(BaseRdfDataType, str):
             vals = tuple(vals)
             newobj = str.__new__(cls, *vals, **kwargs)
             newobj.value = NSM.uri(vals[0])
+            newobj.hash_value = hash(NSM.pyuri(newobj.value))
         return newobj
 
     def __init__(self, value):
@@ -111,7 +132,8 @@ class Uri(BaseRdfDataType, str):
         return self.__repr__()
 
     def __hash__(self):
-        return hash(self._format(method=self.default_method))
+        # return hash(self._format(method=self.default_method))
+        return self.hash_value
 
 class BlankNode(BaseRdfDataType, str):
     """ blankNode URI/IRI class for working with RDF data """
@@ -527,6 +549,9 @@ for xsd_class in xsd_class_list:
     for attr in attr_list:
         if hasattr(xsd_class, attr):
             DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
+        elif hasattr(xsd_class, 'function') and \
+                hasattr(xsd_class.function, attr):
+            DT_LOOKUP[getattr(xsd_class.function, attr)] = xsd_class    
     if hasattr(xsd_class, "datatype"):
         DT_LOOKUP[NSM.iri(NSM.uri(xsd_class.datatype))] = xsd_class
         DT_LOOKUP[NSM.clean_iri(NSM.uri(xsd_class.datatype))] = xsd_class
@@ -534,6 +559,7 @@ for xsd_class in xsd_class_list:
         DT_LOOKUP[NSM.ttluri(xsd_class.datatype)] = xsd_class
     DT_LOOKUP[xsd_class] = xsd_class
 
+@memorize
 def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
     """ Coverts an input to one of the rdfdatatypes classes
 
@@ -542,13 +568,6 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
             class_type: "literal", "uri" or "blanknode"
             datatype: "xsd:string", "xsd:int" , etc
     """
-    if datatype == "xsd:dateTime":
-        pdb.set_trace()
-    try:
-        if value.get("datatype") == "xsd:dateTime":
-            pdb.set_trace()
-    except:
-        pass
     if isinstance(value, BaseRdfDataType):
         return value
     elif isinstance(value, dict):

@@ -1,4 +1,4 @@
-"""    This module is used for setting an intial test configs and values for 
+"""    This module is used for setting an intial test configs and values for
 the rdfframework """
 
 import pdb
@@ -30,17 +30,17 @@ class RdfDataset(dict):
     __slots__ = ['classes',
                  'subj_list',
                  'non_defined',
-                 'base_uri', 
+                 'base_uri',
                  'base_class',
                  'relate_obj_types']
-    
+
     def __init__(self, data=None, base_uri=None, **kwargs):
         if base_uri:
             base_uri = Uri(base_uri)
         self.base_uri = base_uri
 
         # realate_bnode_obj_types sets whether to relate the object of a class
-        # back to itself    
+        # back to itself
 
         self.relate_obj_types = ['bnode','uri']
         if kwargs.get("bnode_only"):
@@ -49,10 +49,10 @@ class RdfDataset(dict):
         if data:
             self.load_data(data, **kwargs)
 
-        
+
 
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
-        """ Adds a triple to the dataset 
+        """ Adds a triple to the dataset
 
             args:
                 sub: The subject of the triple or dictionary contaning a
@@ -63,7 +63,7 @@ class RdfDataset(dict):
             kwargs:
                 map: Optional, a ditionary mapping for a supplied dictionary
                 strip_orphans: Optional, remove triples that have an orphan
-                               blanknode as the object 
+                               blanknode as the object
                 obj_method: if "list" than the object will be returned in the
                             form of a list
         """
@@ -134,7 +134,7 @@ class RdfDataset(dict):
     @property
     def view(self):
         """ prints the dataset in an easy to read format """
-        print(self.format(remove='bnode', 
+        print(self.format(remove='bnode',
                           sort=True,
                           pretty=True,
                           compress=True,
@@ -144,7 +144,7 @@ class RdfDataset(dict):
     @property
     def view_main(self):
         """ prints the dataset in an easy to read format """
-        print(self.format(remove='bnode', 
+        print(self.format(remove='bnode',
                           sort=True,
                           pretty=True,
                           compress=True,
@@ -161,7 +161,7 @@ class RdfDataset(dict):
             kwargs:
                 strip_orphans: True or False - remove triples that have an
                                orphan blanknode as the object
-                obj_method: "list", or None: if "list" the object of a method 
+                obj_method: "list", or None: if "list" the object of a method
                             will be in the form of a list.
         """
         if isinstance(data, list):
@@ -174,7 +174,7 @@ class RdfDataset(dict):
             self.add_triple(sub=triple, **kwargs)
 
     def _group_data(self, data):
-        """ processes the data in to groups prior to loading into the 
+        """ processes the data in to groups prior to loading into the
             dataset
 
             args:
@@ -209,10 +209,10 @@ class RdfDataset(dict):
                 return "%s%s" %(value," " * spaces)
             if output == "view":
                 print("\n".join(
-                        ["%s  %s%s%s" % 
-                         (i, size(trip[0].sparql), size(trip[1].sparql), trip[2].sparql) 
+                        ["%s  %s%s%s" %
+                         (i, size(trip[0].sparql), size(trip[1].sparql), trip[2].sparql)
                          for i, trip in enumerate(rtn_list)]))
-        else:        
+        else:
             return rtn_list
 
     @property
@@ -245,12 +245,12 @@ class RdfDataset(dict):
 
     @staticmethod
     def _get_classtypes(data):
-        """ returns all of the triples where rdf:type is the predicate and 
+        """ returns all of the triples where rdf:type is the predicate and
             removes them from the data list
 
             agrs:
                 data: a list of triples
-        """ 
+        """
         rtn_list = []
         remove_index = []
         for i, triple in enumerate(data):
@@ -262,7 +262,7 @@ class RdfDataset(dict):
         return rtn_list
 
     def _generate_classes(self, class_types, non_defined, **kwargs):
-        """ creates the class for each class in the data set 
+        """ creates the class for each class in the data set
 
             args:
                 class_types: list of class_types in the dataset
@@ -283,7 +283,7 @@ class RdfDataset(dict):
 
     @staticmethod
     def _get_rdfclass(class_type, **kwargs):
-        """ returns the instanticated class from the class list 
+        """ returns the instanticated class from the class list
 
             args:
                 class_type: dictionary with rdf_types
@@ -312,7 +312,9 @@ class RdfDataset(dict):
                 if len(bases) == 1:
                     return bases[0]
                 else:
-                    new_class = type("_".join(class_type['o']), tuple(bases), {})
+                    new_class = type("_".join(class_type['o']),
+                                     tuple(bases),
+                                     {})
                     new_class.hierarchy = list_hierarchy(class_type['o'][0],
                                                          bases)
                     return new_class
@@ -321,7 +323,7 @@ class RdfDataset(dict):
 
     @staticmethod
     def _merge_classtypes(data):
-        obj = {} 
+        obj = {}
         for triple in data:
             try:
                 obj[triple['s']]['o'].append(triple['o'])
@@ -335,8 +337,8 @@ class RdfDataset(dict):
     @staticmethod
     def _get_non_defined(data, class_types):
         """ returns a list of URIs and blanknodes that are not defined within
-            the dataset. For example: schema:Person has an associated rdf:type 
-            then it is considered defined. 
+            the dataset. For example: schema:Person has an associated rdf:type
+            then it is considered defined.
 
             args:
                 data: a list of triples
@@ -346,17 +348,17 @@ class RdfDataset(dict):
         non_def_set = set([item['s'] for item in data])
         return list(non_def_set - subj_set)
 
-    @staticmethod    
+    @staticmethod
     def _convert_results(data, **kwargs):
         """ converts the results of a query to RdfDatatype instances
 
             args:
                 data: a list of triples
-        """ 
+        """
         if kwargs.get('debug'):
             for row in data:
                 for key, value in row.items():
                     if value.get('value') =="2000-05-08T00:00:00.000Z":
                         pyrdf(value)
-        return [{key:pyrdf(value) for key, value in row.items()} 
+        return [{key:pyrdf(value) for key, value in row.items()}
                 for row in data]

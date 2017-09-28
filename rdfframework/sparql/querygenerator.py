@@ -100,6 +100,8 @@ def run_sparql_query(sparql, mode='get', config=RdfConfigManager(), **kwargs):
         else:
             return []
     elif mode == "update":
+        # print(sparql_endpoint)
+        # print(query)
         return requests.post(sparql_endpoint, data={"update":query})
     elif mode == "load":
         context_uri = kwargs.get("graph",
@@ -375,12 +377,12 @@ def save_file_to_repository(data, repo_item_address):
         object_value = repository_result.text
     return iri(object_value)
 
-def get_all_item_data(item_uri):
+def get_all_item_data(item_uri, namespace=None):
     ns = NSM
     _sparql = render_without_request("sparqlAllItemDataTemplate.rq",
                                      prefix=ns.prefix(),
                                      item_uri=item_uri)
-    return run_sparql_query(_sparql)
+    return run_sparql_query(_sparql, namespace=namespace)
 
 def get_class_def_item_data(class_uri, **kwargs):
     ns = NSM

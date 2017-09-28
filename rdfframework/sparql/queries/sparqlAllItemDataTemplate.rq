@@ -29,7 +29,8 @@ SELECT DISTINCT ?s ?p ?o
 	  	Filter(?p2 != rdf:type).
 		Filter(isiri(?s)||isblank(?s))
       	Filter(isiri(?s1)||isblank(?s1))
-      	Filter(isblank(?s2))
+    	Filter(isblank(?s2)||isiri(?s2))
+      	Filter(isblank(?s))
 	} UNION { # Select Triples where the URI is the Object
 	  	?s ?p0 ?item .
 	  	?s ?p ?o .

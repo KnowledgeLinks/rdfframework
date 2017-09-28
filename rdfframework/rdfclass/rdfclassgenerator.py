@@ -6,23 +6,38 @@ import pprint
 import json
 import types
 import inspect
+import logging
+import datetime
 from hashlib import sha1
 
-
 from rdfframework.utilities import RdfNsManager, render_without_request, \
-                                   RdfConfigManager, make_list
-from rdfframework.rdfdatatypes import BaseRdfDataType
+                                   RdfConfigManager, make_list, pp, pyfile_path
+from rdfframework.rdfdatatypes import BaseRdfDataType, pyrdf
 from rdfframework.sparql import run_sparql_query
 from rdfframework.rdfdatasets import RdfDataset
 from rdfframework.rdfclass import RdfClassBase
 from rdfframework import rdfclass
+
+# Setup Module logger
+
+MNAME = pyfile_path(inspect.stack()[0][1])
+MLOG_LVL = logging.DEBUG
+logging.basicConfig(level=MLOG_LVL)
+lg_r = logging.getLogger("requests")
+lg_r.setLevel(logging.CRITICAL)
+
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
 
-
 class RdfClassGenerator(object):
+    ln = "%s-RdfClassGenerator" % MNAME
+    log_level = logging.DEBUG
+
     def __init__(self, reset=False, nsm=NSM, cfg=CFG):
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        lg.info("Starting")
         self.cfg = cfg
         self.nsm = nsm
         self.__get_defs(not reset)
@@ -30,25 +45,37 @@ class RdfClassGenerator(object):
         self.__make_classes()
 
     def __get_defs(self, cache=True):
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        lg.debug(" *** Started")
         if cache:
+            lg.info("loading json cache")
             with open(
                 os.path.join(self.cfg.JSON_LOCATION, "class_query.json")) as file_obj:
                 self.cls_defs_results = json.loads(file_obj.read())
-        else:
+
+        if not cache or len(self.cls_defs_results) == 0:
+            lg.info("NO CACHE, querying the triplestore")
             sparqldefs = render_without_request("sparqlAllRDFClassDefs2.rq",
                                                 graph=self.cfg.RDF_DEFINITION_GRAPH,
                                                 prefix=self.nsm.prefix())
-            print("Starting Class Def query")
+            start = datetime.datetime.now()
+            lg.info("Starting Class Def query")
             rdf_defs = self.cfg.RDF_DEFINITIONS
             self.cls_defs_results = run_sparql_query(sparqldefs,
                     namespace=rdf_defs.namespace)
-            print("Ending Class Def Query")
+            lg.info("query complete in: %s" % (datetime.datetime.now() - start))
             with open(
                 os.path.join(self.cfg.JSON_LOCATION,"class_query.json"),
                 "w") as file_obj:
                 file_obj.write(json.dumps(self.cls_defs_results, indent=4) )
 
     def __make_defs(self):
+        """ Reads through the JSON object and converts them to Dataset """
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
+        start = datetime.datetime.now()
+        lg.debug("Converting to a Dataset")
 
         class_defs = {}
         for item in self.cls_defs_results:
@@ -56,17 +83,23 @@ class RdfClassGenerator(object):
                 class_defs[item['RdfClass']['value']].append(item)
             except KeyError:
                 class_defs[item['RdfClass']['value']] = [item]
-
-        self.cls_defs = {self.nsm.pyuri(key):RdfDataset(value, def_load=True, bnode_only=True)
+        self.cls_defs = {self.nsm.pyuri(key):RdfDataset(value,
+                                                        def_load=True,
+                                                        bnode_only=True)
                          for key, value in class_defs.items()}
         self.cfg.__setattr__('rdf_class_defs', self.cls_defs, True)
+        lg.debug("conv complete in: %s" % (datetime.datetime.now() - start))
 
     def __make_classes(self):
-        # pdb.set_trace()
-        # set the all the base classes
+        """ reads through the classes and generates an python class for each
+        rdf:Class """
+        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        lg.setLevel(self.log_level)
         created = []
-        print("class len: ", len(self.cls_defs.keys()))
+        lg.info("class length: %s" % len(self.cls_defs.keys()))
+        lg.debug("create classes that are not subclassed")
         for name, cls_defs in self.cls_defs.items():
+            # if name == 'bf_Topic': pdb.set_trace()
             if not self.cls_defs[name][name].get('rdfs_subClassOf'):
                 created.append(name)
                 setattr(rdfclass,
@@ -75,6 +108,7 @@ class RdfClassGenerator(object):
                                         (RdfClassBase,),
                                         {#'metaclass': RdfClassMeta,
                                          'cls_defs': cls_defs}))
+        lg.debug("created classes:\n%s", created)
         for name in created:
             del self.cls_defs[name]
         left = len(self.cls_defs.keys())
@@ -83,7 +117,6 @@ class RdfClassGenerator(object):
             new = []
             for name, cls_defs in self.cls_defs.items():
                 parents = self.cls_defs[name][name].get('rdfs_subClassOf')
-                # pdb.set_trace()
                 for parent in make_list(parents):
                     bases = tuple()
                     if parent in created or parent in classes:
@@ -138,7 +171,7 @@ class RdfClassGenerator(object):
 #         make_list, make_set, make_triple, remove_null, DeleteProperty, \
 #         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
 #         pyuri, get_attr, slugify, RdfConfigManager
-   
+
 
 # from .getframework import get_framework as rdfw
 # try:
@@ -154,7 +187,7 @@ class RdfClassGenerator(object):
 #     from .processors import clean_processors, run_processor
 #     from .sparql import save_file_to_repository
 #     from .rdfdatatypes import BaseRdfDataType
-   
+
 # setting DEBUG to False will turn all the debug printing off in the module
 
 # class RdfBaseClass(dict):
@@ -177,7 +210,7 @@ class RdfClassGenerator(object):
 #             self.add_property(sub['p'], sub['o'], kwargs.get("obj_method"))
 #         else:
 #             self._subject = {"s":sub, "p":None, "o":None}
-            
+
 
 #     def add_property(self, pred, obj, obj_method=None):
 #         try:
@@ -224,7 +257,7 @@ class RdfClassGenerator(object):
 #         rtn_val = {key: convert_item(value) for key, value in self.items()}
 #         #pdb.set_trace()
 #         if add_ids:
-            
+
 #             if self._subject['s'].type == 'uri':
 #                 rtn_val['uri'] = self._subject['s'].sparql_uri
 #                 rtn_val['id'] = sha1(rtn_val['uri'].encode()).hexdigest()
@@ -307,7 +340,7 @@ class RdfClassGenerator(object):
 #                 for entry in prop.entries:
 #                     new_prop = copy.copy(prop)
 #                     new_prop.data = entry.data
-                    
+
 #                     if debug: print("* * * * * ", prop.name,": ",entry.data)
 #                     expanded_prop_list.append(new_prop)
 #             else:
@@ -342,11 +375,11 @@ class RdfClassGenerator(object):
 
 #     def new_uri(self, **kwargs):
 #         ''' Generates a new uri for a new subject
-        
+
 #             kwargs:
-#                 save_data - pass in the data to be saved for uri 
+#                 save_data - pass in the data to be saved for uri
 #                 calculations'''
-                
+
 #         if not DEBUG:
 #             debug = False
 #         else:
@@ -427,7 +460,7 @@ class RdfClassGenerator(object):
 #             test_uri = new_uri
 #             while failed_test:
 #                 sparql = """
-#                          SELECT * 
+#                          SELECT *
 #                          WHERE {
 #                             {%s ?p ?o} UNION {?s ?p %s}
 #                          } LIMIT 1""" % (iri(test_uri), iri(test_uri))
@@ -492,7 +525,7 @@ class RdfClassGenerator(object):
 #         if debug: print(self.kds_classUri, " PrimaryKeys: ", pkey, "\n")
 #         if len(pkey) < 1:
 #             if debug: print("END RdfClass.validate_primary_key -NO pKey----\n")
-#             return ["valid"] 
+#             return ["valid"]
 #         else:
 #             _calculated_props = self._get_calculated_properties()
 #             _old_class_data = self._select_class_query_data(old_data)
@@ -547,26 +580,26 @@ class RdfClassGenerator(object):
 #                         (_old_class_data.get(key),
 #                          _new_class_data.get(key),
 #                          key,
-#                          _calculated_props))    
+#                          _calculated_props))
 #                 if (_old_class_data.get(key) != _new_class_data.get(key)) and \
 #                         ((key not in _calculated_props) or \
 #                         _new_class_data.get(key) is not None):
-                    
+
 #                     _key_changed = True
 #                     if _object_val:
 #                         if str(_object_val).startswith("FILTER"):
 #                             arg_trip = make_triple("?uri", iri(uri(key)), "?o")
 #                             _query_args.append(arg_trip)
 #                             _query_args.append("FILTER (!(isIri(?o))) .")
-#                             _query_args.append(_object_val) 
+#                             _query_args.append(_object_val)
 #                             _multi_key_query_args.append(arg_trip)
 #                             _multi_key_query_args.append(\
 #                                     "FILTER (!(isIri(?o))) .")
-#                             _multi_key_query_args.append(_object_val) 
-#                         else:    
-#                             _query_args.append(make_triple("?uri", 
+#                             _multi_key_query_args.append(_object_val)
+#                         else:
+#                             _query_args.append(make_triple("?uri",
 #                                                            iri(uri(key)), \
-#                                                            _object_val))    
+#                                                            _object_val))
 #                             _multi_key_query_args.append(make_triple("?uri", \
 #                                     iri(uri(key)), _object_val))
 #                 else:
@@ -800,7 +833,7 @@ class RdfClassGenerator(object):
 #         _processed_data = {}
 #         obj = {}
 #         _required_props = self.list_required()
-        
+
 #         _calculated_props = self._get_calculated_properties()
 #         _old_data = self._select_class_query_data(rdf_obj.query_data)
 #         # cycle through the form class data and add old, new, doNotSave and

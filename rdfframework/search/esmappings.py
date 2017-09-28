@@ -90,7 +90,9 @@ class EsMappings():
                         "analyzer": {
                             "keylower": {
                                 "tokenizer": "keyword",
-                                "filter": "lowercase"
+                                "type": "custom",
+                                "filter": "lowercase",
+                                "ignore_above" : 256
                             }
                         }
                     }
@@ -100,7 +102,7 @@ class EsMappings():
 
         for idx_cls in idx_obj[idx_name]:
             es_map['body']['mappings'][idx_cls.es_defs['kds_esDocType'][0]] = \
-                    {'properties': idx_cls.es_mapping()}
+                    {'properties': idx_cls.es_mapping(idx_cls)}
 
         return es_map
 
@@ -132,7 +134,10 @@ class EsMappings():
                 alias_def = {alias + "_v0":{}}
             old_idx = list(alias_def)[0]
             parts = old_idx.split("_v")
-            parts[1] = str(int(parts[1]) + 1)
+            try:
+                parts[1] = str(int(parts[1]) + 1)
+            except IndexError:
+                parts = [old_idx,'1']
             return {'old': old_idx, 'new': "_v".join(parts)}
 
         reset_idx= kwargs.get('reset_idx', False)

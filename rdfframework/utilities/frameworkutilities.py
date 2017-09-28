@@ -13,7 +13,7 @@ import inspect
 from types import ModuleType
 from uuid import uuid1, uuid4, uuid5
 from flask import current_app, json
-from .baseutilities import xsd_to_python, make_list
+from .baseutilities import make_list
 from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 from .debug import pp
@@ -21,6 +21,7 @@ from .rdfwconfig import RdfConfigManager
 
 #import rdfframework.rdfdatatypes as dt
 
+xsd_to_python = "depricated"
 
 try:    
     pass

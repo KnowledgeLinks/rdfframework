@@ -12,8 +12,7 @@ import requests
 import json
 
 from elasticsearch import Elasticsearch, helpers
-from rdfframework.utilities import make_list, pp, IsFirst, nz, \
-        make_set, get2, Dot, RdfConfigManager
+from rdfframework.utilities import IsFirst, get2, Dot, RdfConfigManager
 from rdfframework.search import get_es_action_item, EsMappings
 
 MODULE_NAME = "%s.%s" % \
@@ -27,7 +26,7 @@ config = RdfConfigManager()
 class EsBase():
     ''' Base elasticsearch rdfframework class for common es operations'''
         
-    ln = "%s:ReaderBase" % MODULE_NAME
+    ln = "%s:EsBase" % MODULE_NAME
     log_level = logging.INFO
         
     def __init__(self, **kwargs):
@@ -46,7 +45,7 @@ class EsBase():
         
         action_list = []
         es_index = get2(kwargs, "es_index", self.es_index)
-        action_type = kwargs.get("action_type","create")
+        action_type = kwargs.get("action_type","index")
         action_settings = {'_op_type': action_type,
                            '_index': es_index}
         doc_type = kwargs.get("doc_type", self.doc_type)
@@ -70,15 +69,15 @@ class EsBase():
         doc_type = kwargs.get("doc_type", self.doc_type)    
              
         lg.info("Sending %s items to Elasticsearch",len(action_list))
-#        bulk_stream = helpers.streaming_bulk(es, 
+        # bulk_stream = helpers.streaming_bulk(es, 
         result = helpers.bulk(es,
                               action_list, 
                               chunk_size=400, 
                               raise_on_error=False) 
         lg.info("FINISHED sending to Elasticsearch") 
         lg.info("Results\n%s", result)
-#        for success, result in bulk_stream:
-#            lg.debug("\nsuccess: %s \nresult:\n%s", success, pp.pformat(result))
+        # for success, result in bulk_stream:
+        #     lg.debug("\nsuccess: %s \nresult:\n%s", success, pp.pformat(result))
         return result
 
     def save(self, data, **kwargs):
@@ -331,33 +330,4 @@ class EsBase():
                 lg.debug(" calc result: %s", "".join(calc_parts))
                 item['_source']['__calc'] = "".join(calc_parts)
         lg.debug("calc %s", calc)
-        return results
-
-    def create_index(self, **kwargs):
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
-        reset_index = kwargs.get("reset_index",self.reset_index)
-        doc_type = kwargs.get("doc_type")
-        reset_doc_type = kwargs.get("reset_doc_type",self.reset_doc_type)
-        es_mapping = kwargs.get('es_mapping', self.es_mapping)
-        es_index = kwargs.get('es_index', self.es_index)
-        es = kwargs.get("es", self.es)
-        #pdb.set_trace()
-        if reset_index:
-            lg.warn("DELETING Elasticsearch INDEX => %s ******", es_index)
-            es.indices.delete(index=es_index + "*", ignore=[400, 404])
-        if reset_index or not es.indices.exists(index=es_index):
-            es_settings = EsMappings().get_es_settings(es_index)
-            if es_settings:
-                es_mapping = None
-            es.indices.create(index=es_index+"_v1",
-                              body=es_settings,
-                              update_all_types=True) #,
-                              #ignore=[400])
-            es.indices.put_alias(index=[es_index+"_v1"], name=es_index)
-        if es_mapping:
-            es.indices.put_mapping(index=es_index+"_v1",
-                                   doc_type=doc_type,
-                                   body=es_mapping,
-                                   update_all_types=True) 
-        self.reset_index = False     
+        return results    

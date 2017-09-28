@@ -12,8 +12,8 @@ from hashlib import sha1
 
 from rdfframework.utilities import RdfNsManager, render_without_request, \
                                    RdfConfigManager, make_doc_string, \
-                                   p_args, LABEL_FIELDS, DESCRIPTION_FIELDS, \
-                                   find_values
+                                   p_args, LABEL_FIELDS, VALUE_FIELDS, \
+                                   DESCRIPTION_FIELDS, find_values
 from rdfframework.rdfdatatypes import BaseRdfDataType, Uri, DT_LOOKUP, BlankNode
 
 CFG = RdfConfigManager()
@@ -38,12 +38,15 @@ def remove_parents(bases):
             remove_i = [i for i in remove_i]
             remove_i.reverse()
             for index in remove_i:
-                del(bases[i])
+                try:
+                    del(bases[index])
+                except IndexError:
+                    print("Unable to delete base: ", bases)
             return bases
 
 def get_properties(cls_def):
     """ cycles through the class definiton and returns all properties """
-
+    # pdb.set_trace()
     prop_list = {prop: value for prop, value in cls_def.items() \
                  if 'rdf_Property' in value.get('rdf_type',"") or \
                  value.get('rdfs_domain')}
@@ -150,19 +153,20 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         self.old_data = []
 
     @classmethod
-    def es_mapping(cls, **kwargs):
+    def es_mapping(cls, base_class, **kwargs):
         """ Returns the es mapping for the property
         """
         es_idx_types = {
-            'es_Raw': {'raw': {'type': 'keyword'}}, 
-            'es_Lower': {'lower': {'type': 'text', 'analyzer': 'keylower'}},
+            'es_Raw': {'keyword': {'type': 'keyword'}}, 
+            'es_Lower': {'lower': {'type': 'text', 
+                                   'analyzer': 'keylower'}},
             'es_NotAnalyzed': "keyword",
             'es_NotIndexed': False
         }
         # if cls._prop_name == 'dcterm_created':
         #     pdb.set_trace()
         es_map = {}
-        rng = cls.rdfs_range
+        ranges = cls.rdfs_range
         rng_defs = [rng_def for rng_def in cls.kds_rangeDef \
                     if not isinstance(rng_def, BlankNode) \
                     and (cls._cls_name in rng_def.get('kds_classUri',[]) \
@@ -176,18 +180,34 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         except IndexError:
             rng_def = {}
         idx_types = rng_def.get('kds_esIndexType',[]).copy()
+        # pdb.set_trace()
         try:
             idx_types.remove('es_Standard')
         except ValueError:
             pass
+        if cls._prop_name == "rdfs_label":
+            idx_types += ['es_Raw', 'es_Lower'] 
+        if len(idx_types) == 0:
+            nested = False
+            for rng in ranges:
+                if hasattr(MODULE.rdfclass, rng) and \
+                        rng != 'rdfs_Literal' and \
+                        isinstance(getattr(MODULE.rdfclass, rng), RdfClassMeta)\
+                        and cls._prop_name != 'rdf_type':
+                    nested = True
+            if nested:
+                idx_types.append('es_Nested')
         if 'es_Nested' in idx_types:
-            pdb.set_trace()
-            if kwargs.get('depth',0) == 1 and \
-                    kwargs.get('class') == rng[0]:
+            if (kwargs.get('depth',0) >= 1 and \
+                    kwargs.get('class') == ranges[0]) or kwargs.get('depth',0) > 2:
                 return {"type" : "keyword"}
+            # pdb.set_trace()
+            # if cls._prop_name == 'bf_eventContent':
+            #     pdb.set_trace() 
             nested_map = getattr(MODULE.rdfclass,
-                    rng[0]).es_mapping('es_Nested', **kwargs)
+                    ranges[0]).es_mapping(base_class, 'es_Nested', **kwargs)
             es_map['properties'] = nested_map
+            # es_map['properties'] = 
             es_map['type'] = "nested"
         elif len(idx_types) > 1:
             fields = {}
@@ -195,18 +215,27 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 fields.update(es_idx_types[idx])
             es_map['fields'] = fields
         elif len(idx_types) == 1:
-            if idx_types[0] == 'es_NotIndexed':
+            if cls._prop_name == 'rdf_type':
+                es_map['type'] = 'keyword'
+            elif idx_types[0] == 'es_NotIndexed':
                 es_map['index'] = False
             else:
                 es_map['type'] = es_idx_types[idx_types[0]]
         try:
             if not es_map.get('type'):
-                fld_type = DT_LOOKUP.get(rng[0]).es_type
+                fld_type = DT_LOOKUP.get(ranges[0]).es_type
                 es_map['type'] = fld_type
+                if cls._prop_name == 'rdf_type':
+                    es_map['type'] = 'keyword'
         except (KeyError, AttributeError):
-            es_map['type'] = 'text'
+            if cls._prop_name == 'rdf_type':
+                es_map['type'] = 'keyword'
+            else:
+                es_map['type'] = 'text'
+        if es_map['type'] == "nested":
+            del es_map['type']
         try:
-            fld_format = DT_LOOKUP.get(rng[0]).es_format
+            fld_format = DT_LOOKUP.get(ranges[0]).es_format
             es_map['format'] = fld_format
         except (KeyError, AttributeError):
             pass
@@ -215,6 +244,36 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
     def es_json(self, **kwargs):
         """ Returns a JSON object of the property for insertion into es
         """
+
+        def _convert_value(value, method=None):
+
+            def _sub_convert(val):
+                if isinstance(val, BaseRdfDataType):
+                    return val.to_json
+                elif isinstance(value, RdfClassBase):
+                    return val.subject.sparql_uri
+                else:
+                    return val
+
+            if method == "missing_obj":
+                rtn_obj = {
+                        "rdf_type": [rng.sparql_uri for rng in self.rdfs_range],
+                        "label": [getattr(self, label)[0] \
+                                  for label in LABEL_FIELDS \
+                                  if hasattr(self, label)][0]}
+                try:
+                    rtn_obj['uri'] = value.sparql_uri
+                    rtn_obj["rdfs_label"] = NSM.nouri(value.sparql_uri)
+                except AttributeError:
+                    rtn_obj['uri'] ="None Specified"
+                    rtn_obj['rdfs_label'] = _sub_convert(value)
+                rtn_obj['value'] = rtn_obj['rdfs_label']
+                return rtn_obj
+            else:
+                return _sub_convert(value)
+
+            
+
         try:
             rng_defs = [rng_def for rng_def in self.kds_rangeDef \
                         if not isinstance(rng_def, BlankNode) \
@@ -232,19 +291,39 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
             rng_def = {}
         idx_types = rng_def.get('kds_esIndexType',[]).copy()
         rtn_list = []
+        ranges = self.rdfs_range
+        # if self._prop_name == 'bf_shelfMark':
+        #     pdb.set_trace()
+        if len(idx_types) == 0:
+            nested = False
+            for rng in ranges:
+                if hasattr(MODULE.rdfclass, rng) and \
+                        rng != 'rdfs_Literal' and \
+                        isinstance(getattr(MODULE.rdfclass, rng),
+                                   RdfClassMeta):
+                    nested = True
+            for value in self:
+                if isinstance(value, RdfClassBase):
+                    nested = True
+            if nested:
+                idx_types.append('es_Nested')
+
         if 'es_Nested' in idx_types:
-            if kwargs.get('depth',0) == 1:
+            if kwargs.get('depth',0) > 6:
                 return  [val.subject.sparql_uri for val in self]
             for value in self:
-                rtn_list.append(value.es_json('es_Nested', **kwargs))
+                # if self._prop_name == "bf_shelfMark":
+                #     pdb.set_trace()
+                try:
+                    rtn_list.append(value.es_json('es_Nested', **kwargs))
+                except AttributeError:
+                    rtn_list.append(_convert_value(value, 
+                                                   "missing_obj"))
         else:
             for value in self:
-                if isinstance(value, BaseRdfDataType):
-                    rtn_list.append(value.to_json)
-                elif isinstance(value, RdfClassBase):
-                    rtn_list.append(value.subject.sparql_uri)
-                else:
-                    rtn_list.append(value)
+                # if value.__class__.__name__ == "bf_shelfMark":
+                #     pdb.set_trace()
+                rtn_list.append(_convert_value(value))
         return rtn_list
 
 
@@ -300,6 +379,16 @@ def es_get_class_defs(cls_defs, cls_name):
     return rtn_dict
 
 
+def list_properties(cls):
+        """ returns a dictionary of properties assigned to the class"""
+        rtn_dict = {}
+        for attr in dir(cls):
+            if attr not in ["properties", "__doc__", "doc"]:
+                attr_val = getattr(cls, attr)
+
+                if isinstance(attr_val, RdfPropertyMeta):
+                    rtn_dict[attr] = attr_val
+        return rtn_dict
 
 class RdfClassMeta(Registry):
 
@@ -307,13 +396,20 @@ class RdfClassMeta(Registry):
     def doc(self):  
         print_doc(self)
 
+    @property
+    def properties(self):
+        return list_properties(self)
+
     @classmethod
     def __prepare__(*args, **kwargs):
         # print('  RdfClassMeta.__prepare__(\n\t\t%s)' % (p_args(args, kwargs)))
         # pdb.set_trace()
         try:
+            # if args[1] == 'bf_Work':
+            #     pdb.set_trace()
             cls_defs = kwargs.pop('cls_defs') #CFG.rdf_class_defs.get(args[1],{})
             props = get_properties(cls_defs)
+            # pdb.set_trace()
             doc_string = make_doc_string(args[1],
                                         cls_defs[args[1]],
                                         args[2],
@@ -321,21 +417,26 @@ class RdfClassMeta(Registry):
             new_def = {}
             new_def['__doc__'] = doc_string
             new_def['doc'] = property(print_doc)
-            
+            new_def['properties'] = property(list_properties)
             new_def['json_def'] = cls_defs
-            new_def['properties'] = {}
             new_def['hierarchy'] = list_hierarchy(args[1], args[2])
             new_def['id'] = None
-            new_def['es_defs'] = es_get_class_defs(cls_defs, args[1])
+            es_defs = es_get_class_defs(cls_defs, args[1])
+            if len(es_defs) > 0 and not hasattr(args[2][0], 'es_defs'):
+                new_def['es_defs'] = es_defs
+            new_def['es_defs'] = es_defs
             new_def['uri'] = Uri(args[1]).sparql_uri
-
+            # pdb.set_trace()
             for prop, value in props.items():
-                new_def['properties'][prop] = make_property(value, prop, args[1])
-            if 'rdf_type' not in new_def['properties'].keys():
-                new_def['properties'][Uri('rdf_type')] = make_property({},
-                                                                  'rdf_type',
-                                                                  args[1])
+                new_def[prop] = make_property(value, prop, args[1])
+            # pdb.set_trace()
+            if 'rdf_type' not in new_def.keys():
+                new_def[Uri('rdf_type')] = make_property({},
+                                                         'rdf_type',
+                                                         args[1])
             new_def['cls_defs'] = cls_defs.pop(args[1])
+            # if args[1] == 'bf_Topic':
+            #     pdb.set_trace()
             return new_def
         except KeyError:
             return {}
@@ -353,9 +454,10 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
     uri_format = 'sparql_uri'
 
     def __init__(self, sub, **kwargs):
-        if not hasattr(self, "properties"):
-            self.properties = {}
+        # if not hasattr(self, "properties"):
+        #     self.properties = {}
         self.dataset = kwargs.get('dataset')
+        # if not kwargs.get("def_load"):
         self._initilize_props()
         # if kwargs.get("debug"):
         #     pdb.set_trace()
@@ -405,9 +507,10 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             new_list.append(obj)
             self[pred] = new_list
         except KeyError:
-            self[pred] = make_property({},
-                                pred, self.__class__.__name__)\
-                                (self, self.dataset)
+            setattr(self,
+                    pred, 
+                    make_property({},pred, self.__class__.__name__))                                
+            self[pred] = getattr(self, pred)(self, self.dataset)
             self[pred].append(obj)
 
     @property
@@ -458,7 +561,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         return rtn_val
 
     @classmethod
-    def es_mapping(cls, role='rdf_Class', **kwargs):
+    def es_mapping(cls, base_class, role='rdf_Class', **kwargs):
         """ Returns the es mapping for the class
 
         args:
@@ -466,26 +569,75 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                   upon whether it is used as a subject of an object. options
                   are es_Nested or rdf_Class
         """
-        
-        if kwargs.get("depth"):
+
+        def _prop_filter(prop, value, kwargs):
+            try:
+                use_prop = len(set(value.owl_inverseOf) - parent_props) > 0
+            except AttributeError:
+                use_prop = True
+            # if prop == 'bf_eventContentOf':
+            #     pdb.set_trace()
+            if not use_prop:
+                print(prop)
+            if prop in nested_props and use_prop:
+                return True
+            else:
+                return False
+
+        es_map = {}
+        if kwargs.get("depth"): # and kwargs.get('class') == cls.__name__:
             kwargs['depth'] += 1
         else:
             kwargs['depth'] = 1
             kwargs['class'] = cls.__name__
+            kwargs['class_obj'] = cls
+        if kwargs.get('class_obj'):
+            parent_props = set(cls.properties)
+        else:
+            parent_props = set()
         if role == 'rdf_Class':
             es_map = {}
-            es_map = {prop: value.es_mapping() \
+            es_map = {prop: value.es_mapping(base_class) \
                       for prop, value in cls.properties.items()}
             # for prop, value in cls.properties.items():
-            #     print(prop, value.es_mapping())
+            #     if prop == "bf_instanceOf":
+            #         try:
+            #             use_prop = len(set(value.owl_inverseOf) - parent_props) > 1
+            #         except AttributeError:
+            #             use_prop = True
+            #         print("\n****** ", prop," use_prop: ", use_prop,"\n")
+            #         pdb.set_trace()
+            #         print(value.es_mapping())
+            #     else:
+            #         x = value.es_mapping()
+
 
         elif role == 'es_Nested':
+            # print(locals())
             # pdb.set_trace()
-            kds_esNestedProps = cls.es_defs.get('kds_esNestedProps',
-                    list(cls.properties.keys()))
-            es_map = {prop: value.es_mapping(**kwargs) \
+            if cls == base_class:
+                nested_props = LABEL_FIELDS
+            else:
+                nested_props = cls.es_defs.get('kds_esNestedProps',
+                        list(cls.properties.keys()))
+            # es_map = {prop: value.es_mapping(**kwargs) \
+            #           for prop, value in cls.properties.items() \
+            #           if prop in kds_esNestedProps and \
+            #           not prop.endswith('Of')}
+            es_map = {prop: value.es_mapping(base_class, **kwargs) \
                       for prop, value in cls.properties.items() \
-                      if prop in kds_esNestedProps}
+                      if _prop_filter(prop, value, kwargs)}
+            # for prop, value in cls.properties.items():
+            #     if prop == "bf_instanceOf":
+            #         try:
+            #             use_prop = len(set(value.owl_inverseOf) - parent_props) > 1
+            #         except AttributeError:
+            #             use_prop = True
+            #         print("\n****** ", prop," use_prop: ", use_prop,"\n")
+            #         pdb.set_trace()
+            #         print(value.es_mapping(**kwargs))
+            #     else:
+            #         x = value.es_mapping(**kwargs)
         ref_map = {
             "type" : "keyword"
         }
@@ -494,10 +646,10 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             "include_in_all": False,
             "type": "text"
         }
-        es_map['label_field'] = ignore_map
-        es_map['value_field'] = ignore_map
+        es_map['label'] = ref_map
+        es_map['value'] = ref_map
 
-        if cls.cls_defs.get('kds_storageType') == "object":
+        if cls.cls_defs.get('kds_storageType') != "blanknode":
             es_map['id'] = ref_map
             es_map['uri'] = ref_map
             if role == 'rdf_Class':
@@ -505,7 +657,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         return es_map
 
 
-    def es_json(self, role='rdf_Class', **kwargs):
+    def es_json(self, role='rdf_Class', remove_empty=True, **kwargs):
         """ Returns a JSON object of the class for insertion into es
 
         args:
@@ -525,13 +677,19 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         #                    'rdfs_label',
         #                    'hiddenlabel']
         rtn_obj = {}
+        # pdb.set_trace()
         if kwargs.get("depth"):
             kwargs['depth'] += 1
         else:
             kwargs['depth'] = 1
         if role == 'rdf_Class':
             for prop, value in self.items():
-                rtn_obj[prop] = value.es_json()
+                new_val = value.es_json()
+                if (remove_empty and len(new_val) > 0) or not remove_empty:
+                    if len(new_val) == 1:
+                        rtn_obj[prop] = new_val[0]
+                    else:
+                        rtn_obj[prop] = new_val
         else:
             try:
                 nested_props = self.es_defs.get('kds_esNestedProps',
@@ -540,11 +698,46 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                 nested_props = list(self.keys())
             for prop, value in self.items():
                 if prop in nested_props:
-                    rtn_obj[prop] = value.es_json(**kwargs)
+                    # if prop == 'bf_shelfMark':
+                    #     pdb.set_trace()
+                    new_val = value.es_json(**kwargs)
+                    if (remove_empty and len(new_val) > 0) or not remove_empty:
+                        if len(new_val) == 1:
+                            rtn_obj[prop] = new_val[0]
+                        else:
+                            rtn_obj[prop] = new_val
 
         if self.subject.type == 'uri':
             rtn_obj['uri'] = self.subject.sparql_uri
-            rtn_obj['id'] = sha1(rtn_obj['uri'].encode()).hexdigest()
+            try:
+                path = ""
+                for base in [self.__class__] + list(self.__class__.__bases__):
+                    
+                    if hasattr(base, 'es_defs') and len(base.es_defs) > 0:
+                        path = "%s/%s/" % (base.es_defs['kds_esIndex'][0],
+                                           base.es_defs['kds_esDocType'][0])
+                        continue
+            except KeyError:
+                path = ""
+            rtn_obj['id'] = path + sha1(rtn_obj['uri'].encode()).hexdigest()
+        try:
+            rtn_obj['label'] = [self.cls_defs[label][0] \
+                                for label in LABEL_FIELDS \
+                                if self.cls_defs.get(label)][0]
+        except IndexError:
+            print("Missing class label: ", self.__class__.__name__)
+            rtn_obj['label'] = self.__class__.__name__.split("_")[-1]
+        try:
+            rtn_obj['value'] = [rtn_obj.get(label) \
+                                for label in VALUE_FIELDS + LABEL_FIELDS \
+                                if rtn_obj.get(label)][0]
+        except IndexError:
+            rtn_obj['value'] = ", ".join(["%s: %s" % (value.get('label'), value.get('value')) \
+                                for prop, value in rtn_obj.items() \
+                                if isinstance(value, dict) and \
+                                value.get('label')])
+        if rtn_obj['value'].strip().endswith("/"):
+            rtn_obj['value'] = rtn_obj['value'].strip()[:-1].strip()
         return rtn_obj
 
 

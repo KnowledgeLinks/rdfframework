@@ -1,0 +1,14 @@
+
+
+
+#demo1 .galWrapper{background:#2f4159;}
+#demo1 .contentArea{position: absolute; top: 10px; left:50px; /*width:300px; height:330px; display:block;*/ }
+#demo1 .img1{position: absolute; top:0; left:0;}
+#demo1 .usernameText, #demo1 .passwordText{position: absolute; top:107px; left:35px; z-index:1; font-size:15px; color:#009a9a; font-weight:bold; font-family:arial; height:20px; width:auto; display:inline-block;}
+#demo1 .usernameText img, #demo1 .passwordText img{position:relative; float:none;}
+#demo1 .passwordText{top:162px; width:10px; background:url(../demo-images/password.png) repeat-x 0 0; }
+#demo1 .pipe{position:relative;}
+#demo1 .pipe:before{content:''; position:absolute; top:0; right:-4px; width:5px; height:20px; display:block; z-index:1; background:url(../demo-images/pipe.gif) repeat-x 0 0; }
+
+
+

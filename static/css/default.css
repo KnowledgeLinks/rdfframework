@@ -1,0 +1,78 @@
+body { margin-top: 30px; }
+
+.hidden_thumb {
+  display:none;
+}
+.html5gallery {
+  float:left;
+  margin: 5px;
+}
+tr.clickable-row {
+    cursor: pointer;
+}
+.oddRow {
+  background-color: #f9f9f9
+}
+/* twitter typeahead formatting */
+
+span.twitter-typeahead {
+  width:100%
+}
+
+.typeahead,
+.tt-query,
+.tt-hint {
+  line-height: 20px;
+  padding: 8px 12px;
+
+}
+
+.typeahead {
+  background-color: #FFFFFF;
+}
+
+.tt-query {
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+}
+
+.tt-hint {
+  color: #999999;
+}
+
+.tt-drop down-menu {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px 8px 8px 8px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  margin-top: 2px;
+  padding: 2px 0;
+  width: 422px;
+}
+
+.tt-suggestion, .tt-suggestion hr {
+  font-size: 12px;
+  line-height: 18px;
+  padding: 3px 12px;
+  background-color: #f9f9f9;
+}
+.tt-dataset .oddRow{
+  background-color: lightgrey;
+}
+.tt-suggestion hr {
+  padding: 0px;
+  margin: 5px 0px 5px 0px;
+}
+
+.tt-suggestion.tt-cursor {
+  background-color: #0097CF;
+  color: #FFFFFF;
+}
+.tt-suggestion.tt-cursor .tt-highlight{
+  color: yellow;
+}
+.tt-suggestion p {
+  margin: 0;
+}
+.tt-highlight {
+  color: darkred;
+}

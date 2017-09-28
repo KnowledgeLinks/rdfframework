@@ -54,7 +54,7 @@ skos:broader rdfs:domain bf:Topic ;
 		kds:classUri bf:Topic ;
 		kds:rangeUri bf:Topic ;
 		kds:esIndexType es:Nested
-	] .
+	] .	
 
 skos:inScheme rdfs:domain bf:Topic ;
 	kds:rangeDef [
