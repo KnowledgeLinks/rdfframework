@@ -11,12 +11,17 @@ import logging
 import inspect
 
 from types import ModuleType
+from uuid import uuid1, uuid4, uuid5
 from flask import current_app, json
+from .baseutilities import make_list
 from .uriconvertor import iri, clean_iri, uri, pyuri, convert_obj_to_rdf_namespace
 from hashlib import sha1
 from .debug import pp
-from rdfframework.getframework import fw_config
-import rdfframework.rdfdatatypes as dt
+from .rdfwconfig import RdfConfigManager
+
+#import rdfframework.rdfdatatypes as dt
+
+xsd_to_python = "depricated"
 
 try:    
     pass
@@ -38,7 +43,26 @@ MNAME = inspect.stack()[0][1]
 # FOAF = Namespace("http://xmlns.com/foaf/spec/")
 # SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 DEBUG = True
-CONFIG = fw_config()
+CONFIG = RdfConfigManager()
+
+class RdfJsonEncoder(json.JSONEncoder):
+    # def __init__(self, *args, **kwargs):
+    #     if kwargs.get("uri_format"):
+    #         self.uri_format = kwargs.pop("uri_format")
+    #     else:
+    #         self.uri_format = 'sparql_uri'
+    #     super(RdfJsonEncoder, self).__init__(*args, **kwargs)
+    uri_format = 'sparql_uri'
+
+    def default(self, obj):
+        if isinstance(obj, RdfBaseClass):
+            obj.uri_format = self.uri_format
+            temp = obj.conv_json(self.uri_format)
+            return temp
+        elif isinstance(obj, RdfDataset):
+            return obj._format(self.uri_format)
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
 
 def uid_to_repo_uri(id_value):
     if id_value:
@@ -433,4 +457,14 @@ def convert_ispo_to_dict(data, mode="subject", base=None):
                         rtn_obj[key] = value
     return rtn_obj
 
+def new_id(method="uuid"):
+    """ Generates a unique identifier to be used with any dataset. The 
+        default method will use a random generated uuid based on computer
+        and a random generated uuid. 
 
+        Args:
+            method: "uuid" -> default random uuid generation
+                    ???? -> other methods can be added later
+    """
+    if method == "uuid":
+        return str(uuid5(uuid1(),str(uuid4())).hex)

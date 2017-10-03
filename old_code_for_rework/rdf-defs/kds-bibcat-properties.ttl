@@ -1,0 +1,206 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix kdr: <http://knowledgelinks.io/ns/data-resources/> .
+@prefix kds: <http://knowledgelinks.io/ns/data-structures/> .
+@prefix obi: <https://w3id.org/openbadges#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix bc: <http://knowledgelinks.io/ns/bibcat/> .
+@prefix relator: <http://id.loc.gov/vocabulary/relators/> .
+
+bf:absorbed a rdf:Property ;
+    rdfs:label "Absorption of" ;
+    rdfs:comment "Resource that has been incorporated into another resource." ;
+    rdfs:domain bf:Instance;
+	rdfs:range bf:Instance;
+	kds:esIndexType "nested";
+	kds:formDefault [
+		kds:formFieldName "absorbtion";
+		kds:formLabelName "Absorption of";
+		kds:formFieldHelp "Enter the work or instance this item has been absorbed by";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .	
+
+bf:absorbedBy a rdf:Property ;
+    rdfs:label "Absorbed by" ;
+    rdfs:comment "Resource that incorporates another resource." ;
+    rdfs:domain bf:Instance;
+    rdfs:range bf:Instance;
+    kds:formDefault [
+		kds:formFieldName "absorbedby";
+		kds:formLabelName "Absorbedby";
+		kds:formFieldHelp "Enter the work or instance this item absorbs";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .
+
+# *** Title Properties *************************************
+
+bf:title a rdf:Property ;
+    rdfs:label "Title resource" ;
+    rdfs:comment "Name given to a resource." ;
+    rdfs:domain bf:Instance, bf:Work;
+    rdfs:range bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    kds:requiredByDomain bf:Work, bf:Instance;
+    kds:formDefault [
+    	kds:formFieldName "InstanceTitle";
+		kds:formLabelName "Enter the Instance Title";
+	    kds:fieldType [
+			a kdr:SubForm;
+			kds:templatePath  "/widgets/form_subform.html";
+			kds:templateName "/widgets/form_subform.html";
+			kds:subFormUri bc:InstanceTitleSubForm;
+			kds:subFormInstance kdr:LinkWithParent 
+		]
+	] .
+	
+bf:mainTitle a rdf:Property ;
+    rdfs:label "Title resource" ;
+    rdfs:comment "Name given to a resource." ;
+    rdfs:domain bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    rdfs:range xsd:string;
+    kds:requiredByDomain bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    kds:formDefault [
+    	kds:classUri bf:Title, bf:InstanceTitle, bf:WorkTitle;
+		kds:formFieldName "mainTitle";
+		kds:formLabelName "Title";
+		kds:formFieldHelp "Enter the title being addressed.";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .
+	
+bf:subTitle a rdf:Property ;
+    rdfs:label "Title resource" ;
+    rdfs:comment "Name given to a resource." ;
+    rdfs:domain bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    rdfs:range xsd:string;
+    kds:formDefault [
+    	kds:classUri bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    	
+		kds:formFieldName "subTitle";
+		kds:formLabelName "Subtitle";
+		kds:formFieldHelp "Word, character, or group of words and/or characters that contains the remainder of the title after the main title. Possible title component.";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .
+
+bf:partName a rdf:Property ;
+    rdfs:label "Part title" ;
+    rdfs:comment "Part or section name of a title. Possible title component.." ;
+    rdfs:domain bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    rdfs:range xsd:string;
+    kds:formDefault [
+		kds:formFieldName "partName";
+		kds:formLabelName "Part Name";
+		kds:formFieldHelp "Part or section name of a title.";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .
+	
+bf:partNumber a rdf:Property ;
+    rdfs:label "Part number" ;
+    rdfs:comment "Part or section enumeration of a title." ;
+    rdfs:domain bf:Title, bf:InstanceTitle, bf:WorkTitle;
+    rdfs:range xsd:string;
+    kds:requiredByDomain bf:Work, bf:Instance;
+    kds:formDefault [
+		kds:formFieldName "partNumber";
+		kds:formLabelName "Part number";
+		kds:formFieldHelp "Part or section enumeration of a title.";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .
+	
+
+
+
+# *** Identifier Properties *************************************	
+
+bf:identifiedBy a rdf:property ;
+	rdfs:domain bf:Instance, bf:Work;
+	rdfs:range bf:Identifier ;
+	kds:esIndexType "nested";
+	kds:formDefault [
+		kds:formFieldName "identifiedBy";
+		kds:formLabelName "Identifiers";
+		kds:fieldType [
+			a kdr:SubForm;
+			kds:templatePath  "/widgets/form_onlinesubform.html";
+			kds:templateName "/widgets/form_onlinesubform.html";
+			kds:subFormUri bc:IdentifierSubForm;
+			kds:subFormInstance kdr:LinkWithParent;
+			kds:subFormMode kdr:RepeatingSubForm
+		] 
+	].
+	
+rdf:type a rdf:Property ;
+	rdfs:domain bf:Identifier;
+	rdfs:range [
+		kds:classUri bf:Identifier;
+		a bf:Identifier;
+		kds:esIndexType "not_analyzed"
+	];
+	kds:formDefault [
+	    kds:classUri bf:Identifier;
+		kds:formFieldName "identifierType";
+		kds:formLabelName "Identifier Type";
+		kds:formFieldHelp "Select the type of identifier";
+		kds:fieldType [
+			a kdr:SelectField;
+			kds:selectQuery "SELECT ?s ?name
+								{
+								  ?s rdfs:subClassOf bf:Identifier .
+								  ?s rdfs:label ?label .
+								  Optional {
+								    ?s skos:definition ?comment
+								  } .
+								  BIND (REPLACE(REPLACE(REPLACE(?comment,'International Standard', 'Int Std'),'Identifier','[ID]'),'Identification','[ID]') AS ?ncomment)
+								  BIND (SUBSTR(CONCAT(?label,' (',?ncomment,')'),1,150) as ?name)
+								  
+								}
+							ORDER BY ?name" ;
+			kds:selectBoundValue "?s";
+			kds:selectDisplay "?name" 
+		]
+	] .
+
+rdf:value a rdf:Property ;
+	rdfs:domain bf:Identifier ;
+	rdfs:range [
+		kds:classUri bf:Identifier;
+		a xsd:string ;
+		kds:esIndexType "standard";
+		kds:esIndexType "raw";
+		kds:esIndexType "lower"
+	];
+	kds:formDefault [
+		kds:classUri bf:Identifier;
+		kds:formFieldName "rdfvalue";
+		kds:formLabelName "Value";
+		kds:formFieldHelp "Enter the identifier value";
+		kds:fieldType [
+			a	kdr:TextField 
+		]
+	] .
+
+# *** Relator Properties *************************************	
+
+relator:aut a rdf:property ;
+	rdfs:domain bf:Instance, bf:Work;
+	rdfs:range bf:Person ;
+	kds:fieldType [
+		a kdr:SubForm;
+		kds:subFormUri bc:PersonSubForm;
+		kds:subFormInstance kdr:LinkWithParent
+	] .

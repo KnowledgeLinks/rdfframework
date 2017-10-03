@@ -1,0 +1,13 @@
+select ?uris
+{
+	{
+		select (count(?s) as ?c) (group_concat(?i; separator=",") as ?uris)
+		{
+			?s a bf:Topic .
+			?s rdfs:label ?o.
+			BIND (concat('<',str(?s),'>') as ?i)
+		}
+		group by ?o
+	}
+	filter(?c!=1)
+}

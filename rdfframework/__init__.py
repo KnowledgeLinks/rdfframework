@@ -1,5 +1,3 @@
-__author__ = "Mike Stabile, Jeremy Nelson"
-
 """
 RDFframework
 =======
@@ -12,10 +10,10 @@ vocabulary.
 :copyright: Copyright (c) 2016 by Michael Stabile and Jeremy Nelson.
 :license: To be determined, see LICENSE.txt for details.
 """
-import rdfframework.getframework
-import rdfframework.rdfclass
-import rdfframework.rdfdatatype
-import rdfframework.framework
-# from .rdfproperty import *
 
+import rdfframework.rdfclass
+import rdfframework.framework
+import rdfframework.rdfdatasets
+
+__author__ = "Mike Stabile, Jeremy Nelson"
 __version__ = '0.0.1'

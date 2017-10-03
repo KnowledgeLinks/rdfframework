@@ -1,0 +1,29 @@
+
+
+
+
+#demo3 .jsvp-ul{color:#fff; background-color:#36c4f3;}
+#demo3 .clicktoplay{font-size:2em; line-height:50px; color:#fff; text-decoration:none; text-align:center; width:100%; display:block; margin:190px auto 0;}
+#demo3 .clicktoplay span{font-size:1em; line-height:50px;}
+#demo3 .clicktoreplay{font-size:1.4em; color:#fff; text-decoration:underline; text-align:center; width:100%; display:block; margin:205px auto 0;}
+#demo3 .line0{font-size:3em; width:100%; display:block; position:absolute; top:125px; left:0; text-align:center;}
+#demo3 .line1{font-size:3em; opacity:0; margin-left:800px; width:250px; display:block; position:absolute; top:165px; left:0; text-align:right;}
+#demo3 .line2{font-size:5em; opacity:0; margin-left:800px; width:600px; display:block; position:absolute; top:150px; left:265px; text-align:left; font-weight:400;}
+#demo3 .line3{font-size:3em; opacity:0; width:100%; display:block; position:absolute; top:0; left:0; text-align:center;}
+#demo3 .line4{font-size:3em; width:100%; display:block; position:absolute; top:185px; left:0; text-align:center;}
+#demo3 .arrow{display:block; position:absolute; top:245px; left:442px;}
+#demo3 .btn{width:140px; height:45px; line-height:45px; display:block; text-align:center; border:3px #fff solid; position:absolute; top:190px; left:380px; border-radius:10px; font-size:3em; text-transform:uppercase;}
+#demo3 .btn1{left:0;}
+#demo3 .btn2{left:380px; color:#333; border-color:#333;}
+#demo3 .btn3{left:380px;}
+#demo3 .active{opacity:1; margin-left:0; }
+#demo3 .line3.active{opacity:1; top:130px; }
+#demo3 .btn1.active{opacity:1; left:380px;}
+#demo3 .lastScreen{display:block; position:absolute; top:80px; left:450px; margin-left:-160px; width:320px; text-align:center;}
+#demo3 .lastScreen .t1{font-size:3em; width:100%; display:block; float: left; padding-bottom:10px; }
+#demo3 .lastScreen .t2{font-size:1.6em; width:100%; display:block; float: left;}
+#demo3 .lastScreen .t2 a{font-size:1em; color:#333; text-decoration:none; }
+#demo3 .lastScreen .t2 a:hover{text-decoration:underline;}
+#demo3 .lastScreen .t3{font-size:1.4em; width:100%; display:block; float: left;}
+#demo3 .lastScreen .downloadNow{float: left; clear:both; margin:10px 70px; padding:0; height:45px; line-height:45px; }
+

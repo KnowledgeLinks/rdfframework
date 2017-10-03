@@ -1,0 +1,96 @@
+{{ prefix }}
+
+SELECT DISTINCT ?kdsClass ?item ?s ?p ?o
+{
+    GRAPH {{ graph }}
+    {
+
+        {
+            # get all of the triples for the parent classes
+            {
+                # This query returns a list of all classes used in the application
+                SELECT DISTINCT ?kdsClass
+                {
+                    {
+                        # Get the list of classes that are a subClass
+                        # of a kds:ControlledClass
+                        ?base a kds:ControlledClass .
+                        ?kdsClass rdfs:subClassOf+ ?base 
+                        filter(?kdsClass!=rdfs:Class)   
+                    } UNION {
+                        # Get the kds:ControlledClasses
+                        ?kdsClass a kds:ControlledClass
+                    }
+                }
+            }
+            ?kdsClass rdfs:subClassOf+ ?item  .
+        } UNION {
+            {
+                # This query returns a list of all classes used in the application
+                SELECT DISTINCT ?kdsClass
+                {
+                    {
+                        # Get the list of classes that are a subClass
+                        # of a kds:ControlledClass
+                        ?base a kds:ControlledClass .
+                        ?kdsClass rdfs:subClassOf+ ?base 
+                        filter(?kdsClass!=rdfs:Class)   
+                    } UNION {
+                        # Get the kds:ControlledClasses
+                        ?kdsClass a kds:ControlledClass
+                    }
+                }
+            }
+            BIND(?kdsClass as ?item) .
+        }
+        {
+            # get all of the triples for the base item
+            ?item ?p ?o.
+            BIND(?item as ?s) .
+        } UNION {
+            # get the domain tied properties
+            ?s rdfs:domain ?item .
+            ?s ?p ?o .
+        } UNION {
+            # get the 1st level blanknodes tied by kds:classUri
+            ?prop rdfs:domain ?item .
+            ?prop ?p1 ?s .
+            # selects only the base linked subjects
+            {
+              ?s kds:classUri kdr:AllClasses .  
+            } UNION {
+              ?s kds:classUri ?item .
+            }
+            ?s ?p ?o .
+            FILTER isblank(?s)
+        } UNION {
+            # get the 2nd level blanknodes tied by kds:classUri
+            ?prop rdfs:domain ?item .
+            ?prop ?p0 ?s1 .
+            # selects only the base linked subjects
+            {
+              ?s1 kds:classUri kdr:AllClasses .  
+            } UNION {
+              ?s1 kds:classUri ?item .
+            }
+            ?s1 ?p1 ?s .
+            ?s ?p ?o
+            FILTER isblank(?s)
+        } UNION {
+            # get the 3rd level blanknodes tied by kds:classUri
+            ?prop rdfs:domain ?item .
+            ?prop ?p0 ?s1 .
+            # selects only the base linked subjects
+            {
+              ?s1 kds:classUri kdr:AllClasses .  
+            } UNION {
+              ?s1 kds:classUri ?item .
+            }
+            ?s1 ?p1 ?s2 .
+            ?s2 ?p2 ?s .
+            ?s ?p ?o
+            FILTER isblank(?s)
+        }
+    }
+}
+ORDER BY ?kdsClass ?item ?s ?p ?o

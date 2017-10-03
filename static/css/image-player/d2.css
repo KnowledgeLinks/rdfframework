@@ -1,0 +1,20 @@
+
+
+
+#demo2 .galWrapper{background:#2f4159;}
+#demo2 .loginbox, #demo2 .input, #demo2 .button{border-radius:5px;}
+#demo2 .loginbox{position: absolute; top: 10px; left:50%; margin-left:-145px; width:290px; height:320px; display:block; background-color:#f7f6f2; overflow:hidden; }
+#demo2 .logo{width:82px; margin:0 auto; display:block; padding:20px 0 32px; }
+#demo2 .input, #demo2 .rememberme, #demo2 .button, #demo2 .forgotpassword{width:240px; height:40px; line-height:40px; margin:0 auto 10px; display:block; background-color:#ebe6e2; font-weight:bold; color:#bfbcb5; }
+#demo2 .input span{ float:left; padding-left:12px; font-size:16px;}
+#demo2 .input span.actName{color:#009a9a;}
+#demo2 .input span.actPass{width:66px; height:10px; float:left; margin:18px 15px; display:block; background:url(../demo-images/password.png) repeat-x 0 0;}
+#demo2 .rememberme{ height:35px; line-height:35px; background:url(../demo-images/radio.png) no-repeat left center; font-size:14px; text-indent:20px; font-weight:normal;}
+#demo2 .button{background:#009a9a; font-size:16px; text-align:center; color:#fff;}
+#demo2 .button.actSign{background-color:#24b6b5; color:#222;}
+#demo2 .forgotpassword{height:20px; line-height:20px; background-color:transparent; text-align:center; font-size:11px; font-weight:normal;}
+#demo2 .logo, #demo2 .input, #demo2 .rememberme, #demo2 .button, #demo2 .forgotpassword{margin-top:100px; opacity:0;}
+#demo2 .reset{margin-top:0; opacity:1;}
+#demo2 .welcome{margin-top:300px;}
+
+

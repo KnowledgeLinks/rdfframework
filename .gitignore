@@ -14,3 +14,4 @@ __pycache__
 application.cfg
 *DS_Store
 /rdfframework/json-definitions/*.json
+/json-definitions/*.json
