@@ -45,8 +45,8 @@ def parse_uri(value):
 
 def convert_to_ns(value):
     ''' converts a value to the prefixed rdf ns equivalent. If not found
-        returns the value as is 
-    
+        returns the value as is
+
     args:
         value: the value to convert
     '''
@@ -85,12 +85,12 @@ def convert_to_ttl(value):
     except KeyError:
         rtn_val = iri(rpyhttp(value))
 
-    return rtn_val   
+    return rtn_val
 
 
 def convert_to_uri(value):
     ''' converts a prefixed rdf ns equivalent value to its uri form.
-        If not found returns the value as is 
+        If not found returns the value as is
 
         args:
             value: the URI/IRI to convert
@@ -120,7 +120,7 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=Fa
         _return_list = []
         for item in obj:
             if isinstance(item, list):
-                _return_list.append(convert_obj_to_rdf_namespace(item, 
+                _return_list.append(convert_obj_to_rdf_namespace(item,
                                                                  ns_obj,
                                                                  key_only,
                                                                  rdflib_uri))
@@ -133,7 +133,7 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=Fa
                 if key_only:
                     if rdflib_uri:
                         #pdb.set_trace()
-                        _return_list.append(convert_to_uri(item, 
+                        _return_list.append(convert_to_uri(item,
                                                            rdflib_uri=True))
                     else:
                         _return_list.append(item)
@@ -158,7 +158,7 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=Fa
                 if key_only:
                     #pdb.set_trace()
                     if rdflib_uri:
-                        _return_obj[nkey] = convert_to_uri(item, 
+                        _return_obj[nkey] = convert_to_uri(item,
                                                            rdflib_uri=True)
                     else:
                         _return_obj[nkey] = item
@@ -166,7 +166,7 @@ def convert_obj_to_rdf_namespace(obj, ns_obj=None, key_only=False, rdflib_uri=Fa
                     _return_obj[nkey] = convert_to_ns(item)
         return _return_obj
     else:
-        if key_only: 
+        if key_only:
             if rdflib_uri:
                 #pdb.set_trace()
                 return convert_to_uri(item, rdflib_uri=True)
@@ -217,7 +217,7 @@ def ttluri(value):
     return convert_to_ttl(value)
 
 def nouri(value):
-    """ removes all of the namespace portion of the uri 
+    """ removes all of the namespace portion of the uri
     i.e. http://www.schema.org/name  becomes name
 
     Args:
@@ -239,7 +239,7 @@ def nouri(value):
 def uri_prefix(value):
     ''' Takes a uri and returns the prefix for that uri '''
 
-    return ns_obj.ns_dict[parse_uri(value)[0]] 
+    return ns_obj.ns_dict[parse_uri(value)[0]]
 
     # if not DEBUG:
     #     debug = False
@@ -265,7 +265,7 @@ def uri_prefix(value):
     # return value
 
 def uri(value):
-    """ Converts py_uri or ttl uri to a http://... full uri format 
+    """ Converts py_uri or ttl uri to a http://... full uri format
 
     Args:
         value: the string to convert
@@ -342,29 +342,34 @@ def iri(uri_string):
 class NsmSingleton(type):
     """Singleton class for the RdfNsManager that will allow for only one
     instance of the RdfNsManager to be created. In addition the app config
-    can be sent to the RdfNsManger even after instantiation so the the 
+    can be sent to the RdfNsManger even after instantiation so the the
     default RDF namespaces can be loaded. """
 
     _instances = {}
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(NsmSingleton, 
+            cls._instances[cls] = super(NsmSingleton,
                     cls).__call__(*args, **kwargs)
         else:
-            if 'config' in kwargs and hasattr(kwargs['config'], 
+            if 'config' in kwargs and hasattr(kwargs['config'],
                                               "DEFAULT_RDF_NS"):
                 cls._instances[cls].dict_load(kwargs['config'].DEFAULT_RDF_NS)
         return cls._instances[cls]
 
 class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
     """ Extends the the rdflib Namespace Manager. Provides additional methods
-    to easily generate prefixes in use thoughout the application 
+    to easily generate prefixes in use thoughout the application
 
     *** Of Note: this is a singleton class and only one instance of it will
     every exisit. """
 
     ln = "%s-RdfNsManager" % MNAME
     log_level = logging.CRITICAL
+
+    fw_namespaces = {
+        "kds": "http://knowledgelinks.io/ns/data-structures/",
+        "kdr": "http://knowledgelinks.io/ns/data-resources/"
+    }
 
     def __init__(self, *args, **kwargs):
         global NS_GRAPH
@@ -375,7 +380,8 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
         self.ns_dict = {}
         self.uri_dict = {}
         super(RdfNsManager, self).__init__(graph, *args, **kwargs)
-        
+        self.dict_load(self.fw_namespaces)
+
         # load default ns's from config info
         if config and hasattr(config, "DEFAULT_RDF_NS"):
             self.dict_load(config.DEFAULT_RDF_NS)
@@ -393,8 +399,8 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
 
 
     def bind(self, prefix, namespace, *args, **kwargs):
-        """ Extends the function to add an attribute to the class for each 
-        added namespace to allow for use of dot notation. All prefixes are 
+        """ Extends the function to add an attribute to the class for each
+        added namespace to allow for use of dot notation. All prefixes are
         converted to lowercase
 
         Args:
@@ -402,13 +408,13 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
             namespace: rdflib.namespace instance
 
         Example usage:
-            RdfNsManager.rdf.type => 
+            RdfNsManager.rdf.type =>
                     http://www.w3.org/1999/02/22-rdf-syntax-ns#type
 
         """
         # convert all prefix names to lowercase
         prefix = str(prefix).lower()
-        #! treat 'graph' as a reserved word and convert it to graph1 
+        #! treat 'graph' as a reserved word and convert it to graph1
         if prefix == "graph":
             prefix == "graph1"
         if not isinstance(namespace, Namespace):
@@ -435,13 +441,13 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
     def prefix(self, format="sparql"):
         ''' Generates a string of the rdf namespaces listed used in the
             framework
-            
+
             format: "sparql" or "turtle"
         '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         _return_str = ""
         for _prefix, _ns in self.store.namespaces():
             if format.lower() == "sparql":
@@ -452,7 +458,7 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
 
     def load(self, filepath, file_encoding=None):
         """ Reads the the beginning of a turtle file and sets the prefix's used
-        in that file and sets the prefix attribute 
+        in that file and sets the prefix attribute
 
         Args:
             filepath: the path to the turtle file
@@ -505,13 +511,13 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
         self.bind(prefix, Namespace(uri), override=False, calc=False)
 
     def del_ns(self, namespace):
-        """ will remove a namespace ref from the manager. either Arg is 
+        """ will remove a namespace ref from the manager. either Arg is
         optional.
 
         args:
             namespace: prefix, string or Namespace() to remove
         """
-        # remove the item from the namespace dict 
+        # remove the item from the namespace dict
         namespace = str(namespace)
         attr_name = None
         for ns in list(self.store._IOMemory__namespace.items()):
@@ -519,7 +525,7 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
                 del self.store._IOMemory__namespace[ns[0]]
                 # remove the attribute from the class
                 delattr(RdfNsManager, ns[0])
-        # remove the item from the namespace dict 
+        # remove the item from the namespace dict
         for ns in list(self.store._IOMemory__prefix.items()):
             if str(ns[0]) == namespace or str(ns[1]) == namespace:
                 del self.store._IOMemory__prefix[ns[0]]

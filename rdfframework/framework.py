@@ -39,7 +39,7 @@ class RdfFrameworkSingleton(type):
         if not CFG.is_initialized:
             print("The RdfConfigManager has not been initialized!")
         if cls not in cls._instances:
-            cls._instances[cls] = super(RdfFrameworkSingleton, 
+            cls._instances[cls] = super(RdfFrameworkSingleton,
                     cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
@@ -64,13 +64,13 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
     # set specific logging handler for the module allows turning on and off
     # debug as required
     log_level = logging.DEBUG
-    
+
     def __init__(self, **kwargs):
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
-        self.root_file_path = CFG.ROOT_FILE_PATH
+
+        self.root_file_path = CFG.RDF_DEFINITION_FILE_PATH
         self._set_rdf_def_filelist()
         self.form_list = {}
         # if the the definition files have been modified since the last json
@@ -109,7 +109,7 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             to the server core i.e. inital users and organizations'''
 
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)     
+        lg.setLevel(self.log_level)
         # test to see if the default data was already loaded
         sparql = '''
             SELECT ?default_loaded
@@ -148,10 +148,10 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
 
     def form_exists(self, form_path):
         '''Tests to see if the form and instance is valid'''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         if form_path in self.form_list.keys():
             return self.form_list[form_path]
         else:
@@ -159,10 +159,10 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
 
     def api_exists(self, api_path):
         '''Tests to see if the form and instance is valid'''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         if api_path in self.api_list.keys():
             return self.api_list[api_path]
         else:
@@ -170,30 +170,30 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
 
     def get_form_path(self, form_uri, instance):
         ''' reads through the list of defined APIs and returns the path '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         for form_path, val in self.form_list.items():
             if val['form_uri'] == form_uri and val['instance_uri'] == instance:
                 return form_path
 
     def get_api_path(self, api_uri, instance):
         ''' reads through the list of defined forms and returns the path '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         for api_path, val in self.api_list.items():
             if val['api_uri'] == api_uri and val['instance_uri'] == instance:
                 return api_path
 
     def get_form_name(self, form_uri):
         '''returns the form name for a form '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         if form_uri:
             return pyuri(form_uri)
         else:
@@ -201,10 +201,10 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
 
     def get_api_name(self, api_uri):
         '''returns the API name for an API '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         if api_uri:
             return pyuri(api_uri)
         else:
@@ -313,14 +313,17 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
 
         print("\tLoading application defaults")
         if reset:
+            conn = CFG.def_tstore
             sparql = render_without_request("jsonApplicationDefaults.rq",
                                             None,
-                                            graph=iri(self.def_graph))
-            data = run_sparql_query(sparql, namespace=self.def_ns)
+                                            graph=conn.graph)
+            data = conn.query(sparql)
             _string_defs = data[0]['app']['value']
             print("end query")
+            if not os.path.exists(CFG.CACHE_DATA_PATH):
+                os.makedirs(CFG.CACHE_DATA_PATH)
             with open(
-                os.path.join(CFG.JSON_LOCATION, "app_query.json"),
+                os.path.join(CFG.CACHE_DATA_PATH, "app_query.json"),
                 "w") as file_obj:
                 file_obj.write( _string_defs )
             print("end write")
@@ -328,7 +331,7 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             print("end load")
         else:
             with open(
-                os.path.join(CFG.JSON_LOCATION, "app_query.json")) as file_obj:
+                os.path.join(CFG.CACHE_DATA_PATH, "app_query.json")) as file_obj:
                 _json_defs = json.loads(file_obj.read())
         return _json_defs
 
@@ -352,7 +355,7 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
                 class_uri = iri(app_class['kdsClass']['value'])
                 data = get_class_def_item_data(class_uri)
                 #pdb.set_trace()
-                class_dict[class_uri] = convert_ispo_to_dict(data, 
+                class_dict[class_uri] = convert_ispo_to_dict(data,
                         base=class_uri)
             class_dict = convert_obj_to_rdf_namespace(class_dict)
             with open(
@@ -378,7 +381,7 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             linker_data = run_sparql_query(sparql, namespace=self.def_ns)
             linker_data = convert_spo_to_dict(linker_data,
                     method=self.def_config.get('triplestore'))
-            linker_dict = convert_obj_to_rdf_namespace(linker_data, 
+            linker_dict = convert_obj_to_rdf_namespace(linker_data,
                                                        key_only=True,
                                                        rdflib_uri=True)
             with open(
@@ -469,34 +472,15 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
 
     def _load_rdf_data(self, reset=False):
         ''' loads the RDF/turtle application data to the triplestore '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
-        
-        self.base_url = CFG.ORGANIZATION.get('url',"")
-        self.def_config = CFG.RDF_DEFINITIONS
-        self.triplestore_url = CFG.TRIPLESTORE.url
-        self.def_ns = CFG.RDF_DEFINITIONS.get('namespace',
-                CFG.TRIPLESTORE.get("default_ns", "kb"))
-        create_tstore_namespace(self.def_ns)
-        create_tstore_namespace(CFG.TRIPLESTORE.default_ns)
-        # Strip off trailing forward slash for TTL template
-        if self.base_url.endswith("/"):
-            self.base_url = self.base_url[:-1]
-        # if the extensions exist in the triplestore drop the graph
-        self.def_graph = clean_iri(self.def_config.get('graph',
-                CFG.TRIPLESTORE.get('default_graph', "")))
+
+        conn = CFG.def_tstore
         if reset:
-            if self.def_config['method'] == "graph":
-                sparql = "DROP GRAPH %s;" % self.def_config.graph
-                graph = clean_iri(self.def_config.graph)
-            elif self.def_config.method == "namespace":
-                sparql = "DROP ALL;"
-                
-            drop_extensions = run_sparql_query(sparql, 
-                                               namespace=self.def_ns,
-                                               mode="update")
+            sparql = "DROP ALL;"
+
+            drop_extensions = conn.update_query(sparql)
 
             # render the extensions with the base URL
             # must use a ***NON FLASK*** routing since flask is not completely
@@ -506,22 +490,14 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             for path, files in self.def_files.items():
                 for template in files:
                     rdf_data.append(
-                        render_without_request(
-                            template,
-                            path,
-                            base_url=self.base_url))
+                        render_without_request(template, path))
                     rdf_resource_templates.append({template:path})
             # load the extensions in the triplestore
-            context_uri = "http://knowledgelinks.io/ns/application-framework/"
             for i, data in enumerate(rdf_data):
                 lg.info("uploading file: %s",
-                        list(rdf_resource_templates[i])[0]) 
+                        list(rdf_resource_templates[i])[0])
                 data_type = list(rdf_resource_templates[i])[0].split('.')[-1]
-                result = run_sparql_query(data, 
-                                          mode="load",
-                                          data_type=data_type,
-                                          graph=self.def_graph,
-                                          namespace=self.def_ns)
+                result = conn.load_data(data, datatype=data_type)
                 if result.status_code > 399:
                     raise ValueError("Cannot load extensions {} into {}".format(
                         rdf_resource_templates[i], self.triplestore_url))
@@ -589,12 +565,12 @@ def verify_server_core(timeout=120, start_delay=90):
                 repo_code = 400
                 print ("\t", CFG.REPOSITORY_URL, " - DOWN")
             try:
-                triple = requests.get(CFG.TRIPLESTORE_URL)
+                triple = requests.get(CFG.DATA_TRIPLESTORE.url)
                 triple_code = triple.status_code
-                print ("\t", CFG.TRIPLESTORE_URL, " - ", triple_code)
+                print ("\t", CFG.DATA_TRIPLESTORE.url, " - ", triple_code)
             except:
                 triple_code = 400
-                print ("\t", CFG.TRIPLESTORE_URL, " - down")
+                print ("\t", CFG.DATA_TRIPLESTORE.url, " - down")
             if repo_code == 200 and triple_code == 200:
                 server_down = False
                 return_val = True

@@ -45,7 +45,7 @@ def pyfile_path(path):
         parts =path.split("\\")
         join_term = "\\"
     parts.reverse()
-    base = parts[:parts.index('rdfframework') + 1]
+    base = parts[:parts.index('rdfframework')]
     base.reverse()
     return join_term.join(base)
 

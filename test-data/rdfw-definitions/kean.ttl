@@ -13,7 +13,7 @@
 @prefix dcterm: <http://purl.org/dc/terms/> .
 @prefix mads: <http://www.loc.gov/mads/rdf/v1#> .
 
-# Adding an overaching class to Bibframe to allow for class wide 
+# Adding an overaching class to Bibframe to allow for class wide
 # property inheritance
 bf:Resource a owl:Class;
 	rdfs:label "Resource"^^xsd:string ;
@@ -54,9 +54,18 @@ bf:subject rdfs:domain bf:Work, bf:Instance, bf:Item ;
 
 bf:tableOfContents rdfs:domain bf:Work, bf:Instance .
 
-bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type, 
+bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type,
 	rdfs:label .
-	
+
+rdf:type kds:initProcessor [
+		kds:classUri kdr:AllClasses ;
+		a kdr:AddClassProcessor
+	] ;
+	kds:esProcessor	[
+		kds:classUri kdr:AllClasses ;
+		a kdr:AddClassHeirarchyProcessor
+	] .
+
 # -----------------bf:Identifier -----------------------------------------------
 # bf:Identifier a kds:ControlledClass ;
 #     kds:storageType "blanknode" ;
@@ -70,7 +79,7 @@ bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type,
 # 		# kds:esIndexType es:Standard;
 # 		# kds:esIndexType es:Raw;
 # 		# kds:esIndexType es:Lower
-# 		kds:esIndexType es:NotAnalyzed 
+# 		kds:esIndexType es:NotAnalyzed
 # 	] .
 
 # rdf:type rdfs:domain bf:Identifier ;
@@ -81,13 +90,13 @@ bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type,
 # 		# kds:esIndexType es:Standard;
 # 		# kds:esIndexType es:Raw;
 # 		# kds:esIndexType es:Lower
-# 		kds:esIndexType es:NotAnalyzed 
+# 		kds:esIndexType es:NotAnalyzed
 # 	] .
 
 # ----------------- bf:Topic ---------------------------------------------------
 bf:Topic a kds:ControlledClass ;
 	kds:storageType "object" ;
-	kds:esNestedProps skos:broader, skos:altLabel, skos:prefLabel, 
+	kds:esNestedProps skos:broader, skos:altLabel, skos:prefLabel,
 					  bf:identifiedBy, rdfs:label, rdf:type;
 	kds:esValue skos:prefLabel ;
 	kds:esAltValue rdfs:label ;
@@ -100,7 +109,7 @@ skos:broader rdfs:domain bf:Topic ;
 		kds:classUri bf:Topic ;
 		kds:rangeUri bf:Topic ;
 		kds:esIndexType es:Nested
-	] .	
+	] .
 
 skos:inScheme rdfs:domain bf:Topic ;
 	kds:rangeDef [
@@ -139,7 +148,7 @@ skos:notation rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:string 
+		kds:rangeUri xsd:string
 	] .
 
 
@@ -196,7 +205,7 @@ skos:example rdfs:domain bf:Topic ;
 	kds:propertyProcessing [
 		kds:classUri bf:Topic;
 		a kdr:EmailVerificationProcessor
-	];                   
+	];
 	kds:propertyValidation [
 		kds:classUri kdr:AllClasses;
 		a kdr:EmailValidator
@@ -229,210 +238,210 @@ skos:example rdfs:domain bf:Topic ;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:date
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:dimensions
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:identifiedBy
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:issuance
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:hasItem
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:mainTitle
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:place
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:provisionActivity
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:provisionActivityStatement
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:responsibilityStatement
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:role
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:shelfMark
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:source
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:title
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:note
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:subject
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:editionStatement
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:noteType
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:subtitle
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:summary
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:carrier
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:heldBy
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:soundCharacteristic
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:soundContent
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:tabelOfContents
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # bf:hasInstance
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # rdf:type
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # rdf:value
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 # rdfs:label
 # 	kds:rangeDef [
 # 		kds:classUri bf:Topic;
 # 		kds:rangeUri xsd:string  ;
 # 		kds:esIndexType es:Standard;
 # 	] ;
-	
+
 
 
 # bf:Agent
@@ -473,14 +482,14 @@ skos:example rdfs:domain bf:Topic ;
 # bf:Manuscript
 # bf:Archival
 
-# bf:Agent	
+# bf:Agent
 # 	rdf:type
 # 	rdfs:label
-# bf:Contribution	
+# bf:Contribution
 # 	bf:agent
 # 	bf:role
 # 	rdf:type
-# bf:Instance	
+# bf:Instance
 # 	bf:carrier
 # 	bf:soundCharacteristic
 # 	bf:soundContent
@@ -497,7 +506,7 @@ skos:example rdfs:domain bf:Topic ;
 # 	rdfs:label
 # 	bf:editionStatement
 # 	bf:tabelOfContents
-# bf:Item	
+# bf:Item
 # 	bf:shelfMark
 # 	rdf:type
 # 	bf:heldBy
@@ -505,13 +514,13 @@ skos:example rdfs:domain bf:Topic ;
 # 	bf:source
 # 	rdf:type
 # 	rdf:value
-# bf:ProvisionActivity	
-# 	bf:date	
-# 	bf:place	
+# bf:ProvisionActivity
+# 	bf:date
+# 	bf:place
 # 	rdf:type
-# bf:Publication	
-# 	bf:date	
-# 	bf:place	
+# bf:Publication
+# 	bf:date
+# 	bf:place
 # 	rdf:type
 # bf:Role
 # 	rdf:type
@@ -573,7 +582,7 @@ skos:example rdfs:domain bf:Topic ;
 # 	bf:hasInstance
 # 	rdf:type
 # 	bf:subject
-	
+
 # bf:MovingImage	bf:contribution
 # bf:MovingImage	bf:subject
 # bf:MovingImage	bf:summary
@@ -594,7 +603,7 @@ skos:example rdfs:domain bf:Topic ;
 # 	bf:summary
 # bf:PlaybackChannels	rdf:type
 # bf:PlaybackChannels	rdfs:label
-# bf:Audio	
+# bf:Audio
 # bf:MixedMaterial	bf:subject
 # bf:MixedMaterial	bf:summary
 # bf:Collection	bf:dimensions

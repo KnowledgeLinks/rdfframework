@@ -85,10 +85,10 @@ class RdfDataset(dict):
                 return
             obj = self.get(obj,obj)
         try:
-            self[sub].add_property(pred, obj, obj_method)
+            self[sub].add_property(pred, obj)
         except KeyError:
             self[sub] = RdfClassBase(sub, **kwargs)
-            self[sub].add_property(pred, obj, obj_method)
+            self[sub].add_property(pred, obj)
 
     def format(self, **kwargs):
 

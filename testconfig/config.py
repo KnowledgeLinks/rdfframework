@@ -20,7 +20,7 @@ RDF_DEFINITION_FILE_PATH = "/home/stabiledev/git/rdfframework"
 #! Example: -v {python_dir}:{docker_container_dir}
 #!          -v /home/username/local_data:/local_data
 LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
-
+CACHE_DATA_PATH = os.path.join(os.path.expanduser("~"), 'cache_data')
 # URL used in generating IRIs
 BASE_URL = "http://bibcat.org/"
 
@@ -32,9 +32,10 @@ DATA_TRIPLESTORE = {
     "vendor": "blazegraph",
     "url": "http://localhost:9999/blazegraph",
     # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
-    # This is how the triplestore see the file path.
+    # This is how the triplestore sees the file path.
     "container_dir": "local_data",
-    "namespace": "kb"
+    "namespace": "kb",
+    "graph": "bf:nullGraph"
 }
 
 # Declaration for the triplestore storing the rdf vocab and rdfframework files

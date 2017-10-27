@@ -34,17 +34,21 @@ class BaseRdfDataType(object):
             if self.type == 'literal':
                 if hasattr(self, "datatype"):
                     if hasattr(self, "lang") and self.lang:
-                        rtn_val += "@%s" % self.lang
+                        rtn_val = '"%s"@%s' % (json.dumps(rtn_val), self.lang)
                     else:
                         dt = self.datatype
                         if dt_format == "uri":
                             dt = NSM.uri(self.datatype)
                         if method == "sparql":
-                            rtn_val += "^^%s" % dt.sparql
+                            if self.datatype == "xsd:string":
+                                rtn_val = json.dumps(rtn_val)
+                            else:
+                                rtn_val = '"%s"' % rtn_val
+                            rtn_val = '%s^^%s' % (rtn_val, dt.sparql)
                 elif method == "json":
                     pass
                 else:
-                    rtn_val += "^^xsd:string"
+                    rtn_val = '"%s"^^xsd:string' % rtn_val
             elif self.type == 'uri':
                 if method == 'json':
                     rtn_val = NSM.iri(NSM.uri(self.value))
@@ -110,7 +114,7 @@ class Uri(BaseRdfDataType, str):
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and args[0].class_type == "Uri":
             return args[0]
-        else: 
+        else:
             vals = list(args)
             vals[0] = NSM.pyuri(vals[0])
             vals = tuple(vals)
@@ -138,13 +142,13 @@ class Uri(BaseRdfDataType, str):
 class BlankNode(BaseRdfDataType, str):
     """ blankNode URI/IRI class for working with RDF data """
     class_type = "BlankNode"
-    type = "bnode"    
+    type = "bnode"
     es_type = "text"
-    
+
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and args[0].class_type == "bnode":
             return args[0]
-        else: 
+        else:
             vals = list(args)
             if is_not_null(vals[0]):
                 if not vals[0].startswith("_:"):
@@ -172,7 +176,7 @@ class XsdString(str, BaseRdfDataType):
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and args[0].class_type == "XsdString":
             return args[0]
-        else: 
+        else:
             if "lang" in kwargs.keys():
                 lang = kwargs.pop("lang")
             else:
@@ -192,7 +196,7 @@ class XsdString(str, BaseRdfDataType):
             rtn_lang = None
             #pdb.set_trace()
             if other.datatype == "xsd:string":
-                rtn_val = self.value + other.value 
+                rtn_val = self.value + other.value
                 if other.lang and self.lang and other.lang != self.lang:
                     rtn_lang = None
                 elif other.lang:
@@ -204,7 +208,7 @@ class XsdString(str, BaseRdfDataType):
         else:
             rtn_val = self.value + str(other)
             rtn_lang = self.lang
-        return XsdString(rtn_val, lang=rtn_lang)            
+        return XsdString(rtn_val, lang=rtn_lang)
 
 class XsdBoolean(BaseRdfDataType):
     """ Boolean instance of rdf xsd:boolean type value"""
@@ -342,7 +346,7 @@ class XsdInteger(int, BaseRdfDataType):
         if hasattr(args[0], "class_type") and \
                 args[0].class_type == "XsdInteger":
             return args[0]
-        else: 
+        else:
             newobj = int.__new__(cls, *args, **kwargs)
         return newobj
 
@@ -353,17 +357,34 @@ class XsdInteger(int, BaseRdfDataType):
         return self._format(method="sparql")
 
     def _internal_add(self, other):
-        """ Used for specifing addition methods for 
+        """ Used for specifing addition methods for
            __add__, __iadd__, __radd__
         """
         if hasattr(other, "datatype"):
-            if other.datatype == "xsd:integer":
-                rtn_val = self.value + other.value 
-            else:
+            if other.datatype == self.datatype:
                 rtn_val = self.value + other.value
+            else:
+                rtn_val = self.value + int(other.value)
         else:
             rtn_val = self.value + other
-        return XsdInteger(rtn_val) 
+        return XsdInteger(rtn_val)
+
+    def _internal_sub(self, other, method=None):
+        """ Used for specifing addition methods for
+           __add__, __iadd__, __radd__
+        """
+        if hasattr(other, "datatype"):
+            if other.datatype == self.datatype:
+                oval = other.value
+            else:
+                oval = int(other.value)
+        else:
+            oval = int(other)
+        if method == 'rsub':
+            rtn_val = oval - self.value
+        else:
+            rtn_val = self.value - oval
+        return XsdInteger(rtn_val)
 
     def __add__(self, other):
         return self._internal_add(other)
@@ -374,6 +395,15 @@ class XsdInteger(int, BaseRdfDataType):
     def __radd__(self, other):
         return self._internal_add(other)
 
+    def __sub__(self, other):
+        return self._internal_sub(other)
+
+    def __isub__(self, other):
+        return self._internal_sub(other)
+
+    def __rsub__(self, other):
+        return self._internal_sub(other, 'rsub')
+
 class XsdDecimal(Decimal, BaseRdfDataType):
     """ Integer instance of rdf xsd:string type value"""
 
@@ -381,7 +411,7 @@ class XsdDecimal(Decimal, BaseRdfDataType):
     class_type = "XsdDecimal"
     py_type = int
     es_type = "long"
-    
+
     def __new__(cls, *args, **kwargs):
         if hasattr(args[0], "class_type") and \
                 args[0].class_type == "XsdDecimal":
@@ -400,7 +430,7 @@ class XsdDecimal(Decimal, BaseRdfDataType):
         return self._format(method="sparql")
 
     def _internal_add(self, other):
-        """ Used for specifing addition methods for 
+        """ Used for specifing addition methods for
            __add__, __iadd__, __radd__
         """
         if hasattr(other, "datatype"):
@@ -413,7 +443,7 @@ class XsdDecimal(Decimal, BaseRdfDataType):
         return XsdDecimal(str(float(rtn_val)))
 
     def _internal_sub(self, other):
-        """ Used for specifing subtraction methods for 
+        """ Used for specifing subtraction methods for
            __sub__, __isub__, __rsub__
         """
         if hasattr(other, "datatype"):
@@ -423,7 +453,7 @@ class XsdDecimal(Decimal, BaseRdfDataType):
                 rtn_val = self.value - Decimal(str(other.value))
         else:
             rtn_val = self.value - Decimal(str(other))
-        return XsdDecimal(str(float(rtn_val))) 
+        return XsdDecimal(str(float(rtn_val)))
 
     def __add__(self, other):
         return self._internal_add(other)
@@ -551,7 +581,7 @@ for xsd_class in xsd_class_list:
             DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
         elif hasattr(xsd_class, 'function') and \
                 hasattr(xsd_class.function, attr):
-            DT_LOOKUP[getattr(xsd_class.function, attr)] = xsd_class    
+            DT_LOOKUP[getattr(xsd_class.function, attr)] = xsd_class
     if hasattr(xsd_class, "datatype"):
         DT_LOOKUP[NSM.iri(NSM.uri(xsd_class.datatype))] = xsd_class
         DT_LOOKUP[NSM.clean_iri(NSM.uri(xsd_class.datatype))] = xsd_class
@@ -577,7 +607,7 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
         if value.get('type') == "literal":
             if not value.get("datatype"):
                 return XsdString(value['value'])
-            else:  
+            else:
                 try:
                     if value.get("lang"):
                         # The lang keyword only applies to XsdString types
@@ -589,7 +619,7 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
                     rtn_val = BaseRdfDataType(value['value'])
                     rtn_val.datatype = Uri(value['datatype'])
                     return rtn_val
-        else:    
+        else:
             return DT_LOOKUP[value['type']](value['value'])
 
 

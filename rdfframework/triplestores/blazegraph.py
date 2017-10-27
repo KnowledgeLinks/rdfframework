@@ -6,6 +6,7 @@ import logging
 import json
 import requests
 
+from bs4 import BeautifulSoup
 from rdfframework.utilities import RdfConfigManager, list_files, pick, \
                                    pyfile_path, RdfNsManager
 
@@ -45,6 +46,7 @@ class Blazegraph(object):
     # file externsions that contain rdf data
     default_exts = ['xml', 'rdf', 'ttl', 'gz', 'nt']
     default_ns = 'kb'
+    default_graph = "bd:nullGraph"
     qry_results_formats = ['json',
                            'xml',
                            'application/sparql-results+json',
@@ -53,7 +55,8 @@ class Blazegraph(object):
                  url=None,
                  namespace=None,
                  local_directory=None,
-                 container_dir=None):
+                 container_dir=None,
+                 graph=None):
 
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
         self.url = pick(url,
@@ -66,6 +69,10 @@ class Blazegraph(object):
         self.container_dir = pick(container_dir,
                                   CFG.DATA_TRIPLESTORE.container_dir,
                                   CFG.DEFINITION_TRIPLESTORE.container_dir)
+        self.graph = pick(graph,
+                          CFG.DATA_TRIPLESTORE.graph,
+                          CFG.DEFINITION_TRIPLESTORE.graph,
+                          self.default_graph)
         if self.url is None:
             msg = ["A Blazegraph url must be defined. Either pass 'url'",
                    "or initialize the 'RdfConfigManager'"]
@@ -88,6 +95,7 @@ class Blazegraph(object):
             sparql = "%s\n%s" % (NSM.prefix(), sparql)
         if mode == "get":
             data = {"query": sparql, "format": rtn_format}
+
         elif mode == "update":
             data = {"update": sparql}
         else:
@@ -97,6 +105,8 @@ class Blazegraph(object):
             try:
                 return result.json().get('results', {}).get('bindings', [])
             except json.decoder.JSONDecodeError:
+                if mode == 'update':
+                    return BeautifulSoup(result.text, 'lxml').get_text()
                 return result.text
         else:
             raise SyntaxError(result.text)
@@ -109,6 +119,39 @@ class Blazegraph(object):
                 namespace: the namespace to run the sparql query against
         """
         return self.query(sparql, "update", namespace)
+
+    def load_data(self,
+                  data,
+                  datatype="ttl",
+                  namespace=None,
+                  graph=None):
+        """ loads data via file stream from python to triplestore
+
+        Args:
+          data: The data to load
+          datatype(['ttl', 'xml', 'rdf']): the type of data to load
+          namespace: the namespace to use
+          graph: the graph to load the data to.
+        """
+        datatype_map = {
+            'ttl': 'text/turtle',
+            'xml': 'application/rdf+xml',
+            'rdf': 'application/rdf+xml'
+        }
+        try:
+            content_type = datatype_map[datatype]
+        except KeyError:
+            raise NotImplementedError("'%s' is not an implemented data fromat",
+                                      datatype)
+        context_uri = pick(graph, self.graph)
+        result = requests.post(url=self._make_url(namespace),
+                               headers={"Content-Type": content_type},
+                               params={"context-uri": context_uri},
+                               data=data.encode('utf-8'))
+        if result.status_code == 200:
+            return result
+        else:
+            raise SyntaxError(result.text)
 
     def load_local_directory(self, **kwargs):
         """ Uploads data to the Blazegraph Triplestore that is stored in files

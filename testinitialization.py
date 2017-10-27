@@ -40,7 +40,6 @@ except:
     MNAME = "testing"
 
 CFG = RdfConfigManager(config=config)
-pdb.set_trace()
 NSM = RdfNsManager(config=CFG)
 rdf_defs = CFG.RDF_DEFINITIONS
 pyrdf = rdt.pyrdf
