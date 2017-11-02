@@ -58,12 +58,18 @@ bf:Role kds:esNestedProps mads:authoritativeLabel, mads:code, rdf:type,
 	rdfs:label .
 
 rdf:type kds:initProcessor [
-		kds:classUri kdr:AllClasses ;
+		kds:appliesToClass kdr:AllClasses ;
 		a kdr:AddClassProcessor
 	] ;
 	kds:esProcessor	[
-		kds:classUri kdr:AllClasses ;
+		kds:appliesToClass kdr:AllClasses ;
 		a kdr:AddClassHeirarchyProcessor
+	] ;
+	kds:rangeDef [
+		kds:appliesToClass kdr:AllClasses ;
+		kds:appliesToRange kdr:AllClasses ;
+		kds:esIndexType es:NotAnalyzed ;
+		kds:esValue "uri"
 	] .
 
 # -----------------bf:Identifier -----------------------------------------------
@@ -74,8 +80,8 @@ rdf:type kds:initProcessor [
 # rdf:value rdfs:domain bf:Identifier ;
 # 	rdfs:range xsd:string ;
 # 	kds:rangeDef [
-# 		kds:classUri bf:Identifier;
-# 		kds:rangeUri xsd:string  ;
+# 		kds:appliesToClass bf:Identifier;
+# 		kds:appliesToRange xsd:string  ;
 # 		# kds:esIndexType es:Standard;
 # 		# kds:esIndexType es:Raw;
 # 		# kds:esIndexType es:Lower
@@ -85,8 +91,8 @@ rdf:type kds:initProcessor [
 # rdf:type rdfs:domain bf:Identifier ;
 # 	rdfs:range xsd:string ;
 # 	kds:rangeDef [
-# 		kds:classUri bf:Identifier;
-# 		kds:rangeUri xsd:string  ;
+# 		kds:appliesToClass bf:Identifier;
+# 		kds:appliesToRange xsd:string  ;
 # 		# kds:esIndexType es:Standard;
 # 		# kds:esIndexType es:Raw;
 # 		# kds:esIndexType es:Lower
@@ -106,15 +112,15 @@ bf:Topic a kds:ControlledClass ;
 skos:broader rdfs:domain bf:Topic ;
 	rdfs:range bf:Topic ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri bf:Topic ;
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange bf:Topic ;
 		kds:esIndexType es:Nested
 	] .
 
 skos:inScheme rdfs:domain bf:Topic ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri skos:ConceptScheme  ;
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange skos:ConceptScheme  ;
 		kds:esIndexType es:NotAnalyzed ;
 		kds:esValue "uri"
 	] .
@@ -122,23 +128,23 @@ skos:inScheme rdfs:domain bf:Topic ;
 skos:member rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:string  ;
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string  ;
 		kds:esIndexType es:NotAnalyzed
 	] .
 
 dcterm:created rdfs:domain bf:Topic ;
 	rdfs:range xsd:datetime ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:datetime
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:datetime
 	] .
 
 skos:altLabel rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic;
-		kds:rangeUri xsd:string  ;
+		kds:appliesToClass bf:Topic;
+		kds:appliesToRange xsd:string  ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
@@ -147,16 +153,16 @@ skos:altLabel rdfs:domain bf:Topic ;
 skos:notation rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:string
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string
 	] .
 
 
 skos:prefLabel rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic;
-		kds:rangeUri xsd:string  ;
+		kds:appliesToClass bf:Topic;
+		kds:appliesToRange xsd:string  ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
@@ -165,58 +171,58 @@ skos:prefLabel rdfs:domain bf:Topic ;
 dcterm:modified rdfs:domain bf:Topic ;
 	rdfs:range xsd:datetime ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:datetime
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:datetime
 	] .
 
 rdf:type rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:string  ;
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string  ;
 		kds:esIndexType es:NotAnalyzed;
 	] .
 
 bf:identifiedBy rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri bf:Identifier ;
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange bf:Identifier ;
 		kds:esIndexType es:Nested
 	] .
 
 skos:note rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic ;
-		kds:rangeUri xsd:string  ;
+		kds:appliesToClass bf:Topic ;
+		kds:appliesToRange xsd:string  ;
 		kds:esIndexType es:Standard;
 	] .
 
 skos:example rdfs:domain bf:Topic ;
 	rdfs:range xsd:string ;
 	kds:rangeDef [
-		kds:classUri bf:Topic;
-		kds:rangeUri xsd:string  ;
+		kds:appliesToClass bf:Topic;
+		kds:appliesToRange xsd:string  ;
 		kds:esIndexType es:Standard;
 	] ;
 	rdfs:comment "email address.";
 	kds:requiredByDomain skos:example;
 	kds:propertyProcessing [
-		kds:classUri bf:Topic;
+		kds:appliesToClass bf:Topic;
 		a kdr:EmailVerificationProcessor
 	];
 	kds:propertyValidation [
-		kds:classUri kdr:AllClasses;
+		kds:appliesToClass kdr:AllClasses;
 		a kdr:EmailValidator
 	];
 	kds:propertySecurity [
-		kds:classUri kdr:AllClasses;
+		kds:appliesToClass kdr:AllClasses;
 		acl:agent kdr:self-sg;
 		acl:mode acl:Read, acl:Write
 	] ;
 	kds:formDefault [
-		kds:classUri kdr:AllClasses;
+		kds:appliesToClass kdr:AllClasses;
 		kds:formFieldName "emailaddr";
 		kds:formLabelName "Email Address";
 		kds:formFieldHelp "Enter a valid email address.";
@@ -225,455 +231,3 @@ skos:example rdfs:domain bf:Topic ;
 		]
 	] .
 
-# bf:agent
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:contribution
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:date
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:dimensions
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:identifiedBy
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:issuance
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:hasItem
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:mainTitle
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:place
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:provisionActivity
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:provisionActivityStatement
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:responsibilityStatement
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:role
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:shelfMark
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:source
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:title
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:note
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:subject
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:editionStatement
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:noteType
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:subtitle
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:summary
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:carrier
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:heldBy
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:soundCharacteristic
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:soundContent
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:tabelOfContents
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# bf:hasInstance
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# rdf:type
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# rdf:value
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-# rdfs:label
-# 	kds:rangeDef [
-# 		kds:classUri bf:Topic;
-# 		kds:rangeUri xsd:string  ;
-# 		kds:esIndexType es:Standard;
-# 	] ;
-
-
-
-# bf:Agent
-# bf:Contribution
-# bf:Instance
-# bf:Item
-# bf:Local
-# bf:ProvisionActivity
-# bf:Publication
-# bf:Role
-# bf:ShelfMarkLLC
-# bf:Source
-# bf:Text
-# bf:Title
-# bf:Work
-# bf:Isbn
-# bf:Note
-# bf:Topic
-# bf:Summary
-# bf:Electronic
-# bf:PlayingSpeed
-# bf:RecordingMedium
-# bf:SoundContent
-# bf:TableOfContents
-# bf:Cartography
-# bf:MixedMaterial
-# bf:MovingImage
-# bf:NotatedMusic
-# bf:PlaybackChannels
-# bf:Audio
-# bf:Collection
-# bf:PlaybackCharacteristic
-# bf:TapeConfig
-# bf:Object
-# bf:Print
-# bf:StillImage
-# bf:GrooveCharacteristic
-# bf:Manuscript
-# bf:Archival
-
-# bf:Agent
-# 	rdf:type
-# 	rdfs:label
-# bf:Contribution
-# 	bf:agent
-# 	bf:role
-# 	rdf:type
-# bf:Instance
-# 	bf:carrier
-# 	bf:soundCharacteristic
-# 	bf:soundContent
-# 	bf:title
-# 	bf:note
-# 	rdf:type
-# 	bf:hasItem
-# 	bf:dimensions
-# 	bf:identifiedBy
-# 	bf:issuance
-# 	bf:provisionActivity
-# 	bf:provisionActivityStatement
-# 	bf:responsibilityStatement
-# 	rdfs:label
-# 	bf:editionStatement
-# 	bf:tabelOfContents
-# bf:Item
-# 	bf:shelfMark
-# 	rdf:type
-# 	bf:heldBy
-# bf:Local
-# 	bf:source
-# 	rdf:type
-# 	rdf:value
-# bf:ProvisionActivity
-# 	bf:date
-# 	bf:place
-# 	rdf:type
-# bf:Publication
-# 	bf:date
-# 	bf:place
-# 	rdf:type
-# bf:Role
-# 	rdf:type
-# 	rdfs:label
-# bf:ShelfMarkLLC	rdf:type
-# 	rdfs:label
-# 	bf:source
-# bf:Source	rdf:type
-# 	rdfs:label
-# bf:Text	bf:hasInstance
-# 	rdf:type
-# 	bf:contribution
-# 	bf:subject
-# 	bf:summary
-# bf:Title	bf:mainTitle
-# 	rdf:type
-# 	rdfs:label
-# 	bf:subtitle
-# bf:Work	bf:contribution
-# 	bf:hasInstance
-# 	rdf:type
-# 	bf:subject
-# 	bf:summary
-# bf:Isbn	rdf:type
-# 	rdf:value
-# bf:Note	rdf:type
-# 	rdfs:label
-# 	bf:noteType
-# bf:Topic	rdf:type
-# 	rdfs:label
-# bf:Summary	rdf:type
-# 	rdfs:label
-# 	bf:source
-# bf:Electronic	bf:identifiedBy
-# 	bf:issuance
-# 	bf:provisionActivity
-# 	bf:provisionActivityStatement
-# 	bf:responsibilityStatement
-# 	bf:title
-# 	bf:note
-# 	bf:editionStatement
-# 	bf:carrier
-# 	bf:tabelOfContents
-# 	bf:hasItem
-# 	rdf:type
-# 	rdfs:label
-# 	bf:dimensions
-# 	bf:soundContent
-# 	bf:soundCharacteristic
-# bf:PlayingSpeed	rdf:type
-# 	rdfs:label
-# bf:RecordingMedium	rdf:type
-# 	rdfs:label
-# bf:SoundContent	rdf:type
-# 	rdfs:label
-# bf:TableOfContents	rdf:type
-# 	rdfs:label
-# bf:Cartography	bf:contribution
-# 	bf:hasInstance
-# 	rdf:type
-# 	bf:subject
-
-# bf:MovingImage	bf:contribution
-# bf:MovingImage	bf:subject
-# bf:MovingImage	bf:summary
-# bf:MovingImage	bf:hasInstance
-# bf:MovingImage	rdf:type
-# bf:NotatedMusic	bf:contribution
-# bf:NotatedMusic	bf:subject
-# bf:NotatedMusic	bf:hasInstance
-# bf:NotatedMusic	rdf:type
-# bf:NotatedMusic	bf:summary
-# bf:MixedMaterial	bf:hasInstance
-# bf:MixedMaterial	rdf:type
-# bf:MixedMaterial	bf:contribution
-# bf:Audio	bf:contribution
-# bf:Audio	bf:subject
-# bf:Audio	bf:hasInstance
-# bf:Audio	rdf:type
-# 	bf:summary
-# bf:PlaybackChannels	rdf:type
-# bf:PlaybackChannels	rdfs:label
-# bf:Audio
-# bf:MixedMaterial	bf:subject
-# bf:MixedMaterial	bf:summary
-# bf:Collection	bf:dimensions
-# bf:Collection	bf:identifiedBy
-# bf:Collection	bf:provisionActivity
-# bf:Collection	bf:provisionActivityStatement
-# bf:Collection	bf:responsibilityStatement
-# bf:Collection	bf:title
-# bf:Collection	bf:note
-# bf:Collection	bf:carrier
-# bf:Collection	bf:hasItem
-# bf:Collection	rdf:type
-# bf:Collection	rdfs:label
-# bf:Collection	bf:editionStatement
-# bf:Collection	bf:tabelOfContents
-# bf:Object	bf:contribution
-# bf:Object	bf:subject
-# bf:Object	bf:summary
-# bf:Object	bf:hasInstance
-# bf:Object	rdf:type
-# bf:Print	bf:dimensions
-# bf:Print	bf:identifiedBy
-# bf:Print	bf:issuance
-# bf:Print	bf:provisionActivity
-# bf:Print	bf:provisionActivityStatement
-# bf:Print	bf:responsibilityStatement
-# bf:Print	bf:title
-# bf:Print	bf:note
-# bf:Print	rdf:type
-# bf:Print	rdfs:label
-# bf:Print	bf:editionStatement
-# bf:Print	bf:tabelOfContents
-# bf:Print	bf:hasItem
-# bf:Print	bf:carrier
-# bf:TapeConfig	rdf:type
-# bf:TapeConfig	rdfs:label
-# bf:PlaybackCharacteristic	rdf:type
-# bf:PlaybackCharacteristic	rdfs:label
-# bf:StillImage	bf:contribution
-# bf:StillImage	bf:subject
-# bf:StillImage	bf:summary
-# bf:StillImage	bf:hasInstance
-# bf:StillImage	rdf:type
-# bf:Manuscript	bf:identifiedBy
-# bf:Manuscript	bf:issuance
-# bf:Manuscript	bf:provisionActivity
-# bf:Manuscript	bf:provisionActivityStatement
-# bf:Manuscript	bf:responsibilityStatement
-# bf:Manuscript	bf:title
-# bf:Manuscript	bf:note
-# bf:Manuscript	rdf:type
-# bf:Manuscript	rdfs:label
-# bf:Manuscript	bf:hasItem
-# bf:Manuscript	bf:dimensions
-# bf:Manuscript	bf:editionStatement
-# bf:Manuscript	bf:carrier
-# bf:GrooveCharacteristic	rdf:type
-# bf:GrooveCharacteristic	rdfs:label
-# bf:Archival	bf:identifiedBy
-# bf:Archival	bf:issuance
-# bf:Archival	bf:provisionActivity
-# bf:Archival	bf:provisionActivityStatement
-# bf:Archival	bf:title
-# bf:Archival	bf:note
-# bf:Archival	bf:editionStatement
-# bf:Archival	bf:carrier
-# bf:Archival	bf:tabelOfContents
-# bf:Archival	bf:hasItem
-# bf:Archival	rdf:type
-# bf:Archival	rdfs:label
-# bf:Archival	bf:soundContent
-# bf:Archival	bf:dimensions
-# bf:Archival	bf:responsibilityStatement

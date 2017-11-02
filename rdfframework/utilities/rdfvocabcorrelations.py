@@ -19,3 +19,5 @@ VALUE_FIELDS = ['rdf_value',
 DOMAIN_FIELDS = ['schema_domainIncludes', 'rdfs_domain']
 RANGE_FIELDS = ['schema_rangeIncludes', 'rdfs_range']
 PROP_RDF_TYPES = ['rdf_Property', 'owl_ObjectProperty' ]
+RDF_CLASSES = ['rdfs_Class', 'rdf_Class', 'owl_Class']
+INFERRED_CLASS_PROPS = ['rdfs_subClassOf']

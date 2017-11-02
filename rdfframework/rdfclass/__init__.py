@@ -14,9 +14,9 @@ vocabulary.
 """
 
 from .rdfproperty import make_property, RdfPropertyMeta, properties, \
-                         domain_props
+                         domain_props, link_property
 from .rdfclass import RdfClassBase, RdfClassMeta, remove_parents, list_hierarchy
-from .rdfclassgenerator import RdfClassGenerator
+# from .rdfclassgenerator import RdfClassGenerator
 from .rdffactories import RdfClassFactory, RdfPropertyFactory
 
 __version__ = '0.0.1'

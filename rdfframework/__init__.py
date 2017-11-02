@@ -11,9 +11,14 @@ vocabulary.
 :license: To be determined, see LICENSE.txt for details.
 """
 
-import rdfframework.rdfclass
-import rdfframework.framework
-import rdfframework.rdfdatasets
+# import rdfframework.rdfclass
+# import rdfframework.framework
+# import rdfframework.rdfdatasets
+# import rdfframework.connections
+# import rdfframework.datamergers
+# import rdfframework.configuration
+# import rdfframework.search
+# import rdfframework.sparql
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 __version__ = '0.0.1'

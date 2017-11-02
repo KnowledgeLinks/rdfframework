@@ -103,7 +103,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                 params: The paramaters of the connection
         """
         if params.get('vendor') == 'blazegraph':
-            from rdfframework.triplestores import Blazegraph
+            from rdfframework.connections import Blazegraph
         vendor_dict = {"blazegraph": Blazegraph,
                        "rdflib": "#! Need to build API"}
         vendor = vendor_dict[params.vendor]

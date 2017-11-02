@@ -7,8 +7,8 @@ import json
 import requests
 
 from bs4 import BeautifulSoup
-from rdfframework.utilities import RdfConfigManager, list_files, pick, \
-                                   pyfile_path, RdfNsManager
+from rdfframework.utilities import list_files, pick, pyfile_path
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 

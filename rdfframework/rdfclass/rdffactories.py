@@ -10,12 +10,13 @@ import logging
 import datetime
 from hashlib import sha1
 
-from rdfframework.utilities import RdfNsManager, render_without_request, \
-                                   RdfConfigManager, make_list, pp, pyfile_path
-from rdfframework.rdfdatatypes import BaseRdfDataType, pyrdf
+from rdfframework.utilities import render_without_request, make_list, \
+        pyfile_path, pp, RDF_CLASSES, INFERRED_CLASS_PROPS
+from rdfframework.rdfdatatypes import BaseRdfDataType, pyrdf, Uri
 from rdfframework.rdfdatasets import RdfDataset
 from rdfframework.rdfclass import RdfClassBase, make_property
 from rdfframework import rdfclass
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -29,7 +30,6 @@ lg_r.setLevel(logging.CRITICAL)
 
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
-
 
 class RdfBaseFactory(object):
     lg_name = "%s-RdfBaseGenerator" % MNAME
@@ -45,7 +45,7 @@ class RdfBaseFactory(object):
         self.conn = conn
         self.cfg = cfg
         self.nsm = nsm
-        self.def_sparql = sparql_template #"sparqlDefinitionPropertiesAll.rq"
+        self.def_sparql = sparql_template #
         self.cache_filepath = os.path.join(self.cfg.CACHE_DATA_PATH,
                                            self.cache_file)
         self.get_defs(not reset)
@@ -55,6 +55,12 @@ class RdfBaseFactory(object):
         log.info(" completed in %s", (datetime.datetime.now() - start))
 
     def get_defs(self, cache=True):
+        """ Gets the defitions
+
+        args:
+            cache: True will read from the file cache, False queries the
+                   triplestore
+        """
         log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
         log.setLevel(self.log_level)
         log.debug(" *** Started")
@@ -92,13 +98,8 @@ class RdfBaseFactory(object):
         self.cfg.__setattr__('rdf_prop_defs', self.defs, True)
         log.debug(" conv complete in: %s" % (datetime.datetime.now() - start))
 
-    # def make(self):
-    #     """ place holder method for subclasses """
-    #     pass
-
-
 class RdfPropertyFactory(RdfBaseFactory):
-    """ Extends RdfBaseFactory to property creation specific querying """
+    """ Extends RdfBaseFactory for property creation specific querying """
     lg_name = "%s-RdfPropertyFactory" % MNAME
     log_level = MLOG_LVL #logging.DEBUG
     cache_file = "properties.json"
@@ -124,14 +125,92 @@ class RdfClassFactory(RdfBaseFactory):
     lg_name = "%s-RdfClassFactory" % MNAME
     log_level = MLOG_LVL #logging.DEBUG
     cache_file = "classes.json"
+    classes_key = set([Uri(item) for item in RDF_CLASSES])
+    inferred_key = set([Uri(item) for item in INFERRED_CLASS_PROPS])
+    rdf_type = Uri('rdf_type')
 
     def __init__(self, conn, reset=False, nsm=NSM, cfg=CFG):
         if cfg.props_initialized != True:
-            raise RuntimeError("RdfPropertyFactory must be run prior!")
+            err_msg = ["RdfPropertyFactory must be run prior to",
+                       "the intialization of RdfClassFactory!"]
+            raise RuntimeError(" ".join(err_msg))
         sparql_template = "sparqlDefinitionClassesAll.rq"
         super().__init__(conn, sparql_template, reset, nsm, cfg)
 
     def make(self):
         """ reads through the definitions and generates an python class for each
         definition """
-        pass
+        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
+        created = []
+        self.set_class_dict()
+        start = datetime.datetime.now()
+        log.info(" # of classes to create: %s" % len(self.class_dict))
+        log.debug(" creating classes that are not subclassed")
+        for name, cls_defs in self.class_dict.items():
+            if not self.class_dict[name].get('rdfs_subClassOf'):
+                created.append(name)
+                setattr(rdfclass,
+                        name,
+                        types.new_class(name,
+                                        (RdfClassBase,),
+                                        {#'metaclass': RdfClassMeta,
+                                         'cls_defs': cls_defs}))
+        log.debug(" created %s classes", created)
+        for name in created:
+            del self.class_dict[name]
+        left = len(self.class_dict)
+        classes = []
+        while left > 0:
+            new = []
+            for name, cls_defs in self.class_dict.items():
+                parents = self.class_dict[name].get('rdfs_subClassOf')
+                for parent in make_list(parents):
+                    bases = tuple()
+                    if parent in created or parent in classes:
+                        if parent in classes:
+                            bases += (RdfClassBase, )
+                        else:
+                            base = getattr(rdfclass, parent)
+                            bases += (base,) + base.__bases__
+                if len(bases) > 0:
+                    created.append(name)
+                    setattr(rdfclass,
+                            name,
+                            types.new_class(name,
+                                            bases,
+                                            {#'metaclass': RdfClassMeta,
+                                             'cls_defs': cls_defs}))
+            for name in created:
+                try:
+                    del self.class_dict[name]
+                except KeyError:
+                    pass
+            if left == len(self.class_dict):
+                c_list = [self.class_dict[name].get('rdfs_subClassOf') \
+                          for name in self.class_dict]
+                classess = []
+                for cl in c_list:
+                    for item in cl:
+                        classes.append(item)
+
+                for name in self.class_dict:
+                    if name in classes:
+                        classes.remove(name)
+            left = len(self.class_dict)
+        log.info(" created all classes in %s",
+                 (datetime.datetime.now() - start))
+    def set_class_dict(self):
+        """ Reads through the dataset and assigns self.class_dict the key value
+            pairs for the classes in the dataset
+        """
+
+        self.class_dict = {}
+        for name, cls_defs in self.defs.items():
+            def_type = set(cls_defs.get(self.rdf_type, []))
+            # a class can be determined by checking to see if it is of an
+            # rdf_type listed in the classes_key or has a property that is
+            # listed in the inferred_key
+            if def_type.intersection(self.classes_key) or \
+                    list([cls_defs.get(item) for item in self.inferred_key]):
+                self.class_dict[name] = cls_defs

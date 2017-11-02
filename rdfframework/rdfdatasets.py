@@ -7,7 +7,8 @@ import copy
 import types
 
 from rdfframework import rdfclass
-from rdfframework.utilities import DictClass, pp, make_list, RdfConfigManager
+from rdfframework.utilities import DictClass, pp, make_list
+from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfdatatypes import pyrdf, BaseRdfDataType, Uri
 from rdfframework.rdfclass import RdfClassBase, remove_parents, list_hierarchy
 # import rdfframework.rdfclass as rdfclass
@@ -48,8 +49,6 @@ class RdfDataset(dict):
 
         if data:
             self.load_data(data, **kwargs)
-
-
 
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
         """ Adds a triple to the dataset
@@ -205,12 +204,17 @@ class RdfDataset(dict):
         # rtn_list.sort(key=lambda tup: tup[0]+tup[1]+tup[2])
         if output:
             def size(value):
+                if len(value) > 42:
+                    value = "... %s" % value[-39:]
                 spaces = 45 - len(value)
                 return "%s%s" %(value," " * spaces)
             if output == "view":
                 print("\n".join(
                         ["%s  %s%s%s" %
-                         (i, size(trip[0].sparql), size(trip[1].sparql), trip[2].sparql)
+                         (i,
+                          size(trip[0].sparql),
+                          size(trip[1].sparql),
+                          size(trip[2].sparql))
                          for i, trip in enumerate(rtn_list)]))
         else:
             return rtn_list

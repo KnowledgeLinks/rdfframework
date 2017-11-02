@@ -25,9 +25,9 @@ logging.basicConfig(level=logging.DEBUG)
 lg_r = logging.getLogger("requests")
 lg_r.setLevel(logging.CRITICAL)
 
-from rdfframework.utilities import DataStatus, iri, pp, RdfNsManager, \
-        RdfConfigManager, render_without_request
-from rdfframework.sparql import run_sparql_query, get_all_item_data
+from rdfframework.utilities import DataStatus, pp, render_without_request
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdfframework.sparql import get_all_item_data
 from rdfframework.search import EsBase, EsMappings
 from rdfframework.rdfdatasets import RdfDataset
 
@@ -40,10 +40,11 @@ class EsRdfBulkLoader(object):
     ln = "%s-EsRdfBulkLoader" % MNAME
     log_level = logging.DEBUG
 
-    def __init__(self, rdf_class, namespace):
+    def __init__(self, rdf_class, namespace, conn):
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         lg.debug(" *** Started")
+        self.conn = conn
         self.namespace = namespace
         self.es_index = rdf_class.es_defs.get('kds_esIndex')[0]
         self.es_doc_type = rdf_class.es_defs.get('kds_esDocType')[0]
@@ -59,7 +60,7 @@ class EsRdfBulkLoader(object):
     def _index_item(self, uri, num, batch_num):
         """ queries the triplestore for an item sends it to elasticsearch """
 
-        data = RdfDataset(get_all_item_data(uri, self.namespace), 
+        data = RdfDataset(get_all_item_data(uri, self.conn),
                           uri).base_class.es_json()
         self.batch_data[batch_num].append(data)
         self.count += 1
@@ -71,7 +72,7 @@ class EsRdfBulkLoader(object):
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         # get a list of all the uri to index
-        results = run_sparql_query(sparql=self.query, namespace=self.namespace)
+        results = self.conn.query(sparql=self.query, namespace=self.namespace)
         # results = results[:100]
         # Start processing through uri
         self.time_start = datetime.datetime.now()
@@ -91,7 +92,7 @@ class EsRdfBulkLoader(object):
             for i, subj in enumerate(results[batch_start:batch_end]):
                 th = threading.Thread(name=batch_start + i + 1,
                                       target=self._index_item,
-                                      args=(iri(subj['s']['value']),
+                                      args=(MSN.iri(subj['s']['value']),
                                             i+1,batch_num,))
                 th.start()
             lg.debug(datetime.datetime.now() - self.time_start)
@@ -125,7 +126,7 @@ class EsRdfBulkLoader(object):
                                 "sparqlAllItemDataTemplate_Bulk.rq",
                                 bulk_list=statement,
                                 prefix=NSM.prefix())
-            return run_sparql_query(bulk_sparql, namespace=self.namespace)
+            return self.conn.query(bulk_sparql, namespace=self.namespace)
 
         data = RdfDataset(run_query(uri_list))
         for value in data.values():
@@ -139,7 +140,7 @@ class EsRdfBulkLoader(object):
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
         # get a list of all the uri to index
-        results = run_sparql_query(sparql=self.query, namespace=self.namespace)
+        results = self.conn.query(sparql=self.query, namespace=self.namespace)
         # results = results[:100]
         # Start processing through uri
         self.time_start = datetime.datetime.now()

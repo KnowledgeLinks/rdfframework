@@ -4,9 +4,9 @@ import pdb
 from hashlib import sha1
 
 from rdfframework import rdfclass
-from rdfframework.utilities import RdfNsManager, LABEL_FIELDS, VALUE_FIELDS, \
-                                   RdfConfigManager, make_doc_string
-from rdfframework.rdfdatatypes import BaseRdfDataType, Uri
+from rdfframework.utilities import LABEL_FIELDS, VALUE_FIELDS, make_doc_string
+from rdfframework.rdfdatatypes import BaseRdfDataType, Uri, BlankNode
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -61,9 +61,9 @@ class RdfClassMeta(Registry):
     def __prepare__(mcs, name, bases, **kwargs):
         try:
             cls_defs = kwargs.pop('cls_defs')
-            props = get_properties(cls_defs)
+            props = get_properties(name) #cls_defs)
             doc_string = make_doc_string(name,
-                                         cls_defs[name],
+                                         cls_defs,
                                          bases,
                                          props)
             new_def = {}
@@ -71,21 +71,25 @@ class RdfClassMeta(Registry):
             new_def['__doc__'] = doc_string
             new_def['doc'] = property(print_doc)
             new_def['properties'] = property(list_properties)
-            new_def['json_def'] = cls_defs
+            # new_def['json_def'] = cls_defs
             new_def['hierarchy'] = list_hierarchy(name, bases)
             new_def['id'] = None
             es_defs = es_get_class_defs(cls_defs, name)
-            if es_defs and not hasattr(bases[0], 'es_defs'):
-                new_def['es_defs'] = es_defs
+            # if es_defs and not hasattr(bases[0], 'es_defs'):
+            #     new_def['es_defs'] = es_defs
+            if hasattr(bases[0], 'es_defs'):
+                es_defs.update(bases[0].es_defs)
             new_def['es_defs'] = es_defs
             new_def['uri'] = Uri(name).sparql_uri
             for prop, value in props.items():
-                new_def[prop] = rdfclass.make_property(value, prop, name)
+                # new_def[prop] = rdfclass.make_property(value, prop, name)
+                new_def[prop] = value
             if 'rdf_type' not in new_def.keys():
-                new_def[Uri('rdf_type')] = rdfclass.make_property({},
-                                                                  'rdf_type',
-                                                                  name)
-            new_def['cls_defs'] = cls_defs.pop(name)
+                # new_def[Uri('rdf_type')] = rdfclass.make_property({},
+                #                                                   'rdf_type',
+                #                                                   name)
+                new_def[Uri('rdf_type')] = rdfclass.properties.get('rdf_type')
+            new_def['cls_defs'] = cls_defs #cls_defs.pop(name)
             return new_def
         except KeyError:
             return {}
@@ -357,8 +361,20 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         """
         # if not subject:
         #     self.subject =
+        def test_uri(value):
+            """ test to see if the value is a uri or bnode
+
+            Returns: Uri or Bnode """
+            if not isinstance(value, (Uri.function, BlankNode)):
+                if value.startswith("_:"):
+                    return BlankNode(value)
+                else:
+                    return Uri(value)
+            else:
+                return value
+
         if isinstance(subject, dict):
-            self.subject = Uri(subject['s'])
+            self.subject = test_uri(subject['s'])
             if isinstance(subject['o'], list):
                 for item in subject['o']:
                     self.add_property(subject['p'],
@@ -367,7 +383,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                 self.add_property(subject['p'],
                                   subject['o'])
         else:
-            self.subject = Uri(subject)
+            self.subject = test_uri(subject)
 
     def _initilize_props(self):
         """ Adds an intialized property to the class dictionary """
@@ -375,6 +391,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             for prop, prop_class in self.properties.items():
                 # passing in the current dataset tie
                 self[prop] = prop_class(self, self.dataset)
+                setattr(self, prop, self[prop])
             bases = remove_parents(self.__class__.__bases__)
             for base in bases:
                 if base.__name__ not in IGNORE_CLASSES:
@@ -408,19 +425,18 @@ def list_hierarchy(class_name, bases):
             class_list.append(Uri(base.__name__))
     return list([i for i in set(class_list)])
 
-def es_get_class_defs(cls_defs, cls_name):
+def es_get_class_defs(cls_def, cls_name):
     """ reads through the class defs and gets the related es class
         defintions
 
     Args:
         class_defs: RdfDataset of class definitions
     """
-
-    cls_def = cls_defs[cls_name]
+    # cls_def = cls_defs[cls_name]
     rtn_dict = {key: value for key, value in cls_def.items() \
                 if key.startswith("kds_es")}
     for key in rtn_dict.keys():
-        del cls_defs[cls_name][key]
+        del cls_def[key]
     return rtn_dict
 
 
@@ -435,13 +451,16 @@ def list_properties(cls):
                 rtn_dict[attr] = attr_val
     return rtn_dict
 
-def get_properties(cls_def):
+def get_properties(cls_name):
     """ cycles through the class definiton and returns all properties """
     # pdb.set_trace()
-    prop_list = {prop: value for prop, value in cls_def.items() \
-                 if 'rdf_Property' in value.get('rdf_type', "") or \
-                 value.get('rdfs_domain')}
 
+    # prop_list = {prop: value for prop, value in cls_def.items() \
+    #              if 'rdf_Property' in value.get('rdf_type', "") or \
+    #              value.get('rdfs_domain') or value.get('schema_domainIncludes')}
+
+    prop_list = {prop._prop_name: prop
+                 for prop in rdfclass.domain_props.get(cls_name, {})}
     return prop_list
 
 def remove_parents(bases):

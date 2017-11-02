@@ -3,11 +3,11 @@ import pdb
 import types
 
 from rdfframework import rdfclass
-from rdfframework.utilities import RdfNsManager, RdfConfigManager, find_values,\
-                                   make_doc_string, LABEL_FIELDS, RANGE_FIELDS,\
-                                   DESCRIPTION_FIELDS, DOMAIN_FIELDS
+from rdfframework.utilities import find_values, make_doc_string, LABEL_FIELDS, \
+        RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS
 from rdfframework.rdfdatatypes import BaseRdfDataType, Uri, DT_LOOKUP, BlankNode
 from rdfframework.processors import prop_processor_mapping
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -16,6 +16,7 @@ NSM = RdfNsManager()
 MODULE = __import__(__name__)
 properties = {}
 domain_props = {}
+
 
 class RdfPropertyMeta(type):
     """ Metaclass for generating rdfproperty classes """
@@ -41,10 +42,10 @@ class RdfPropertyMeta(type):
             new_def['append'] = unique_append
         # if prop_name == 'rdf_type':
         #     pdb.set_trace()
-        new_def['_init_processors'] = get_processors('kds_initProcessor',
-                                                     prop_defs)
-        new_def['_es_processors'] = get_processors('kds_esProcessor',
-                                                   prop_defs)
+        # new_def['_init_processors'] = get_processors('kds_initProcessor',
+        #                                              prop_defs)
+        # new_def['_es_processors'] = get_processors('kds_esProcessor',
+        #                                            prop_defs)
         # pdb.set_trace()
         return new_def
         # x = super().__prepare__(name, bases, **new_def)
@@ -56,6 +57,44 @@ class RdfPropertyMeta(type):
 
     def __init__(cls, name, bases, namespace, **kwargs):
         super().__init__(name, bases, namespace)
+
+
+class RdfLinkedPropertyMeta(RdfPropertyMeta):
+    """ Metaclass for generating rdfproperty classes """
+
+    @classmethod
+    def __prepare__(mcs, name, bases, **kwargs):
+        # print('  RdfClassMeta.__prepare__(\n\t\t%s)' % (p_args(args, kwargs)))
+
+        linked_cls = kwargs.pop('linked_cls')
+        cls_name = kwargs.pop('cls_name')
+        prop_defs = {attr: getattr(bases[0], attr)
+                     for attr in dir(bases[0])
+                     if isinstance(attr, Uri.function)}
+        prop_name = bases[0]._prop_name
+        if cls_name == 'RdfClassBase':
+            return {}
+        new_def = prepare_prop_defs(prop_defs, prop_name, cls_name)
+        new_def['__doc__'] = bases[0].__doc__
+        new_def['_cls_name'] = cls_name
+        new_def['linked_cls'] = linked_cls
+        new_def['_init_processors'] = get_processors('kds_initProcessor',
+                                                     prop_defs,
+                                                     linked_cls)
+        new_def['_es_processors'] = get_processors('kds_esProcessor',
+                                                   prop_defs,
+                                                   linked_cls)
+        # pdb.set_trace()
+        return new_def
+        # x = super().__prepare__(name, bases, **new_def)
+        # pdb.set_trace()
+        # return super().__prepare__(name, bases, **new_def)
+
+    # def __new__(mcs, name, bases, clsdict, **kwargs):
+    #     return type.__new__(mcs, name, bases, clsdict)
+
+    # def __init__(cls, name, bases, namespace, **kwargs):
+    #     super().__init__(name, bases, namespace)
 
 class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
     """ Property Base Class """
@@ -101,8 +140,8 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         ranges = cls.rdfs_range # pylint: disable=no-member
         rng_defs = [rng_def for rng_def in cls.kds_rangeDef # pylint: disable=no-member
                     if not isinstance(rng_def, BlankNode)
-                    and (cls._cls_name in rng_def.get('kds_classUri', []) # pylint: disable=no-member
-                         or 'kdr_AllClasses' in rng_def.get('kds_classUri',
+                    and (cls._cls_name in rng_def.get('kds_appliesToClass', []) # pylint: disable=no-member
+                         or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass',
                                                             []))]
         if 'es_Nested' in idx_types:
             if (kwargs.get('depth', 0) >= 1 and \
@@ -179,8 +218,8 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         try:
             rng_defs = [rng_def for rng_def in self.kds_rangeDef \
                         if not isinstance(rng_def, BlankNode) \
-                        and (self._cls_name in rng_def.get('kds_classUri', []) \
-                        or 'kdr_AllClasses' in rng_def.get('kds_classUri', []))]
+                        and (self._cls_name in rng_def.get('kds_appliesToClass', []) \
+                        or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass', []))]
         except AttributeError:
             rng_defs = []
 
@@ -196,7 +235,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         ranges = self.rdfs_range # pylint: disable=no-member
         # if self._prop_name == 'bf_shelfMark':
         #     pdb.set_trace()
-        if idx_types:
+        if not idx_types:
             nested = False
             for rng in ranges:
                 if hasattr(MODULE.rdfclass, rng) and \
@@ -241,7 +280,7 @@ def make_property(prop_defs, prop_name, cls_name=None):
     register = False
     if cls_name and cls_name != 'RdfBaseClass':
         new_name = "%s_%s" % (prop_name, cls_name)
-        prop_defs['kds_classUri'] = Uri(cls_name)
+        prop_defs['kds_appliesToClass'] = Uri(cls_name)
     elif not cls_name:
         register = True
         new_name = prop_name
@@ -265,6 +304,31 @@ def make_property(prop_defs, prop_name, cls_name=None):
                 domain_props[domain] = [new_prop]
             except TypeError:
                 pass
+    return new_prop
+
+
+def link_property(prop, cls_object):
+    """ Generates a property class linked to the rdfclass
+
+    args:
+        prop: unlinked property class
+        cls_name: the name of the rdf_class with which the property is
+                  associated
+        cls_object: the rdf_class
+    """
+    register = False
+    cls_name = cls_object.__name__
+    if cls_name and cls_name != 'RdfBaseClass':
+        new_name = "%s_%s" % (prop._prop_name, cls_name)
+    else:
+        new_name = prop._prop_name
+
+    new_prop = types.new_class(new_name,
+                               (prop,),
+                               {'metaclass': RdfLinkedPropertyMeta,
+                                'cls_name': cls_name,
+                                'prop_name': prop._prop_name,
+                                'linked_cls': cls_object})
     return new_prop
 
 def get_properties(cls_def):
@@ -304,6 +368,9 @@ def get_idx_types(prop_name, prop_def):
                 nested = True
         if nested:
             idx_types.append('es_Nested')
+
+def filter_prop_defs(prop_defs, cls_object, cls_name):
+    pass
 
 def prepare_prop_defs(prop_defs, prop_name, cls_name):
     """ Examines and adds any missing defs to the prop_defs dictionary for
@@ -365,7 +432,7 @@ def prepare_prop_defs(prop_defs, prop_name, cls_name):
         Uri('rdfs_domain'): [Uri(cls_name)],
         Uri('rdfs_label'): [NSM.nouri(prop_name)],
         Uri('kds_formDefault'): [{
-            Uri('kds:classUri'): Uri('kdr:AllClasses'),
+            Uri('kds:appliesToClass'): Uri('kdr:AllClasses'),
             Uri('kds:formFieldName'): "emailaddr",
             Uri('kds:formLabelName'): [NSM.nouri(prop_name)],
             Uri('kds:formFieldHelp'): find_values(DESCRIPTION_FIELDS,
@@ -383,9 +450,44 @@ def prepare_prop_defs(prop_defs, prop_name, cls_name):
         if prop not in prop_defs.keys():
             prop_defs[prop] = required_def_defaults[prop]
     prop_defs['rdfs_domain'] = get_def(prop_defs, DOMAIN_FIELDS, Uri(cls_name))
-    prop_defs['rdfs_range'] = get_def(prop_defs, RANGE_FIELDS, Uri('xsd_string'))
+    prop_defs['rdfs_range'] = get_def(prop_defs, RANGE_FIELDS,
+                                      Uri('xsd_string'))
 
     return prop_defs
+
+def tie_prop_to_class(prop, cls_name):
+    """ reads through the prop attributes and filters them for the associated
+    class and returns a dictionary for meta_class __prepare__
+
+    args:
+        prop: class object to read
+        cls_name: the name of the class to tie the porperty to
+    """
+    attr_list = [attr for attr in dir(prop) if type(attr, Uri)]
+    prop_defs = kwargs.pop('prop_defs')
+    prop_name = kwargs.pop('prop_name')
+    cls_name = kwargs.pop('cls_name')
+    if cls_name == 'RdfClassBase':
+        return {}
+    doc_string = make_doc_string(name,
+                                 prop_defs,
+                                 bases,
+                                 None)
+    new_def = prepare_prop_defs(prop_defs, prop_name, cls_name)
+    new_def['__doc__'] = doc_string
+    new_def['_cls_name'] = cls_name
+    new_def['_prop_name'] = prop_name
+    if prop_name == 'rdf_type':
+        new_def['append'] = unique_append
+    # if prop_name == 'rdf_type':
+    #     pdb.set_trace()
+    new_def['_init_processors'] = get_processors('kds_initProcessor',
+                                                 prop_defs)
+    new_def['_es_processors'] = get_processors('kds_esProcessor',
+                                               prop_defs)
+    # pdb.set_trace()
+    return new_def
+
 
 def unique_append(self, value):
     """ function for only appending unique items to a list.
@@ -411,14 +513,6 @@ def get_processors(processor_cat, prop_defs):
         processor_list.append(proc_class(processor.get('kds_params')))
     return processor_list
 
-# def add_class_processor(property):
-#     """ adds the class to the properties list of values
-
-#     Args:
-#         property(RdfPropertyBase): The instance of the rdf property
-#     """
-
-#     property.append(property._cls_name)
 
 def merge_rdf_list(rdf_list):
     """ takes an rdf list and merges it into a python list

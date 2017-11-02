@@ -1,7 +1,7 @@
 import pdb
 
 from .baseutilities import make_list
-from .uriconvertor import RdfNsManager
+from rdfframework.configuration import RdfNsManager
 from .rdfvocabcorrelations import *
 
 NSM = RdfNsManager()
@@ -42,8 +42,13 @@ def string_wrap(string, width=80, indent=0, subindent='auto'):
     rtn_list.append(" ".join(line_list))
     return "\n".join(rtn_list)
 
-def find_values(field_list, data, seperator = " -- "):
-    new_list = [(key, data.get(key)) for key in field_list if data.get(key)]
+def find_values(field_list, data, seperator = " -- ", method='dict'):
+    if method == 'dict':
+        new_list = [(key, data.get(key)) for key in field_list if data.get(key)]
+    elif method == 'class':
+        new_list = [(key, getattr(data, key))
+                    for key in field_list
+                    if hasattr(data, key)]
     rtn_list = []
     # if the values do not need to to concatenated return the new_list
     if seperator is None:
@@ -127,14 +132,14 @@ def make_doc_string(name, cls_def, bases=[], props={}):
             pass
 
     try:
-        # prop_notes = [(prop, " ".join(make_list(prop_def.get('rdfs_comment')))) \
-        #               for prop, prop_def in props.items() \
-        #               if prop_def.get('rdfs_comment')]
-
         prop_notes = [(prop, " ".join([item[1] for item in \
-                      find_values(description_fields, prop_def)])) \
+                      find_values(description_fields,
+                                  prop_def,
+                                  method='class')])) \
                       for prop, prop_def in props.items() \
-                      if len(find_values(description_fields, prop_def)) > 0]
+                      if len(find_values(description_fields,
+                                         prop_def,
+                                         method='class')) > 0]
 
         prop_notes.sort()
         properties = format_doc_vals(data=prop_notes,

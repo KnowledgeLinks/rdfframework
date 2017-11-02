@@ -2,12 +2,13 @@ import json
 import pdb
 
 from decimal import Decimal
-from rdfframework.utilities import RdfNsManager as nsm, cbool, is_not_null, \
-                                   DictClass, new_id
+from rdfframework.utilities import cbool, is_not_null, DictClass, new_id
+from rdfframework.configuration import RdfNsManager
 from dateutil.parser import parse
 from datetime import date, datetime, time, timezone
 
-NSM = nsm()
+NSM = RdfNsManager()
+
 class BaseRdfDataType(object):
     """ Base for all rdf datatypes. Not designed to be used alone """
     type = "literal"
@@ -621,5 +622,6 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
                     return rtn_val
         else:
             return DT_LOOKUP[value['type']](value['value'])
-
+    else:
+        return DT_LOOKUP[type(value)](value['value'])
 
