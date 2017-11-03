@@ -9,7 +9,8 @@ SECRET_KEY = "enter_a_secret_key_here"
 # and load those files into the RDF_DEFINITIONS triplestore.
 #! If left blank the application will use the file path that originally called
 #! RdfConfigManager
-RDF_DEFINITION_FILE_PATH = "/home/stabiledev/git/rdfframework"
+RDF_DEFINITION_FILE_PATH = os.path.join(os.path.expanduser("~"),
+                                        "git/rdfframework")
 
 # Path to where local data files are stored, as python sees the file path.
 # This variable is paired with the 'container_dir' in a TRIPLESTORE declaration.
@@ -35,7 +36,8 @@ DATA_TRIPLESTORE = {
     # This is how the triplestore sees the file path.
     "container_dir": "local_data",
     "namespace": "kb",
-    "graph": "bf:nullGraph"
+    "graph": "bf:nullGraph",
+    "namespace_params": {"quads": True}
 }
 
 # Declaration for the triplestore storing the rdf vocab and rdfframework files
@@ -45,7 +47,8 @@ DEFINITION_TRIPLESTORE = {
     "url": "http://localhost:9999/blazegraph",
     "container_dir": "local_data",
     "graph": "<http://knowledgelinks.io/ns/application-framework/>",
-    "namespace": "rdf_defs"
+    "namespace": "rdf_defs",
+    "namespace_params": {"quads": True}
 }
 
 REPOSITORY_URL = "http://localhost:8080/rest"

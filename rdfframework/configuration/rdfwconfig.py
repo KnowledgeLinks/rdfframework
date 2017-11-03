@@ -1,14 +1,16 @@
 ''' Application Configuration Manager '''
 import inspect
 import os
+import logging
+import pdb
 
 from elasticsearch import Elasticsearch
-from rdfframework.utilities import DictClass, pp, EmptyDot
+from rdfframework.utilities import DictClass, pp, EmptyDot, pyfile_path
 
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-MNAME = inspect.stack()[0][1]
+MNAME = pyfile_path(inspect.stack()[0][1])
 
 class ConfigSingleton(type):
     """Singleton class for the RdfConfigManager that will allow for only one
@@ -48,8 +50,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                  exisit.
     """
 
-    # log_name = "%s-RdfConfigManager" % MNAME
-    # log_level = logging.CRITICAL
+    log_name = "%s-RdfConfigManager" % MNAME
+    log_level = logging.INFO
     __type = 'DictClass'
     __reserved = ['dict',
                   'get',
@@ -91,6 +93,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         self.json_location = os.path.join(self.RDF_DEFINITION_FILE_PATH,
                                           "json-definitions")
         self.__initialize_conns()
+        self.__initialize_directories()
 
 
     def __make_tstore_conn(self, attr_name, params):
@@ -102,6 +105,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                     config manager
                 params: The paramaters of the connection
         """
+        log = logging.getLogger("%s.%s" % (self.log_name,
+                                           inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
         if params.get('vendor') == 'blazegraph':
             from rdfframework.connections import Blazegraph
         vendor_dict = {"blazegraph": Blazegraph,
@@ -111,6 +117,12 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                       url=params.get("url"),
                       container_dir=params.get("container_dir"),
                       namespace=params.get("namespace"))
+        if not conn.has_namespace(conn.namespace):
+            log.warn("namespace '%s' does not exist. Creating namespace",
+                     conn.namespace)
+            pdb.set_trace()
+            conn.create_namespace(conn.namespace,
+                                  params.get('namespace_params', {}))
         setattr(self, attr_name, conn)
 
     def __initialize_conns(self):
@@ -123,6 +135,22 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             self.__make_tstore_conn('def_tstore', self.DEFINITION_TRIPLESTORE)
         if self.get('ES_URL'):
             setattr(self, 'es_conn', Elasticsearch([self.ES_URL]))
+
+    def __initialize_directories(self):
+        """ reads through the config and verifies if all directories exist and
+            creates them if they do not """
+        log = logging.getLogger("%s.%s" % (self.log_name,
+                                           inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
+        for attr in dir(self):
+            if attr.endswith("_PATH"):
+                path = getattr(self, attr)
+                if not os.path.isdir(path):
+                    log.warn("The '%s' --> '%s' directory does not exist. %s",
+                             attr,
+                             path,
+                             "Creating directory!")
+                    os.makedirs(path)
 
     @initialized
     def __repr__(self):
