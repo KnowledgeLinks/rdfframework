@@ -1,0 +1,56 @@
+SELECT DISTINCT ?s ?p ?o
+{
+  {
+  # Get all of the property URIs
+  # Vocabularies are using either rdf:Property or
+  # owl:ObjectPropery or neither and just have
+  # rdfs:subPropertyOf
+    SELECT DISTINCT ?prop
+    {
+      {
+      	?prop rdf:type rdf:Property .
+      } UNION {
+        ?prop a owl:ObjectProperty .
+      } UNION {
+        ?prop rdfs:subPropertyOf ?ignore .
+      }
+    }
+  }
+  {
+    # get all of the triples for the base item
+    ?prop ?p ?o .
+    BIND(?prop as ?s) .
+  } UNION {
+    # get first level blank nodes
+    ?prop ?p1 ?s .
+    ?s ?p ?o .
+    filter(isblank(?s)) .
+  } UNION {
+    # get 2nd level blank nodes
+    ?prop ?p1 ?o1 .
+    ?o1 ?p2 ?s .
+    ?s ?p ?o .
+    filter (isblank(?o1)) .
+    filter(isblank(?s)) .
+  } UNION {
+    # get 3nd level blank nodes
+    ?prop ?p0 ?o0 .
+    ?o0	?p1 ?o1 .
+    ?o1 ?p2 ?s .
+    ?s ?p ?o .
+    filter (isblank(?o0)) .
+    filter (isblank(?o1)) .
+    filter(isblank(?s)) .
+  } UNION {
+    # get 4th level blank nodes
+    ?prop ?p0 ?o0 .
+    ?o0	?p1 ?o1 .
+    ?o1 ?p2 ?o2 .
+    ?o2 ?p3 ?s .
+    ?s ?p ?o .
+    filter (isblank(?o0)) .
+    filter (isblank(?o1)) .
+    filter (isblank(?o2)) .
+    filter(isblank(?s)) .
+  }
+}

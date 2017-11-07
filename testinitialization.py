@@ -1,25 +1,23 @@
-"""	This module is used for setting an intial test configs and values for 
+"""    This module is used for setting an intial test configs and values for
 the rdfframework """
 
-import sys
-import os
-
-PACKAGE_BASE = os.path.abspath(
-    os.path.split(
-        os.path.dirname(__file__))[0])
-print("PACKAGE_BASE: ", PACKAGE_BASE)
-sys.path.append(PACKAGE_BASE)
+import pdb
+import rdfframework.rdfclass
 
 from testconfig import config
+from rdfframework.rdfdatatypes import rdfdatatypes as rdt, BaseRdfDataType, Uri
+from rdfframework.framework import RdfFramework
+from rdfframework.rdfdatasets import RdfDataset
+from rdfframework.configuration import RdfConfigManager
+from rdfframework.sparql import get_all_item_data
 
-from rdfframework.getframework import fw_config as fwc, get_framework as fw
-from rdfframework.utilities import DictClass, pp, get_ns_obj
-from rdfframework.rdfdatatypes import rdfdatatypes as rdt
+r = rdfframework.rdfclass
 
-print("CONFIG ---------------------------------------------------------------")
-pp.pprint(DictClass(config))
-print("----------------------------------------------------------------------")
-#fw(config=config, root_file_path=PACKAGE_BASE)
-NSM = get_ns_obj(config=DictClass(config))
+RdfFramework(reset=False, config=config)
 
-	
+cfg = RdfConfigManager()
+
+item_uri = "<http://library.kean.edu/173849#Work>"
+conn = cfg.data_tstore
+data = get_all_item_data(item_uri, conn)
+x = RdfDataset(data, item_uri)

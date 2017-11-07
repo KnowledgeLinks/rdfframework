@@ -1,26 +1,28 @@
-__author__ = "Mike Stabile, Jeremy Nelson"
 import re
 import json
 import requests
 import copy
+import pdb
 from werkzeug.datastructures import FileStorage
 from jinja2 import Template
+from hashlib import sha1
 #from rdfframework import fw_config
 try:
     from rdfframework.utilities import clean_iri, iri, is_not_null, \
         make_list, make_set, make_triple, remove_null, DeleteProperty, \
         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
-        pyuri, get_attr, slugify
+        pyuri, get_attr, slugify, RdfConfigManager
 except ImportError:
     # Try local imports
     from .utilities import clean_iri, iri, is_not_null, \
         make_list, make_set, make_triple, remove_null, DeleteProperty, \
         NotInFormClass, pp, uri, calculate_default_value, uri_prefix, nouri, \
-        pyuri, get_attr, slugify
-   
+        pyuri, get_attr, slugify, RdfConfigManager
+
 
 from .getframework import get_framework as rdfw
 try:
+    from rdfframework.rdfdatatypes import BaseRdfDataType
     from rdfframework.rdfdatatype import RdfDataType
     from rdfframework.utilities.debug import dumpable_obj
     from rdfframework.processors import clean_processors, run_processor
@@ -31,12 +33,89 @@ except ImportError:
     from .utilities.debug import dumpable_obj
     from .processors import clean_processors, run_processor
     from .sparql import save_file_to_repository
-   
-# setting DEBUG to False will turn all the debug printing off in the module
+    from .rdfdatatypes import BaseRdfDataType
+
+setting DEBUG to False will turn all the debug printing off in the module
+
+class RdfBaseClass(dict):
+    # _reserved = ['add_property',
+    #              '_format',
+    #              '_reserved',
+    #              'subject',
+    #              '_type',
+    #              'to_json',
+    #              'uri_format',
+    #              'conv_json']
+
+    # __slots__ = ['subject']
+
+    uri_format = 'sparql_uri'
+
+    def __init__(self, sub, **kwargs):
+        if isinstance(sub, dict):
+            self.subject = sub
+            self.add_property(sub['p'], sub['o'], kwargs.get("obj_method"))
+        else:
+            self.subject = {"s":sub, "p":None, "o":None}
+
+
+    def add_property(self, pred, obj, obj_method=None):
+        try:
+            self[pred].append(obj)
+        except AttributeError:
+            new_list = [self[pred]]
+            new_list.append(obj)
+            self[pred] = new_list
+        except KeyError:
+            if obj_method != "list":
+                self[pred] = obj
+            else:
+                self[pred] = [obj]
+
+    @property
+    def to_json(self, start=True):
+        return self.conv_json(self.uri_format)
+
+    def conv_json(self, uri_format="sparql_uri", add_ids=False):
+
+        def convert_item(ivalue):
+            nvalue = ivalue
+            if isinstance(ivalue, BaseRdfDataType):
+                if ivalue.type == 'uri':
+                    if ivalue.startswith("pyuri") and uri_format == "pyuri":
+                        nvalue = getattr(ivalue, "sparql")
+                    else:
+                        nvalue = getattr(ivalue, uri_format)
+                else:
+                    nvalue = ivalue.to_json
+            elif isinstance(ivalue, RdfBaseClass):
+                if ivalue.subject['s'].type == "uri":
+                    # nvalue = getattr(ivalue.subject['s'], uri_format)
+                    nvalue = ivalue.conv_json(uri_format, add_ids)
+                elif ivalue.subject['s'].type == "bnode":
+                    nvalue = ivalue.conv_json(uri_format, add_ids)
+            elif isinstance(ivalue, list):
+                nvalue = []
+                for item in ivalue:
+                    temp = convert_item(item)
+                    nvalue.append(temp)
+            return nvalue
+
+        rtn_val = {key: convert_item(value) for key, value in self.items()}
+        #pdb.set_trace()
+        if add_ids:
+
+            if self.subject['s'].type == 'uri':
+                rtn_val['uri'] = self.subject['s'].sparql_uri
+                rtn_val['id'] = sha1(rtn_val['uri'].encode()).hexdigest()
+        #return {key: convert_item(value) for key, value in self.items()}
+        return rtn_val
+
 DEBUG = True
 class RdfClass(object):
-    '''RDF Class for an RDF Class object.
-       Used for manipulating and validating an RDF Class subject'''
+    ''' RDF Class for an RDF Class object.
+        Used for manipulating and validating an RDF Class subject'''
+
 
     def __init__(self, json_obj, class_name, **kwargs):
         if not DEBUG:
@@ -69,8 +148,8 @@ class RdfClass(object):
         # set the triplestore and repository urls for the class
         self.triplestore_url = fw_config().get(self.kds_triplestoreConfigName)
         self.repository_url = fw_config().get(self.kds_repositoryConfigName)
-        if not hasattr(self, "kds_subjectPattern"):
-            self.kds_subjectPattern = kwargs.get("kds_subjectPattern",
+        if not hasattr(self, "kdssubjectPattern"):
+            self.kdssubjectPattern = kwargs.get("kdssubjectPattern",
                     "!--baseUrl,/,ns,/,!--classPrefix,/,!--className,/,!--uuid")
         if not hasattr(self, "kds_baseUrl"):
             self.kds_baseUrl = kwargs.get("kds_baseUrl", fw_config().get(\
@@ -108,7 +187,7 @@ class RdfClass(object):
                 for entry in prop.entries:
                     new_prop = copy.copy(prop)
                     new_prop.data = entry.data
-                    
+
                     if debug: print("* * * * * ", prop.name,": ",entry.data)
                     expanded_prop_list.append(new_prop)
             else:
@@ -143,11 +222,11 @@ class RdfClass(object):
 
     def new_uri(self, **kwargs):
         ''' Generates a new uri for a new subject
-        
+
             kwargs:
-                save_data - pass in the data to be saved for uri 
+                save_data - pass in the data to be saved for uri
                 calculations'''
-                
+
         if not DEBUG:
             debug = False
         else:
@@ -157,7 +236,7 @@ class RdfClass(object):
         if self.kds_saveLocation == "triplestore":
             # get a uuid by saving an empty record to the repo and then
             # delete the item.
-            if "!--uuid" in self.kds_subjectPattern:
+            if "!--uuid" in self.kdssubjectPattern:
                 repository_result = requests.post(
                                 self.repository_url,
                                 data="",
@@ -179,7 +258,7 @@ class RdfClass(object):
         else:
             debug = True
         if debug: print("START RdfClass.uri_patterner ---------------------\n")
-        pattern = kwargs.get("kds_subjectPattern", self.kds_subjectPattern)
+        pattern = kwargs.get("kdssubjectPattern", self.kdssubjectPattern)
         pattern_args = pattern.split(",")
         new_args = []
         for arg in pattern_args:
@@ -228,7 +307,7 @@ class RdfClass(object):
             test_uri = new_uri
             while failed_test:
                 sparql = """
-                         SELECT * 
+                         SELECT *
                          WHERE {
                             {%s ?p ?o} UNION {?s ?p %s}
                          } LIMIT 1""" % (iri(test_uri), iri(test_uri))
@@ -293,7 +372,7 @@ class RdfClass(object):
         if debug: print(self.kds_classUri, " PrimaryKeys: ", pkey, "\n")
         if len(pkey) < 1:
             if debug: print("END RdfClass.validate_primary_key -NO pKey----\n")
-            return ["valid"] 
+            return ["valid"]
         else:
             _calculated_props = self._get_calculated_properties()
             _old_class_data = self._select_class_query_data(old_data)
@@ -348,26 +427,26 @@ class RdfClass(object):
                         (_old_class_data.get(key),
                          _new_class_data.get(key),
                          key,
-                         _calculated_props))    
+                         _calculated_props))
                 if (_old_class_data.get(key) != _new_class_data.get(key)) and \
                         ((key not in _calculated_props) or \
                         _new_class_data.get(key) is not None):
-                    
+
                     _key_changed = True
                     if _object_val:
                         if str(_object_val).startswith("FILTER"):
                             arg_trip = make_triple("?uri", iri(uri(key)), "?o")
                             _query_args.append(arg_trip)
                             _query_args.append("FILTER (!(isIri(?o))) .")
-                            _query_args.append(_object_val) 
+                            _query_args.append(_object_val)
                             _multi_key_query_args.append(arg_trip)
                             _multi_key_query_args.append(\
                                     "FILTER (!(isIri(?o))) .")
-                            _multi_key_query_args.append(_object_val) 
-                        else:    
-                            _query_args.append(make_triple("?uri", 
+                            _multi_key_query_args.append(_object_val)
+                        else:
+                            _query_args.append(make_triple("?uri",
                                                            iri(uri(key)), \
-                                                           _object_val))    
+                                                           _object_val))
                             _multi_key_query_args.append(make_triple("?uri", \
                                     iri(uri(key)), _object_val))
                 else:
@@ -601,7 +680,7 @@ class RdfClass(object):
         _processed_data = {}
         obj = {}
         _required_props = self.list_required()
-        
+
         _calculated_props = self._get_calculated_properties()
         _old_data = self._select_class_query_data(rdf_obj.query_data)
         # cycle through the form class data and add old, new, doNotSave and
@@ -1114,23 +1193,23 @@ class RdfClass(object):
             # find the current class data from the query
             if isinstance(old_data, list):
                 for entry in old_data:
-                    for _subject_uri, value in entry.items():
+                    for subject_uri, value in entry.items():
                         _class_types = make_list(value.get("rdf_type", []))
                         for _rdf_type in _class_types:
                             if _rdf_type == self.kds_classUri or \
                                     _rdf_type == "<%s>" % self.kds_classUri:
                                 _old_class_data = value
-                                _old_class_data["!!!!subjectUri"] = _subject_uri
+                                _old_class_data["!!!!subjectUri"] = subject_uri
                                 break
             else:
-                for _subject_uri in old_data:
-                    _class_types = make_list(old_data[_subject_uri].get( \
+                for subject_uri in old_data:
+                    _class_types = make_list(old_data[subject_uri].get( \
                         "rdf_type", []))
                     for _rdf_type in _class_types:
                         if _rdf_type == self.kds_classUri or \
                                     _rdf_type == "<%s>" % self.kds_classUri:
-                            _old_class_data = old_data[_subject_uri]
-                            _old_class_data["!!!!subjectUri"] = _subject_uri
+                            _old_class_data = old_data[subject_uri]
+                            _old_class_data["!!!!subjectUri"] = subject_uri
                         break
 
         return _old_class_data

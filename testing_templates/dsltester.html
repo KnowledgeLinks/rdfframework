@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<div class="container">
+	{# START row #}
+
+	<div class="row">
+		<div class="col-md-12">
+			<div class="page-header">
+				<h1>Query DSL Tester</h1>
+			</div>
+			<form method="POST" action="{{ url_for('base_site.dsltester') }}">
+				<div class="form-group">
+					
+					{{ form.hidden_tag() }}
+					{{ form.index.label }}
+					{{ form.index(class_="form-control") }}
+					{{ form.doc_type.label }}
+					{{ form.doc_type(class_="form-control") }}
+					{{ form.dslbox.label }}
+					{{ form.dslbox(class_="form-control", rows=20) }}
+				</div>
+				<button type="submit" class="btn btn-primary">Submit</button>
+				<button id="clear_dsl" type="button" class="btn btn-default">Clear</button>
+			</form>
+			{% if dsl_results|length > 0 %}
+			<div class="dsl_results">
+				<div class="row">
+					<div class="col-md-8">
+						<h1>Results</h1>
+					</div>
+					<div class="col-md-4" style="text-align:right;">
+						<button  id="copy_results" data-clipboard-target="#phone_results" type="button" class="btn btn-success">Copy</button>
+					</div>
+				</div>
+				<pre id="dsl_query_results">
+					{{ dsl_results }}
+				</pre>
+			</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+{% endblock %}
+{% block more_js %}
+<script src="{{ url_for('static', filename='js/clipboard.min.js') }}"></script>
+<script>
+	$("#clear_dsl").click(function(){
+		$("#dslbox").val(null)
+		$("#dsl_query_results").remove()
+	});
+	var clipboard = new Clipboard('#copy_results');
+	clipboard.on('success', function(e) {
+		$(".copy_notice").remove();
+		e.clearSelection();
+		$("#copy_results").after("<div class='copy_notice'><mark>Copied</mark></div>");
+	});
+</script>
+{% endblock %}

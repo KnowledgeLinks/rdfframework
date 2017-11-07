@@ -12,56 +12,27 @@
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dcterm: <http://purl.org/dc/terms/> .
 
-bf:Item a kds:ControlledClass ;
-    rdfs:comment "Single example of an Instance." ;
-    rdfs:label "Item" ;
-    kds:storageType "object" .
-
-bf:Instance a kds:ControlledClass ;
-	rdfs:comment "Resource reflecting an individual, material embodiment of the Work." ;
-	rdfs:label "Instance" ;
-	kds:subjectPattern "http://id.loc.gov/,!--slugify(bf:title)" ;
-	kds:storageType "object" .
-
-bf:Work a kds:ControlledClass ;
-    rdfs:comment "Resource reflecting a conceptual essence of a cataloging resource." ;
-    rdfs:label "Work" ;
-    kds:storageType "object" .
-
-bf:Title a kds:ControlledClass ;
-	rdfs:comment "Title information relating to a resource: mail title, translated title, or variant form of title." ;
-	rdfs:label "Title Entity" ;
-	kds:storageType "object" .
-	
-bf:WorkTitle a kds:ControlledClass ;
-	rdfs:comment "Work title" ;
-	rdfs:label "Title or form of title chosen to identify the work, such as a preferred title, preferred title with additions, uniform title, etc." ;
-	kds:storageType "object" .
-	
-bf:InstanceTitle a kds:ControlledClass ;
-	rdfs:comment "Instance title" ;
-	rdfs:label "Title or form of title chosen to identify the work, such as a preferred title, preferred title with additions, uniform title, etc." ;
-	kds:storageType "object" .
 
 # -----------------bf:Identifier -----------------------------------------------
 bf:Identifier a kds:ControlledClass ;
-    kds:storageType "blanknode" .
-
-bf:LCSH rdfs:subClassOf bf:Identifier .
+    kds:storageType "blanknode" ;
+    kds:esNestedProps rdf:type, rdf:value.
 
 rdf:value rdfs:domain bf:Identifier ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Identifier;
-		a xsd:string ;
+		kds:rangeUri xsd:string  ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
 	] .
 
 rdf:type rdfs:domain bf:Identifier ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Identifier;
-		a xsd:string ;
+		kds:rangeUri xsd:string  ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
@@ -69,96 +40,109 @@ rdf:type rdfs:domain bf:Identifier ;
 
 # ----------------- bf:Topic ---------------------------------------------------
 bf:Topic a kds:ControlledClass ;
-	kds:storageType "object" .
+	kds:storageType "object" ;
+	kds:esNestedProps skos:broader, skos:altLabel, skos:prefLabel, 
+					  bf:identifiedBy ;
+	kds:esValue skos:prefLabel ;
+	kds:esAltValue rdfs:label ;
+	kds:esIndex "reference" ;
+	kds:esDocType "topics" .
 
 skos:broader rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range bf:Topic ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a bf:Topic ;
+		kds:rangeUri bf:Topic ;
 		kds:esIndexType es:Nested
-	] .
+	] .	
 
 skos:inScheme rdfs:domain bf:Topic ;
-	rdfs:range [
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:string ;
-		kds:esIndexType es:Not_analyzed
+		kds:rangeUri skos:ConceptScheme  ;
+		kds:esIndexType es:NotAnalyzed ;
+		kds:esValue "uri"
 	] .
 
 skos:member rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:string ;
-		kds:esIndexType es:Not_analyzed
+		kds:rangeUri xsd:string  ;
+		kds:esIndexType es:NotAnalyzed
 	] .
 
 dcterm:created rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:datetime ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:dateTime;
-		kds:esIndexType es:Date 
+		kds:rangeUri xsd:datetime
 	] .
 
 skos:altLabel rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic;
-		a xsd:string ;
+		kds:rangeUri xsd:string  ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
 	] .
 
 skos:notation rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:string ;
-		kds:esIndexType es:Standard;
-		kds:esIndexType es:Raw;
-		kds:esIndexType es:Lower
+		kds:rangeUri xsd:string 
 	] .
 
 
 skos:prefLabel rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic;
-		a xsd:string ;
+		kds:rangeUri xsd:string  ;
 		kds:esIndexType es:Standard;
 		kds:esIndexType es:Raw;
 		kds:esIndexType es:Lower
 	] .
 
 dcterm:modified rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:datetime ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:dateTime;
-		kds:esIndexType es:Date 
+		kds:rangeUri xsd:datetime
 	] .
 
 rdf:type rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:string ;
-		kds:esIndexType es:Not_analyzed;
+		kds:rangeUri xsd:string  ;
+		kds:esIndexType es:NotAnalyzed;
 	] .
 
 bf:identifiedBy rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a bf:Identifier ;
+		kds:rangeUri bf:Identifier ;
 		kds:esIndexType es:Nested
 	] .
 
 skos:note rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic ;
-		a xsd:string ;
+		kds:rangeUri xsd:string  ;
 		kds:esIndexType es:Standard;
 	] .
 
 skos:example rdfs:domain bf:Topic ;
-	rdfs:range [
+	rdfs:range xsd:string ;
+	kds:rangeDef [
 		kds:classUri bf:Topic;
-		a xsd:string ;
+		kds:rangeUri xsd:string  ;
 		kds:esIndexType es:Standard;
 	] ;
 	rdfs:comment "email address.";

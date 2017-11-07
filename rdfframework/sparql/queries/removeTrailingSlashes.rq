@@ -1,0 +1,14 @@
+# Will replace any string that ends with a "/" from all triples in the 
+# triplestore 
+
+DELETE {
+	?s ?p ?o
+}
+INSERT {
+ 	?s ?p ?new_val
+}
+WHERE {
+  ?s ?p ?o.
+  BIND(REPLACE(?o, "[ \n\t/]+$", "") as ?new_val)
+  filter(strends(?o, "/"))
+}
