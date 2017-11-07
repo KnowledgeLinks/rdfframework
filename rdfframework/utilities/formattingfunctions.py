@@ -135,11 +135,11 @@ def make_doc_string(name, cls_def, bases=[], props={}):
         prop_notes = [(prop, " ".join([item[1] for item in \
                       find_values(description_fields,
                                   prop_def,
-                                  method='class')])) \
+                                  method='dict')])) \
                       for prop, prop_def in props.items() \
                       if len(find_values(description_fields,
                                          prop_def,
-                                         method='class')) > 0]
+                                         method='dict')) > 0]
 
         prop_notes.sort()
         properties = format_doc_vals(data=prop_notes,

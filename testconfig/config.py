@@ -35,7 +35,7 @@ DATA_TRIPLESTORE = {
     # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
     # This is how the triplestore sees the file path.
     "container_dir": "local_data",
-    "namespace": "kb",
+    "namespace": "kean_all", # "kb",
     "graph": "bf:nullGraph",
     "namespace_params": {"quads": True}
 }

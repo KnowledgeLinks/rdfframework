@@ -28,6 +28,7 @@ class RdfPropertyMeta(type):
         prop_defs = kwargs.pop('prop_defs')
         prop_name = kwargs.pop('prop_name')
         cls_name = kwargs.pop('cls_name')
+        hierarchy = kwargs.pop('hierarchy')
         if cls_name == 'RdfClassBase':
             return {}
         doc_string = make_doc_string(name,
@@ -35,17 +36,16 @@ class RdfPropertyMeta(type):
                                      bases,
                                      None)
         new_def = prepare_prop_defs(prop_defs, prop_name, cls_name)
+        new_def = filter_prop_defs(prop_defs, hierarchy, cls_name)
         new_def['__doc__'] = doc_string
         new_def['_cls_name'] = cls_name
         new_def['_prop_name'] = prop_name
         if prop_name == 'rdf_type':
             new_def['append'] = unique_append
-        # if prop_name == 'rdf_type':
-        #     pdb.set_trace()
-        # new_def['_init_processors'] = get_processors('kds_initProcessor',
-        #                                              prop_defs)
-        # new_def['_es_processors'] = get_processors('kds_esProcessor',
-        #                                            prop_defs)
+        new_def['_init_processors'] = get_processors('kds_initProcessor',
+                                                     prop_defs)
+        new_def['_es_processors'] = get_processors('kds_esProcessor',
+                                                   prop_defs)
         # pdb.set_trace()
         return new_def
         # x = super().__prepare__(name, bases, **new_def)
@@ -66,24 +66,24 @@ class RdfLinkedPropertyMeta(RdfPropertyMeta):
     def __prepare__(mcs, name, bases, **kwargs):
         # print('  RdfClassMeta.__prepare__(\n\t\t%s)' % (p_args(args, kwargs)))
 
-        linked_cls = kwargs.pop('linked_cls')
         cls_name = kwargs.pop('cls_name')
+        if cls_name == 'RdfClassBase':
+            return {}
+        linked_cls = kwargs.pop('linked_cls')
         prop_defs = {attr: getattr(bases[0], attr)
                      for attr in dir(bases[0])
                      if isinstance(attr, Uri.function)}
         prop_name = bases[0]._prop_name
-        if cls_name == 'RdfClassBase':
-            return {}
-        new_def = prepare_prop_defs(prop_defs, prop_name, cls_name)
+
+        new_def = filter_prop_defs(prop_defs, linked_cls, cls_name)
         new_def['__doc__'] = bases[0].__doc__
         new_def['_cls_name'] = cls_name
-        new_def['linked_cls'] = linked_cls
+        new_def['_linked_cls'] = linked_cls
+        new_def['_prop_name'] = prop_name
         new_def['_init_processors'] = get_processors('kds_initProcessor',
-                                                     prop_defs,
-                                                     linked_cls)
+                                                     new_def)
         new_def['_es_processors'] = get_processors('kds_esProcessor',
-                                                   prop_defs,
-                                                   linked_cls)
+                                                   new_def)
         # pdb.set_trace()
         return new_def
         # x = super().__prepare__(name, bases, **new_def)
@@ -268,7 +268,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         return rtn_list
 
 
-def make_property(prop_defs, prop_name, cls_name=None):
+def make_property(prop_defs, prop_name, cls_name=None, hierarchy=[]):
     """ Generates a property class from the defintion dictionary
 
     args:
@@ -282,6 +282,7 @@ def make_property(prop_defs, prop_name, cls_name=None):
         new_name = "%s_%s" % (prop_name, cls_name)
         prop_defs['kds_appliesToClass'] = Uri(cls_name)
     elif not cls_name:
+        cls_name = Uri('kdr_AllClasses')
         register = True
         new_name = prop_name
     else:
@@ -292,16 +293,20 @@ def make_property(prop_defs, prop_name, cls_name=None):
                                {'metaclass': RdfPropertyMeta,
                                 'prop_defs': prop_defs,
                                 'cls_name': cls_name,
-                                'prop_name': prop_name})
+                                'prop_name': prop_name,
+                                'hierarchy': hierarchy})
     if register:
         global properties
         global domain_props
         properties[new_name] = new_prop
         for domain in new_prop.rdfs_domain:
             try:
-                domain_props[domain].append(new_prop)
+                # domain_props[domain].append(new_prop)
+                domain_props[domain][prop_name] = prop_defs
             except KeyError:
-                domain_props[domain] = [new_prop]
+                # domain_props[domain] = [new_prop]
+                domain_props[domain] = {}
+                domain_props[domain][prop_name] = prop_defs
             except TypeError:
                 pass
     return new_prop
@@ -369,8 +374,50 @@ def get_idx_types(prop_name, prop_def):
         if nested:
             idx_types.append('es_Nested')
 
-def filter_prop_defs(prop_defs, cls_object, cls_name):
-    pass
+def filter_prop_defs(prop_defs, hierarchy, cls_name):
+    """ Reads through the prop_defs and returns a dictionary filtered by the
+        current class
+
+    args:
+        prop_defs: the defintions from the rdf vocabulary defintion
+        cls_object: the class object to tie the property
+        cls_name: the name of the class
+    """
+
+    def _is_valid(test_list, valid_list):
+        """ reads the list of classes in appliesToClass and returns whether
+            the test_list matches
+
+        args:
+            test_list: the list of clasees to test against
+            valid_list: list of possible matches
+        """
+
+        for test in test_list:
+            if test in valid_list:
+                return True
+        return False
+
+    new_dict = {}
+    valid_classes = [Uri('kdr_AllClasses'), cls_name] + hierarchy
+    for def_name, value in prop_defs.items():
+        new_dict[def_name] = []
+        empty_def = []
+        try:
+            for item in value:
+                if item.get('kds_appliesToClass'):
+                    if _is_valid(item['kds_appliesToClass'], valid_classes):
+                        new_dict[def_name].append(item)
+                else:
+                    empty_def.append(item)
+            if not new_dict[def_name]:
+                new_dict[def_name] = empty_def
+        except AttributeError:
+            new_dict[def_name] = value
+    return new_dict
+
+
+
 
 def prepare_prop_defs(prop_defs, prop_name, cls_name):
     """ Examines and adds any missing defs to the prop_defs dictionary for
@@ -411,6 +458,8 @@ def prepare_prop_defs(prop_defs, prop_name, cls_name):
                     if isinstance(item, rdfclass.RdfClassBase):
                         new_rtn.append(\
                                 "|".join(merge_rdf_list(item['owl_unionOf'])))
+                    elif isinstance(item, list):
+                        new_rtn.append("|".join(item))
                     else:
                         new_rtn.append(item)
                 rtn_list = list(set(new_rtn))

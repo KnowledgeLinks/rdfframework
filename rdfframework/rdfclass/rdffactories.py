@@ -14,7 +14,7 @@ from rdfframework.utilities import render_without_request, make_list, \
         pyfile_path, pp, RDF_CLASSES, INFERRED_CLASS_PROPS
 from rdfframework.rdfdatatypes import BaseRdfDataType, pyrdf, Uri
 from rdfframework.rdfdatasets import RdfDataset
-from rdfframework.rdfclass import RdfClassBase, make_property
+from rdfframework.rdfclass import RdfClassBase, make_property, link_property
 from rdfframework import rdfclass
 from rdfframework.configuration import RdfConfigManager, RdfNsManager
 
@@ -95,7 +95,7 @@ class RdfBaseFactory(object):
                                def_load=True,
                                bnode_only=True)
 
-        self.cfg.__setattr__('rdf_prop_defs', self.defs, True)
+        # self.cfg.__setattr__('rdf_prop_defs', self.defs, True)
         log.debug(" conv complete in: %s" % (datetime.datetime.now() - start))
 
 class RdfPropertyFactory(RdfBaseFactory):
@@ -123,7 +123,7 @@ class RdfPropertyFactory(RdfBaseFactory):
 class RdfClassFactory(RdfBaseFactory):
     """ Extends RdfBaseFactory to property creation specific querying """
     lg_name = "%s-RdfClassFactory" % MNAME
-    log_level = MLOG_LVL #logging.DEBUG
+    log_level = logging.DEBUG #MLOG_LVL #
     cache_file = "classes.json"
     classes_key = set([Uri(item) for item in RDF_CLASSES])
     inferred_key = set([Uri(item) for item in INFERRED_CLASS_PROPS])
@@ -156,7 +156,9 @@ class RdfClassFactory(RdfBaseFactory):
                                         (RdfClassBase,),
                                         {#'metaclass': RdfClassMeta,
                                          'cls_defs': cls_defs}))
-        log.debug(" created %s classes", created)
+        log.debug(" created %s classes in: %s",
+                  len(created),
+                  (datetime.datetime.now() - start))
         for name in created:
             del self.class_dict[name]
         left = len(self.class_dict)
@@ -198,6 +200,7 @@ class RdfClassFactory(RdfBaseFactory):
                     if name in classes:
                         classes.remove(name)
             left = len(self.class_dict)
+        # self.tie_properties(created)
         log.info(" created all classes in %s",
                  (datetime.datetime.now() - start))
     def set_class_dict(self):
@@ -214,3 +217,21 @@ class RdfClassFactory(RdfBaseFactory):
             if def_type.intersection(self.classes_key) or \
                     list([cls_defs.get(item) for item in self.inferred_key]):
                 self.class_dict[name] = cls_defs
+
+    def tie_properties(self, class_list):
+        """ Runs through the classess and ties the properties to the class
+
+        args:
+            class_list: a list of class names to run
+        """
+        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
+        start = datetime.datetime.now()
+        log.info(" Tieing properties to the class")
+        for cls_name in class_list:
+            cls_obj = getattr(rdfclass, cls_name)
+            prop_dict = dict(cls_obj.properties)
+            for prop_name, prop_obj in cls_obj.properties.items():
+                setattr(cls_obj, prop_name, link_property(prop_obj, cls_obj))
+        log.info(" Finished tieing properties in: %s",
+                 (datetime.datetime.now() - start))

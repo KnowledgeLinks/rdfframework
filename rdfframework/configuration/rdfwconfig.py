@@ -90,8 +90,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             for attr in dir(new_class):
                 if not attr.startswith("_") and attr not in self.__reserved:
                     setattr(self, attr, getattr(new_class, attr))
-        self.json_location = os.path.join(self.RDF_DEFINITION_FILE_PATH,
-                                          "json-definitions")
         self.__initialize_conns()
         self.__initialize_directories()
 
@@ -101,9 +99,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             as paramater
 
             args:
-                attr_name: The name the conncetion will be assigned in the
+                attr_name: The name the connection will be assigned in the
                     config manager
-                params: The paramaters of the connection
+                params: The paramaters of the connectionf
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
@@ -120,7 +118,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         if not conn.has_namespace(conn.namespace):
             log.warn("namespace '%s' does not exist. Creating namespace",
                      conn.namespace)
-            pdb.set_trace()
             conn.create_namespace(conn.namespace,
                                   params.get('namespace_params', {}))
         setattr(self, attr_name, conn)

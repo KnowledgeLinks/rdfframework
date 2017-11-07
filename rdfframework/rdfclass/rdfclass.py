@@ -82,12 +82,9 @@ class RdfClassMeta(Registry):
             new_def['es_defs'] = es_defs
             new_def['uri'] = Uri(name).sparql_uri
             for prop, value in props.items():
-                # new_def[prop] = rdfclass.make_property(value, prop, name)
-                new_def[prop] = value
+                new_def[prop] = rdfclass.make_property(value, prop, name)
+                # new_def[prop] = value
             if 'rdf_type' not in new_def.keys():
-                # new_def[Uri('rdf_type')] = rdfclass.make_property({},
-                #                                                   'rdf_type',
-                #                                                   name)
                 new_def[Uri('rdf_type')] = rdfclass.properties.get('rdf_type')
             new_def['cls_defs'] = cls_defs #cls_defs.pop(name)
             return new_def
@@ -110,7 +107,6 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         dataset(RdfDataset): The linked RdfDataset that this instance of a class
                              is part.
     """
-
 
     uri_format = 'sparql_uri'
 
@@ -136,9 +132,14 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             new_list.append(obj)
             self[pred] = new_list
         except KeyError:
+            try:
+                new_prop = rdfclass.properties[pred]
+            except KeyError:
+                new_prop = rdfclass.make_property({},
+                                                  pred, self.__class__.__name__)
             setattr(self,
                     pred,
-                    rdfclass.make_property({}, pred, self.__class__.__name__))
+                    new_prop)
             self[pred] = getattr(self, pred)(self, self.dataset)
             self[pred].append(obj)
 
@@ -459,8 +460,9 @@ def get_properties(cls_name):
     #              if 'rdf_Property' in value.get('rdf_type', "") or \
     #              value.get('rdfs_domain') or value.get('schema_domainIncludes')}
 
-    prop_list = {prop._prop_name: prop
-                 for prop in rdfclass.domain_props.get(cls_name, {})}
+    # prop_list = {prop._prop_name: prop
+    #              for prop in rdfclass.domain_props.get(cls_name, {})}
+    prop_list = rdfclass.domain_props.get(cls_name, {})
     return prop_list
 
 def remove_parents(bases):
