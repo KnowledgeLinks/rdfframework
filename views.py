@@ -9,12 +9,12 @@ import requests
 import cgi
 import pdb
 from flask import Flask, Blueprint, jsonify, render_template, \
-                  Response, request
+                  Response, request, session
 from flask_wtf import CsrfProtect, Form
 from wtforms.fields import TextAreaField, StringField
 from keanfunctions import EsBase, sample_data_map, sample_data_convert
 from elasticsearch import Elasticsearch
-    
+
 MODULE_NAME = os.path.basename(inspect.stack()[0][1])
 
 base_site = Blueprint("base_site", __name__,
@@ -28,7 +28,7 @@ def html_sample_data(path, data):
     html = """
             <style>
                 .even_row {
-                    background: lightgoldenrodyellow; 
+                    background: lightgoldenrodyellow;
                 }
                 td {
                     padding: 0px 20px 0px 20px
@@ -49,7 +49,7 @@ def html_sample_data(path, data):
 
 @base_site.route("/")
 def api_instructions():
-    
+
 
     warning = {"Routes": {
                     "/api/list/<es_index>/<doc_type>": get_lookup_list.__doc__}}
@@ -72,7 +72,7 @@ def api_instructions():
 
 @base_site.route("/api/search/<es_index>/<doc_type>")
 def get_lookup_list(es_index, doc_type, **kwargs):
-    ''' Returns search results based on relevancy or an ordered list of 
+    ''' Returns search results based on relevancy or an ordered list of
     items.
 
     Request Params:
@@ -83,22 +83,22 @@ def get_lookup_list(es_index, doc_type, **kwargs):
         method:     (optional)['serach','list']
                         search: (default) will return results based on relevance
                         list: a 'fields' value must be supplied
-        fields:     (optional) a CSV list of fields to return. returns the 
-                    entire document if left blank 
-        search_flds:(optional) a CSV list of fields to search. Higher relevancy 
-                    is placed on these fields. defaults to fields paramater if 
+        fields:     (optional) a CSV list of fields to return. returns the
+                    entire document if left blank
+        search_flds:(optional) a CSV list of fields to search. Higher relevancy
+                    is placed on these fields. defaults to fields paramater if
                     left blank
-        sort_dir:   (optional) the direction to sort the results. 
+        sort_dir:   (optional) the direction to sort the results.
                     ['asc','desc','none']
         sort_flds:  (optional) a CSV list of fields for sorting the results.
                     defaults to 'fields' paramater if supplied
-        filter_val: (optional) value to filter results on ***must supply a 
+        filter_val: (optional) value to filter results on ***must supply a
                     filter_fld value
-        filter_fld: (optional) the field to fileter results on *** used in 
+        filter_fld: (optional) the field to fileter results on *** used in
                     conjunction with 'filter_val'
         calc:       (optional) use '+' field_names and double quotes to add text
                     fld1 +", " + fld2 = "fld1, fld2" *** make sure the string is
-                    encoded for a url i.e. '+' is %2B 
+                    encoded for a url i.e. '+' is %2B
                     The calculated result will be in the '_calc' field
 
     Example Calls:
@@ -114,12 +114,13 @@ def get_lookup_list(es_index, doc_type, **kwargs):
             ...?method=list&fields=rdfs_label&filter_val=Cosmology&filter_fld=bf_subject.rdfs_label&sort=asc
     '''
 
-
+    print("session: ", session)
+    session['key'] = "asdfdaf"
     fields = param_list(kwargs.get("fields", request.args.get("fields")))
     search_flds = param_list(kwargs.get("search_flds",
                                         request.args.get("search_flds")))
     sort_dir = kwargs.get("", request.args.get("sort_dir"))
-    sort_fields = param_list(kwargs.get("sort_fields", 
+    sort_fields = param_list(kwargs.get("sort_fields",
                              request.args.get("sort_fields")))
     raw = kwargs.get("raw", request.args.get("raw"))
     term = kwargs.get("term", request.args.get("term"))
@@ -144,7 +145,7 @@ def get_lookup_list(es_index, doc_type, **kwargs):
                              filter_value=filter_value,
                              highlight=highlight,
                              calc=calc)
-    
+
     if request.full_path.startswith("/api/"):
         return jsonify(result)
     else:
@@ -155,12 +156,12 @@ def get_lookup_list(es_index, doc_type, **kwargs):
 @base_site.route("/api/item/<es_index>/<doc_type>/<id>")
 def get_lookup_item(es_index, doc_type, id=None, **kwargs):
     """ Returns a single item from the spedified index and doc_type
-    
+
     Request Params:
         id: the id value associated with the id_field
         id_field: the field supplying the identifier | default: _id
         output: 'json'(default) or'sample' -> sample provides an html display
-                of data with full field names.  
+                of data with full field names.
 
     Example Calls:
         Call for a document suppling only an 'id':
@@ -170,20 +171,20 @@ def get_lookup_item(es_index, doc_type, id=None, **kwargs):
 
         Call for a document keying on a different field than the id:
             /api/item/[es_index]/[doc_type]?id=0958473827&id_field=bf_hasInstance.bf_identifiedBy.value
-    
+
         Call for a document by 'id' returning with html sample:
             /api/item/[es_index]/[doc_type]/lkajflk5342509daspjfal239?output=sample
     """
-    
+
     lg = logging.getLogger("%s:%s" % (MODULE_NAME, inspect.stack()[0][3]))
-    lg.setLevel(logging.DEBUG)    
+    lg.setLevel(logging.INFO)
     output = kwargs.get("output", request.args.get("output", "json"))
 
     id_field = kwargs.get("id_field", request.args.get("id_field", "_id"))
     if id:
         item_id = id
     else:
-        item_id = kwargs.get("id", request.args.get("id"))     
+        item_id = kwargs.get("id", request.args.get("id"))
 
     search = EsBase(es_index=es_index, doc_type=doc_type)
     result = search.get_doc(id_field=id_field,
@@ -191,20 +192,20 @@ def get_lookup_item(es_index, doc_type, id=None, **kwargs):
 
     if request.full_path.startswith("/api/"):
         if output == 'sample':
-            return html_sample_data("/".join([es_index, doc_type, id]), 
+            return html_sample_data("/".join([es_index, doc_type, id]),
                     sample_data_convert(result, es_index, doc_type))
-            
+
         return jsonify(result)
     else:
         return result
-    
+
 def param_list(param, split_term=","):
     """ Takes a paramater and converts to a list or returns none.
 
     args:
         param: the parmater to change into a list
         split_term: the value to split the parameter on.
-        
+
     returns:
         None: if the param is None
         []: a list of terms
@@ -255,7 +256,7 @@ def dsltester():
         if form.index.data and form.dslbox.data:
             body=json.loads(form.dslbox.data)
             results = es.search(index=form.index.data,
-                                body=body, 
+                                body=body,
                                 doc_type= form.doc_type.data,
                                 ignore=[400, 404])
             dsl_results = json.dumps(results, indent=4)

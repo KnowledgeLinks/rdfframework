@@ -4,7 +4,7 @@ import types
 
 from rdfframework import rdfclass
 from rdfframework.utilities import find_values, make_doc_string, LABEL_FIELDS, \
-        RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS
+        RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS, pick
 from rdfframework.rdfdatatypes import BaseRdfDataType, Uri, DT_LOOKUP, BlankNode
 from rdfframework.processors import prop_processor_mapping
 from rdfframework.configuration import RdfConfigManager, RdfNsManager
@@ -27,18 +27,22 @@ class RdfPropertyMeta(type):
 
         prop_defs = kwargs.pop('prop_defs')
         prop_name = kwargs.pop('prop_name')
-        cls_name = kwargs.pop('cls_name')
+        cls_names = kwargs.pop('class_names')
         hierarchy = kwargs.pop('hierarchy')
-        if cls_name == 'RdfClassBase':
+        try:
+            cls_names.remove('RdfClassBase')
+        except ValueError:
+            pass
+        if not cls_names:
             return {}
         doc_string = make_doc_string(name,
                                      prop_defs,
                                      bases,
                                      None)
-        new_def = prepare_prop_defs(prop_defs, prop_name, cls_name)
-        new_def = filter_prop_defs(prop_defs, hierarchy, cls_name)
+        new_def = prepare_prop_defs(prop_defs, prop_name, cls_names)
+        new_def = filter_prop_defs(prop_defs, hierarchy, cls_names)
         new_def['__doc__'] = doc_string
-        new_def['_cls_name'] = cls_name
+        new_def['class_namea'] = cls_names
         new_def['_prop_name'] = prop_name
         if prop_name == 'rdf_type':
             new_def['append'] = unique_append
@@ -107,10 +111,12 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         'es_NotIndexed': False
     }
 
+
     def __init__(self, bound_class, dataset=None):
         super().__init__(self)
         self.dataset = dataset
         self.bound_class = bound_class
+        self.class_names = bound_class.class_names
         self.old_data = []
         try:
             self._run_processors(self._init_processors)
@@ -268,7 +274,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         return rtn_list
 
 
-def make_property(prop_defs, prop_name, cls_name=None, hierarchy=[]):
+def make_property(prop_defs, prop_name, cls_names=[], hierarchy=[]):
     """ Generates a property class from the defintion dictionary
 
     args:
@@ -278,11 +284,15 @@ def make_property(prop_defs, prop_name, cls_name=None, hierarchy=[]):
                   associated
     """
     register = False
-    if cls_name and cls_name != 'RdfBaseClass':
-        new_name = "%s_%s" % (prop_name, cls_name)
-        prop_defs['kds_appliesToClass'] = Uri(cls_name)
-    elif not cls_name:
-        cls_name = Uri('kdr_AllClasses')
+    try:
+        cls_names.remove('RdfClassBase')
+    except ValueError:
+        pass
+    if cls_names:
+        new_name = "%s_%s" % (prop_name, "_".join(cls_names))
+        prop_defs['kds_appliesToClass'] = cls_names
+    elif not cls_names:
+        cls_names = [Uri('kdr_AllClasses')]
         register = True
         new_name = prop_name
     else:
@@ -292,7 +302,7 @@ def make_property(prop_defs, prop_name, cls_name=None, hierarchy=[]):
                                (RdfPropertyBase, list,),
                                {'metaclass': RdfPropertyMeta,
                                 'prop_defs': prop_defs,
-                                'cls_name': cls_name,
+                                'class_names': cls_names,
                                 'prop_name': prop_name,
                                 'hierarchy': hierarchy})
     if register:
@@ -374,14 +384,14 @@ def get_idx_types(prop_name, prop_def):
         if nested:
             idx_types.append('es_Nested')
 
-def filter_prop_defs(prop_defs, hierarchy, cls_name):
+def filter_prop_defs(prop_defs, hierarchy, cls_names):
     """ Reads through the prop_defs and returns a dictionary filtered by the
         current class
 
     args:
         prop_defs: the defintions from the rdf vocabulary defintion
         cls_object: the class object to tie the property
-        cls_name: the name of the class
+        cls_names: the name of the classes
     """
 
     def _is_valid(test_list, valid_list):
@@ -399,7 +409,7 @@ def filter_prop_defs(prop_defs, hierarchy, cls_name):
         return False
 
     new_dict = {}
-    valid_classes = [Uri('kdr_AllClasses'), cls_name] + hierarchy
+    valid_classes = [Uri('kdr_AllClasses')] + cls_names + hierarchy
     for def_name, value in prop_defs.items():
         new_dict[def_name] = []
         empty_def = []
@@ -419,14 +429,14 @@ def filter_prop_defs(prop_defs, hierarchy, cls_name):
 
 
 
-def prepare_prop_defs(prop_defs, prop_name, cls_name):
+def prepare_prop_defs(prop_defs, prop_name, cls_names):
     """ Examines and adds any missing defs to the prop_defs dictionary for
         use with the RdfPropertyMeta.__prepare__ method
 
     args:
         prop_defs: the defintions from the rdf vocabulary defintion
         prop_name: the property name
-        cls_name: the name of the associated clasee
+        cls_names: the name of the associated classes
 
     returns:
         prop_defs
@@ -478,7 +488,7 @@ def prepare_prop_defs(prop_defs, prop_name, cls_name):
     required_def_defaults = {
         Uri('kds_rangeDef'): [{}],
         Uri('rdfs_range'): [Uri("xsd_string")],
-        Uri('rdfs_domain'): [Uri(cls_name)],
+        Uri('rdfs_domain'): cls_names,
         Uri('rdfs_label'): [NSM.nouri(prop_name)],
         Uri('kds_formDefault'): [{
             Uri('kds:appliesToClass'): Uri('kdr:AllClasses'),
@@ -498,7 +508,7 @@ def prepare_prop_defs(prop_defs, prop_name, cls_name):
     for prop in required_def_defaults:
         if prop not in prop_defs.keys():
             prop_defs[prop] = required_def_defaults[prop]
-    prop_defs['rdfs_domain'] = get_def(prop_defs, DOMAIN_FIELDS, Uri(cls_name))
+    prop_defs['rdfs_domain'] = get_def(prop_defs, DOMAIN_FIELDS, cls_names)
     prop_defs['rdfs_range'] = get_def(prop_defs, RANGE_FIELDS,
                                       Uri('xsd_string'))
 

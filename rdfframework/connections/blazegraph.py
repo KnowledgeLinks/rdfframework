@@ -136,7 +136,8 @@ class Blazegraph(object):
         datatype_map = {
             'ttl': 'text/turtle',
             'xml': 'application/rdf+xml',
-            'rdf': 'application/rdf+xml'
+            'rdf': 'application/rdf+xml',
+            'nt': 'text/plain'
         }
         try:
             content_type = datatype_map[datatype]

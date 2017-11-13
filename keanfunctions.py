@@ -1,5 +1,5 @@
 ''' Base class for reading and pushing to eslasticsearch'''
-    
+
 __author__="Mike Stabile, Jeremy Nelson"
 import sys
 import os
@@ -25,10 +25,10 @@ MAPPINGS = json.loads(requests.get('http://localhost:9200/_mapping').text)
 
 class EsBase():
     ''' Base elasticsearch rdfframework class for common es operations'''
-        
+
     ln = "%s:EsBase" % MODULE_NAME
-    log_level = logging.DEBUG
-        
+    log_level = logging.INFO
+
     def __init__(self, **kwargs):
         self.es_url = kwargs.get('es_url', 'http://localhost:9200')
         self.es = kwargs.get("es",Elasticsearch([self.es_url]))
@@ -38,11 +38,11 @@ class EsBase():
         self.reset_index = kwargs.get("reset_index",False)
         self.reset_doc_type = kwargs.get("reset_doc_type",False)
         self.es_mapping = kwargs.get("es_mapping")
-        
- 
+
+
     def make_action_list(self, item_list, **kwargs):
         ''' Generates a list of actions for sending to Elasticsearch '''
-        
+
         action_list = []
         es_index = get2(kwargs, "es_index", self.es_index)
         action_type = kwargs.get("action_type","index")
@@ -56,32 +56,32 @@ class EsBase():
             action = get_es_action_item(item, action_settings, doc_type, id_field)
             action_list.append(action)
         return action_list
-               
+
     def bulk_save(self, action_list, **kwargs):
         ''' sends a passed in action_list to elasticsearch '''
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
         reset_index = kwargs.get("reset_index",self.reset_index)
-        doc_type = kwargs.get("doc_type", self.doc_type)    
-             
+        doc_type = kwargs.get("doc_type", self.doc_type)
+
         lg.info("Sending %s items to Elasticsearch",len(action_list))
-        # bulk_stream = helpers.streaming_bulk(es, 
+        # bulk_stream = helpers.streaming_bulk(es,
         result = helpers.bulk(es,
-                              action_list, 
-                              chunk_size=400, 
-                              raise_on_error=False) 
-        lg.info("FINISHED sending to Elasticsearch") 
+                              action_list,
+                              chunk_size=400,
+                              raise_on_error=False)
+        lg.info("FINISHED sending to Elasticsearch")
         lg.info("Results\n%s", result)
         # for success, result in bulk_stream:
         #     lg.debug("\nsuccess: %s \nresult:\n%s", success, pp.pformat(result))
         return result
 
     def save(self, data, **kwargs):
-        """ sends a passed in action_list to elasticsearch 
+        """ sends a passed in action_list to elasticsearch
 
         args:
             data: that data dictionary to save
@@ -89,10 +89,10 @@ class EsBase():
         kwargs:
             id: es id to use / None = auto
             """
-        
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
         reset_index = kwargs.get("reset_index",self.reset_index)
@@ -113,32 +113,32 @@ class EsBase():
                                doc_type=doc_type,
                                body=data)
 
-        lg.debug("Result = \n%s",pp.pformat(result)) 
+        lg.debug("Result = \n%s",pp.pformat(result))
         return result
 
-    def _find_ids(self, 
-                  data_list, 
-                  prop, 
+    def _find_ids(self,
+                  data_list,
+                  prop,
                   lookup_index,
                   lookup_doc_type,
                   lookup_field):
         """ Reads a list of data and replaces the ids with es id of the item
-        
+
         args:
             data_list: list of items to find in replace
             prop: full prop name in es format i.e. make.id
-            lookup_src: dictionary with index doc_type ie. 
+            lookup_src: dictionary with index doc_type ie.
                 {"es_index": "reference", "doc_type": "device_make"}
-            lookup_fld: field to do the lookup against in full es naming 
+            lookup_fld: field to do the lookup against in full es naming
                 convention i.e. make.raw
         """
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)  
-        
+        lg.setLevel(self.log_level)
+
         rtn_list = []
         first_time = IsFirst()
         for item in data_list:
-            # the Dot class will retive and set dictionary values via dot 
+            # the Dot class will retive and set dictionary values via dot
             # notation
             val = Dot(item).get(prop)
             if val.startswith("#;lookup#;"):
@@ -151,38 +151,38 @@ class EsBase():
         return rtn_list
 
     def get_doc(self, item_id, id_field="_id", **kwargs):
-        """ returns a single item data record/document based on specified 
-        criteria 
-        
+        """ returns a single item data record/document based on specified
+        criteria
+
         args:
-            item_id: the id value of the desired item. Can be used in 
+            item_id: the id value of the desired item. Can be used in
                      combination with the id_field for a paired lookup.
             id_field: the field that is related to the item_id; default = '_id'
-                      **Example**: selecting a country using a different 
+                      **Example**: selecting a country using a different
                       itendifier than the record id. The United States's '_id'
-                      value is 'US' however the record can be found by 
+                      value is 'US' however the record can be found by
                       specifying item_id='USA', id_field='ISO 3166-1 A3'
         kwargs:
             used to overided any of the initialization values for the class
-        """    
-        
+        """
+
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         args = inspect.getargvalues(inspect.currentframe())[3]
         lg.debug("\n****** Args *****:\n%s",
                  pp.pformat(args))
-                 
+
         es = kwargs.get("es",self.es)
         doc_type = kwargs.get("doc_type", self.doc_type)
         if id_field == "_id":
-            lg.debug("*** _id lookup: index: %s item_id: %s", 
+            lg.debug("*** _id lookup: index: %s item_id: %s",
                      self.es_index,
                      item_id)
             result = es.get(index=self.es_index,
                             id=item_id)
         else:
-            dsl = { 
+            dsl = {
                 "query": {
                     "constant_score": {
                         "filter": {
@@ -192,29 +192,29 @@ class EsBase():
                 }
             }
             lg.debug("*** id_field lookup: index: %s item_id: %s \nDSL: %s",
-                     self.es_index, 
+                     self.es_index,
                      item_id,
                      pp.pformat(dsl))
             result = es.search(index=self.es_index,
                                doc_type=doc_type,
                                body=dsl)
             result = first(result.get("hits",{}).get("hits",[]))
-        
-        lg.debug("\tresult:\n%s", pp.pformat(result))                           
+
+        lg.debug("\tresult:\n%s", pp.pformat(result))
         return result
-        
+
     def get_list(self, method="search", **kwargs):
-        """ returns a key value list of items based on the specfied criteria 
-        
+        """ returns a key value list of items based on the specfied criteria
+
         """
 
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         args = inspect.getargvalues(inspect.currentframe())[3]
         lg.debug("\n****** Args *****:\n%s",
                  pp.pformat(args))
-        
+
         es = kwargs.get("es",self.es)
         doc_type = get2(kwargs, "doc_type", self.doc_type)
         fields = get2(kwargs, "fields")
@@ -255,28 +255,42 @@ class EsBase():
                 fields_to_search = fields
             else:
                 fields_to_search = []
-            dsl['query'] =  {
-                "bool": {
-                    "should": [
-                        {
+            # dsl['query'] =  {
+            #     "bool": {
+            #         "should": [
+            #             {
+            #                 "query_string" : {
+            #                     "query": search_term,
+            #                     "analyzer": "default",
+            #                     "analyze_wildcard": True
+            #                 }
+            #             },
+            #             {
+            #                 "query_string" : {
+            #                     "query": search_term,
+            #                     "analyzer": "default",
+            #                     "analyze_wildcard": True,
+            #                     "fields": fields_to_search,
+            #                     "boost": 10
+            #                 }
+            #             }
+            #         ]
+            #     }
+            # }
+            # dsl['query'] = {
+            #                 "query_string" : {
+            #                     "query": search_term,
+            #                     "analyzer": "default",
+            #                     "analyze_wildcard": True
+            #                 }
+            #             }
+            dsl['query'] = {
                             "query_string" : {
-                                "query": search_term,
-                                "analyzer": "default",
-                                "analyze_wildcard": True
-                            }                       
-                        },
-                        {
-                            "query_string" : {
-                                "query": search_term,
-                                "analyzer": "default",
-                                "analyze_wildcard": True,
-                                "fields": fields_to_search,
-                                "boost": 10
+                                "query": search_term
                             }
                         }
-                    ]
-                }  
-            }
+
+
         else:
             dsl['query'] = {'bool':{}}
         if filter_value:
@@ -289,7 +303,7 @@ class EsBase():
                 if filter_types[0] == 'text':
                     filter_field = "%s.%s" % (filter_field, filter_types[1])
             else:
-                return {'error': 
+                return {'error':
                         "Field %s is not filterable. Use a field that has 'keyword' or 'lower' as a mapping" % filter_field}
             dsl['query']['bool']['filter'] = {
                 "term": { filter_field: filter_value }
@@ -302,25 +316,25 @@ class EsBase():
         result = es.search(index=self.es_index,
                            size=size,
                            from_=from_,
-                           doc_type=doc_type,   
+                           doc_type=doc_type,
                            body=dsl)
         if kwargs.get("calc"):
-            result = self._calc_result(result, kwargs['calc']) 
-        lg.debug(pp.pformat(result))            
+            result = self._calc_result(result, kwargs['calc'])
+        lg.debug(pp.pformat(result))
         return result
-    
+
     def _calc_result(self, results, calc):
         """ parses the calc string and then reads the results and returns
         the new value Elasticsearch no longer allow dynamic in scripting
-        
+
         args:
             results: the list of results from Elasticsearch
             calc: the calculation sting
-        
+
         returns:
             refomated results list with calculation added to the '_calc' field
             in _source
-            
+
         examples:
             concatenation: use + field_names and double quotes to add text
                 fld1 +", " + fld2 = "fld1, fld2"
@@ -350,19 +364,19 @@ class EsBase():
                 item['_calc'] = "".join(calc_parts)
                 pdb.set_trace()
         lg.debug("calc %s", calc)
-        return results    
+        return results
 
 class IsFirst():
     ''' tracks if is the first time through a loop. class must be initialized
         outside the loop.
-        
+
         *args:
             true -> specifiy the value to return on true
             false -> specify to value to return on false    '''
-            
+
     def __init__(self):
         self.__first = True
-        
+
     def first(self, true=True, false=False):
         if self.__first == True:
             self.__first = False
@@ -371,15 +385,15 @@ class IsFirst():
             return false
 
 def get2(item, key, if_none=None, strict=True):
-    ''' similar to dict.get functionality but None value will return then 
-        if_none value 
-     
+    ''' similar to dict.get functionality but None value will return then
+        if_none value
+
     args:
         item: dictionary to search
         key: the dictionary key
         if_none: the value to return if None is passed in
         strict: if False an empty string is treated as None'''
-        
+
     if not strict and item.get(key) == "":
         return if_none
     elif item.get(key) is None:
@@ -390,12 +404,12 @@ def get2(item, key, if_none=None, strict=True):
 class Dot(object):
     """ Takes a dictionary and gets and sets values via a "." dot notation
     of the path
-    
+
     args:
         dictionary: The dictionary object
-        copy_dict: Boolean - True - (default) does a deepcopy of the dictionay 
+        copy_dict: Boolean - True - (default) does a deepcopy of the dictionay
             before returning. False - maniplutes the passed in dictionary
-            
+
     """
     def __init__(self, dictionary, copy_dict=True):
         self.obj = dictionary
@@ -404,9 +418,9 @@ class Dot(object):
 
     def get(self, prop):
         """ get the value off the passed in dot notation
-        
+
         args:
-            prop: a string of the property to retreive 
+            prop: a string of the property to retreive
                 "a.b.c" ~ dictionary['a']['b']['c']
         """
         prop_parts = prop.split(".")
@@ -420,13 +434,13 @@ class Dot(object):
 
     def set(self, prop, value):
         """ sets the dot notated property to the passed in value
-        
+
         args:
-            prop: a string of the property to retreive 
+            prop: a string of the property to retreive
                 "a.b.c" ~ dictionary['a']['b']['c']
             value: the value to set the prop object
         """
-        
+
         prop_parts = prop.split(".")
         if self.copy_dict:
             new_dict = copy.deepcopy(self.obj)
@@ -438,7 +452,7 @@ class Dot(object):
             if pointer is None and i == parts_length:
                 new_dict[part] = value
             elif pointer is None:
-                pointer = new_dict.get(part)            
+                pointer = new_dict.get(part)
             elif i == parts_length:
                 pointer[part] = value
             else:
@@ -446,9 +460,9 @@ class Dot(object):
         return new_dict
 
 def get_es_action_item(data_item, action_settings, es_type, id_field=None):
-    ''' This method will return an item formated and ready to append 
+    ''' This method will return an item formated and ready to append
         to the action list '''
-        
+
     action_item = dict.copy(action_settings)
     if id_field is not None:
         id_val = first(list(get_dict_key(data_item, id_field)))
@@ -468,7 +482,7 @@ def get_es_action_item(data_item, action_settings, es_type, id_field=None):
 
 def first(data):
     ''' returns the first item in a list and None if the list is empty '''
-    
+
     data_list = make_list(data)
     if len(data_list) > 0:
         return data_list[0]
@@ -530,7 +544,7 @@ def key_data_map(source, mapping, parent=[]):
     rtn_obj = {}
     if isinstance(source, dict):
         for key, value in source.items():
-            
+
             new_key = parent + [key]
             new_key = ".".join(new_key)
             rtn_obj.update({new_key: {'mapping':mapping.get(new_key)}})
@@ -541,13 +555,13 @@ def key_data_map(source, mapping, parent=[]):
                     rtn_obj[new_key]['data'] = "%s ...}" % str(value)[:60]
             elif isinstance(value, dict):
                 rtn_obj.update(key_data_map(value, mapping, [new_key]))
-                rtn_obj[new_key]['data'] = "%s ...}" % str(value)[:60] 
+                rtn_obj[new_key]['data'] = "%s ...}" % str(value)[:60]
             else:
                 rtn_obj[new_key]['data'] = value
     elif isinstance(source, list):
         rtn_obj.update(key_data_map(value[0], mapping, parent))
     else:
-        rtn_obj = {"".join(parent): {'data':source, 
+        rtn_obj = {"".join(parent): {'data':source,
                                      'mapping':mapping.get("".join(parent))}}
         # pdb.set_trace()
     return rtn_obj
@@ -574,7 +588,7 @@ def sample_data_map():
         sample_data = json.loads(requests.get(url).text)
         sample_data = sample_data['hits']['hits'][0]['_source']
         conv_data = key_data_map(sample_data, mapping)
-        
+
         rtn_obj[path] = [(key, str(value['mapping']), str(value['data']),) \
                          for key, value in conv_data.items()]
         rtn_obj[path].sort(key=lambda tup: es_field_sort(tup[0]))

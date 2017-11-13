@@ -117,7 +117,7 @@ class RdfPropertyFactory(RdfBaseFactory):
         prop_list = [item for item in self.defs if item.type == 'uri']
         log.debug(" creating properties ... ")
         for prop in prop_list:
-            make_property(self.defs[prop], prop, "")
+            make_property(self.defs[prop], prop, [])
         log.info(" property count: %s", len(prop_list))
 
 class RdfClassFactory(RdfBaseFactory):
