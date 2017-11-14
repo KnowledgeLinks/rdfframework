@@ -11,5 +11,6 @@ The configuartion manager is a global manager for the package
 from .rdfwconfig import RdfConfigManager
 from .namespaces import RdfNsManager
 
+
 __author__ = "Mike Stabile, Jeremy Nelson"
 __version__ = '0.0.1'

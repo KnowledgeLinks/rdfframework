@@ -47,7 +47,12 @@ class RdfBaseFactory(object):
         self.nsm = nsm
         self.def_sparql = sparql_template #
         self.cache_filepath = os.path.join(self.cfg.CACHE_DATA_PATH,
+                                           'def_files',
                                            self.cache_file)
+        if not os.path.isdir(os.path.join(self.cfg.CACHE_DATA_PATH,
+                                          'def_files')):
+            os.makedirs(os.path.join(self.cfg.CACHE_DATA_PATH,
+                                          'def_files'))
         self.get_defs(not reset)
         self.conv_defs()
         self.make()
