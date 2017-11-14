@@ -501,6 +501,9 @@ class DictClass(metaclass=DictClassMeta):
         else:
             return None
 
+    def __setitem__(self, attr, value):
+        self.__setattr__(attr, value)
+
     def __str__(self):
         return str(self.dict())
 

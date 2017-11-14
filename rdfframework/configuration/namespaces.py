@@ -229,7 +229,7 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
         """
         return self.parse_uri(value)[1]
 
-    def uri(self, value):
+    def uri(self, value, strip_iri=True):
         """ Converts py_uri or ttl uri to a http://... full uri format
 
         Args:
@@ -239,9 +239,9 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
             full uri of an abbreivated uri
         """
 
-        return self.convert_to_uri(value)
+        return self.convert_to_uri(value, strip_iri=strip_iri)
 
-    def convert_to_uri(self, value):
+    def convert_to_uri(self, value, strip_iri=True):
         ''' converts a prefixed rdf ns equivalent value to its uri form.
             If not found returns the value as is
 
@@ -253,7 +253,10 @@ class RdfNsManager(NamespaceManager, metaclass=NsmSingleton):
         parsed = self.parse_uri(str(value))
 
         try:
-            return "%s%s" % (self.ns_dict[parsed[0]], parsed[1])
+            new_uri = "%s%s" % (self.ns_dict[parsed[0]], parsed[1])
+            if not strip_iri:
+                return self.iri(new_uri)
+            return new_uri
         except KeyError:
             return self.rpyhttp(value)
 

@@ -1,6 +1,7 @@
 """ MODULE contains a Uri mapping to Rdf Property Processing class """
 
 from rdfframework.rdfdatatypes import Uri
+# from rdfframework.rdfclass import RdfClassBase
 
 class PropSingleton(type):
     """singleton class for processors that do not utilize any params  """
@@ -22,7 +23,7 @@ class AddClassProcessor(object, metaclass=PropSingleton):
         self.params = params
 
     def __call__(self, prop):
-        prop.append(prop._cls_name)
+        prop += prop.bound_class.class_names
 
 class AddClassHeirarchyProcessor(object, metaclass=PropSingleton):
     """ adds the rdf:Class heirarchy URIs to the property's list of values.

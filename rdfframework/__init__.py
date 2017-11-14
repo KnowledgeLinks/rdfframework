@@ -12,8 +12,9 @@ vocabulary.
 """
 
 # import rdfframework.rdfclass
-# import rdfframework.framework
-# import rdfframework.rdfdatasets
+# from .rdfdatasets import RdfDataset
+from .framework import RdfFramework
+
 # import rdfframework.connections
 # import rdfframework.datamergers
 # import rdfframework.configuration

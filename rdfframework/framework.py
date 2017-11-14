@@ -12,11 +12,14 @@ import operator
 import requests
 import pdb
 import rdflib
+import shutil
 
 from flask import json
-from rdfframework.utilities import render_without_request
+from rdfframework.utilities import render_without_request, list_files, DictClass
 from rdfframework.configuration import RdfConfigManager, RdfNsManager
 from rdfframework.rdfclass import RdfPropertyFactory, RdfClassFactory
+from rdfframework.rdfdatasets import RdfDataset
+from rdfframework.sparql import get_graph
 
 MODULE_NAME = os.path.basename(inspect.stack()[0][1])
 CFG = RdfConfigManager()
@@ -58,13 +61,11 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
         self.cfg = CFG
         NSM = RdfNsManager(config=CFG)
         self.root_file_path = CFG.RDF_DEFINITION_FILE_PATH
-        self._set_rdf_def_filelist()
+        self._set_datafiles()
+        self.rml = DictClass()
         # if the the definition files have been modified since the last json
         # files were saved reload the definition files
-        if kwargs.get('reset',False) or self.last_def_mod > self.last_json_mod:
-            reset = True
-        else:
-            reset = False
+        reset = kwargs.get('reset',False)
         # verify that the server core is up and running
         servers_up = True
         if kwargs.get('server_check', True):
@@ -75,12 +76,58 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
             log.info("Sever core not initialized --- Framework Not loaded")
         if servers_up:
             log.info("*** Loading Framework ***")
-            self._load_rdf_data(reset)
+            self._load_data(reset)
             RdfPropertyFactory(CFG.def_tstore, reset=reset)
             RdfClassFactory(CFG.def_tstore, reset=reset)
             log.info("*** Framework Loaded ***")
 
-    def _load_rdf_data(self, reset=False):
+    def load_rml(self, rml_name):
+        """ loads an rml mapping into memory
+
+        args:
+            rml_name(str): the name of the rml file
+        """
+        conn = CFG.rml_tstore
+        cache_path = os.path.join(CFG.CACHE_DATA_PATH, 'rml_files', rml_name)
+        if not os.path.exists(cache_path):
+            results = get_graph(NSM.uri(getattr(NSM.kdr, rml_name), False),
+                                conn)
+            with open(cache_path, "w") as file_obj:
+                file_obj.write(json.dumps(results, indent=4))
+        else:
+            results = json.loads(open(cache_path).read())
+        self.rml[rml_name] = RdfDataset(results)
+        return self.rml[rml_name]
+
+    def get_rml(self, rml_name):
+        """ returns the rml mapping RdfDataset
+
+        rml_name(str): Name of the rml mapping to retrieve
+        """
+
+        try:
+            return getattr(self, rml_name)
+        except AttributeError:
+            return self.load_rml(rml_name)
+
+
+
+    def _set_datafiles(self):
+        self.datafile_obj = {}
+
+        if CFG.def_tstore:
+            self._set_data_filelist(start_path=CFG.RDF_DEFINITION_FILE_PATH,
+                                    attr_name='def_files',
+                                    conn=CFG.def_tstore,
+                                    file_exts=['ttl', 'nt', 'xml', 'rdf'],
+                                    dir_filter=['rdfw-definitions', 'custom'])
+        if CFG.rml_tstore:
+            self._set_data_filelist(start_path=CFG.RML_DATA_PATH,
+                                    attr_name='rml_files',
+                                    conn=CFG.rml_tstore,
+                                    file_exts=['ttl', 'nt', 'xml', 'rdf'])
+
+    def _load_data(self, reset=False):
         ''' loads the RDF/turtle application data to the triplestore
 
         args:
@@ -91,55 +138,81 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
         log.setLevel(self.log_level)
+        for attr, obj in self.datafile_obj.items():
+            if reset or obj['latest_mod'] > obj['last_json_mod']:
+                conn = obj['conn']
+                sparql = "DROP ALL;"
+                if os.path.isdir(obj['cache_path']):
+                    shutil.rmtree(obj['cache_path'], ignore_errors=True)
+                os.makedirs(obj['cache_path'])
+                drop_extensions = conn.update_query(sparql)
+                rdf_resource_templates = []
+                rdf_data = []
+                for path, files in obj['files'].items():
+                    for file in files:
+                        file_path = os.path.join(path, file)
+                        data = open(file_path).read()
+                        log.info(" uploading file: %s | namespace: %s",
+                                 file,
+                                 conn.namespace)
+                        data_type = file.split('.')[-1]
+                        result = conn.load_data(data,
+                                                datatype=data_type,
+                                                graph=str(getattr(NSM.kdr,
+                                                                  file)))
+                        if result.status_code > 399:
+                            raise ValueError("Cannot load '{}' into {}".format(
+                                file_name, conn))
 
-        conn = CFG.def_tstore
-        if reset:
-            sparql = "DROP ALL;"
-            drop_extensions = conn.update_query(sparql)
-            rdf_resource_templates = []
-            rdf_data = []
-            for path, files in self.def_files.items():
-                for template in files:
-                    rdf_data.append(
-                        render_without_request(template, path))
-                    rdf_resource_templates.append({template:path})
-            # load the extensions in the triplestore
-            for i, data in enumerate(rdf_data):
-                file_name = list(rdf_resource_templates[i])[0]
-                log.info("uploading file: %s", file_name)
-                data_type = file_name.split('.')[-1]
-                result = conn.load_data(data,
-                                        datatype=data_type,
-                                        graph="kdr:%s" % file_name)
-                if result.status_code > 399:
-                    raise ValueError("Cannot load '{}' into {}".format(
-                        file_name, conn))
+    def _set_data_filelist(self,
+                           start_path,
+                           attr_name,
+                           conn,
+                           file_exts=[],
+                           dir_filter=set()):
+        ''' does a directory search for data files '''
 
-    def _set_rdf_def_filelist(self):
-        ''' does a directory search for rdf application definition files '''
+        def filter_path(filter_terms, dir_path):
+            """ sees if any of the terms are present in the path if so returns
+                True
 
-        def_files = {}
+            args:
+                filter_terms(list): terms to check
+                dir_path: the path of the directory
+            """
+            if filter_terms.intersection(set(dir_path.split(os.path.sep))):
+                return True
+            else:
+                return False
+
+        data_obj = {}
+        files_dict = {}
         latest_mod = 0
-        rdf_file_ext = ['ttl', 'nt', 'xml', 'rdf']
-        for root, dirnames, filenames in os.walk(self.root_file_path):
-            if "rdfw-definitions" in root or "custom" in root:
-                filenames = [x for x in filenames
-                             if x.split('.')[-1].lower() in rdf_file_ext]
-                def_files[root] = filenames
+        dir_filter = set(dir_filter)
+        for root, dirnames, filenames in os.walk(start_path):
+            if not dir_filter or filter_path(dir_filter, root):
+                if file_exts:
+                    filenames = [x for x in filenames
+                                 if x.split('.')[-1].lower() in file_exts]
+                files_dict[root] = filenames
                 for def_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,def_file))
                     if file_mod > latest_mod:
                         latest_mod = file_mod
-        self.last_def_mod = latest_mod
-        self.def_files = def_files
+        data_obj['latest_mod'] = latest_mod
+        data_obj['files'] = files_dict
         json_mod = 0
-        if os.path.isdir(CFG.CACHE_DATA_PATH):
-            for root, dirnames, filenames in os.walk(CFG.CACHE_DATA_PATH):
+        cache_path = os.path.join(CFG.CACHE_DATA_PATH, attr_name)
+        if cache_path:
+            for root, dirnames, filenames in os.walk(cache_path):
                 for json_file in filenames:
                     file_mod = os.path.getmtime(os.path.join(root,json_file))
                     if file_mod > json_mod:
                         json_mod = file_mod
-        self.last_json_mod = json_mod
+        data_obj['last_json_mod'] = json_mod
+        data_obj['conn'] = conn
+        data_obj['cache_path'] = cache_path
+        self.datafile_obj[attr_name] = data_obj
 
 def verify_server_core(timeout=120, start_delay=90):
     ''' checks to see if the server_core is running

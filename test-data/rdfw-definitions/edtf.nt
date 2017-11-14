@@ -1,0 +1,60 @@
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#MADSScheme> . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasMADSSchemeMember> <http://id.loc.gov/datatypes/edtf/EDTF> . 
+<http://id.loc.gov/datatypes/edtf/EDTF> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasTopMemberOfMADSScheme> <http://id.loc.gov/datatypes/edtf/EDTF> . 
+<http://id.loc.gov/datatypes/edtf/EDTF> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasTopMemberOfMADSScheme> <http://id.loc.gov/datatypes/edtf/EDTF-level0> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level0> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format - Level 0" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasTopMemberOfMADSScheme> <http://id.loc.gov/datatypes/edtf/EDTF-level1> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level1> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format - Level 1" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasTopMemberOfMADSScheme> <http://id.loc.gov/datatypes/edtf/EDTF-level2> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level2> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format - Level 2" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasMADSSchemeMember> <http://id.loc.gov/datatypes/edtf/EDTF-level2> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level2> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format - Level 2" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasMADSSchemeMember> <http://id.loc.gov/datatypes/edtf/EDTF-level0> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level0> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format - Level 0" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#hasMADSSchemeMember> <http://id.loc.gov/datatypes/edtf/EDTF-level1> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level1> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> "Extended Date/Time Format - Level 1" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2000/01/rdf-schema#label> "Extended Date/Time Format Datatypes Scheme"@en . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2000/01/rdf-schema#comment> "
+                
+<xhtml:div class=\"schemeAbout\" title=\"About EDTF Datatypes:\" property=\"rdfs:comment\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:madsrdf=\"http://www.loc.gov/mads/rdf/v1#\" xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\" xmlns:xhtml=\"http://www.w3.org/1999/xhtml\" xmlns=\"info:lc/id-data/vocabulary\">
+                  <xhtml:p>
+                    <xhtml:em>Extended Date/Time Format Datatypes Scheme</xhtml:em> collects the three 
+                        different datatypes, one each pertaining to a EDTF level.
+                    </xhtml:p>
+                </xhtml:div>
+
+              "^^<http://www.w3.org/2000/01/rdf-schema#Literal> . 
+<http://id.loc.gov/datatypes/edtf> <http://www.loc.gov/mads/rdf/v1#adminMetadata> _:bnode50datatypesedtf . 
+_:bnode50datatypesedtf <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/RecordInfo#RecordInfo> . 
+_:bnode50datatypesedtf <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "new"^^<http://www.w3.org/2001/XMLSchema#string> . 
+_:bnode50datatypesedtf <http://id.loc.gov/ontologies/RecordInfo#recordChangeDate> "2012-05-18T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> . 
+_:bnode50datatypesedtf <http://id.loc.gov/ontologies/RecordInfo#recordContentSource> <http://id.loc.gov/vocabulary/organizations/dlcmrc> . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#ConceptScheme> . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <http://id.loc.gov/datatypes/edtf/EDTF> . 
+<http://id.loc.gov/datatypes/edtf/EDTF> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> . 
+<http://id.loc.gov/datatypes/edtf/EDTF> <http://www.w3.org/2004/02/skos/core#prefLabel> "Extended Date/Time Format" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <http://id.loc.gov/datatypes/edtf/EDTF-level0> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level0> <http://www.w3.org/2004/02/skos/core#prefLabel> "Extended Date/Time Format - Level 0" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <http://id.loc.gov/datatypes/edtf/EDTF-level1> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level1> <http://www.w3.org/2004/02/skos/core#prefLabel> "Extended Date/Time Format - Level 1" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <http://id.loc.gov/datatypes/edtf/EDTF-level2> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> . 
+<http://id.loc.gov/datatypes/edtf/EDTF-level2> <http://www.w3.org/2004/02/skos/core#prefLabel> "Extended Date/Time Format - Level 2" . 
+<http://id.loc.gov/datatypes/edtf> <http://www.w3.org/2004/02/skos/core#changeNote> _:bnode83datatypesedtf . 
+_:bnode83datatypesedtf <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/vocab/changeset/schema#ChangeSet> . 
+_:bnode83datatypesedtf <http://purl.org/vocab/changeset/schema#subjectOfChange> <http://id.loc.gov/datatypes/edtf> . 
+_:bnode83datatypesedtf <http://purl.org/vocab/changeset/schema#creatorName> <http://id.loc.gov/vocabulary/organizations/dlcmrc> . 
+_:bnode83datatypesedtf <http://purl.org/vocab/changeset/schema#createdDate> "2012-05-18T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> . 
+_:bnode83datatypesedtf <http://purl.org/vocab/changeset/schema#changeReason> "new"^^<http://www.w3.org/2001/XMLSchema#string> . 

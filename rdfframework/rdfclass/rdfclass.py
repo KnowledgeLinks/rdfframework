@@ -74,15 +74,16 @@ class RdfClassMeta(Registry):
             # new_def['json_def'] = cls_defs
             new_def['hierarchy'] = list_hierarchy(name, bases)
             new_def['id'] = None
+            new_def['class_names'] = [name]
             es_defs = es_get_class_defs(cls_defs, name)
-            # if es_defs and not hasattr(bases[0], 'es_defs'):
-            #     new_def['es_defs'] = es_defs
             if hasattr(bases[0], 'es_defs'):
                 es_defs.update(bases[0].es_defs)
             new_def['es_defs'] = es_defs
             new_def['uri'] = Uri(name).sparql_uri
             for prop, value in props.items():
-                new_def[prop] = rdfclass.make_property(value, prop, name)
+                new_def[prop] = rdfclass.make_property(value,
+                                                       prop,
+                                                       new_def['class_names'])
                 # new_def[prop] = value
             if 'rdf_type' not in new_def.keys():
                 new_def[Uri('rdf_type')] = rdfclass.properties.get('rdf_type')
@@ -90,6 +91,7 @@ class RdfClassMeta(Registry):
             return new_def
         except KeyError:
             return {}
+            # return {'_cls_name': name}
 
     def __new__(mcs, name, bases, clsdict, **kwargs):
         return super().__new__(mcs, name, bases, clsdict)
@@ -107,7 +109,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         dataset(RdfDataset): The linked RdfDataset that this instance of a class
                              is part.
     """
-
+    class_names = []
     uri_format = 'sparql_uri'
 
     def __init__(self, subject=None, **kwargs):
@@ -136,7 +138,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                 new_prop = rdfclass.properties[pred]
             except KeyError:
                 new_prop = rdfclass.make_property({},
-                                                  pred, self.__class__.__name__)
+                                                  pred, self.class_names)
             setattr(self,
                     pred,
                     new_prop)
@@ -468,15 +470,18 @@ def get_properties(cls_name):
 def remove_parents(bases):
     """ removes the parent classes if one base is subclass of
         another"""
-
+    if len(bases) < 2:
+        return bases
     remove_i = []
+    bases = list(bases)
     for i, base in enumerate(bases):
         for j, other in enumerate(bases):
-            if issubclass(base, other) and j != i:
+            # print(i, j, base, other, remove_i)
+            if j != i and (issubclass(other, base) or base == other):
                 remove_i.append(i)
     remove_i = set(remove_i)
     remove_i = [i for i in remove_i]
-    remove_i.reverse()
+    remove_i.sort(reverse=True)
     for index in remove_i:
         try:
             del bases[index]

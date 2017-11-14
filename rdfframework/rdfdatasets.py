@@ -50,6 +50,10 @@ class RdfDataset(dict):
         if data:
             self.load_data(data, **kwargs)
 
+    def __repr__(self):
+        return "<Dataset([{'base_uri': '%s',\n'keys': '%s'}])>" % \
+               (self.base_uri,
+                [key.sparql for key in self.keys() if key.type != 'bnode'])
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
         """ Adds a triple to the dataset
 
@@ -272,6 +276,7 @@ class RdfDataset(dict):
                 class_types: list of class_types in the dataset
                 non_defined: list of subjects that have no defined class
         """
+        kwargs['dataset'] = self
         for class_type in class_types:
             self[class_type['s']] = self._get_rdfclass(class_type, **kwargs)\
                     (class_type, **kwargs)
@@ -319,8 +324,14 @@ class RdfDataset(dict):
                     new_class = type("_".join(class_type['o']),
                                      tuple(bases),
                                      {})
+                    # new_class = types.new_class("_".join(class_type['o']),
+                    #                             tuple(bases),
+                    #                             {'multi_class': True})
                     new_class.hierarchy = list_hierarchy(class_type['o'][0],
                                                          bases)
+                    new_class.class_names = [base.__name__ \
+                            for base in bases \
+                            if base not in [RdfClassBase, dict]]
                     return new_class
         else:
             return select_class(class_type['o'])

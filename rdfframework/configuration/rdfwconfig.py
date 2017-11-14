@@ -130,6 +130,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             self.__make_tstore_conn('data_tstore', self.DATA_TRIPLESTORE)
         if self.get('DEFINITION_TRIPLESTORE'):
             self.__make_tstore_conn('def_tstore', self.DEFINITION_TRIPLESTORE)
+        if self.get('RML_MAPS_TRIPLESTORE'):
+            self.__make_tstore_conn('rml_tstore', self.RML_MAPS_TRIPLESTORE)
         if self.get('ES_URL'):
             setattr(self, 'es_conn', Elasticsearch([self.ES_URL]))
 
