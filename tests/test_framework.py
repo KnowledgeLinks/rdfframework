@@ -1,24 +1,26 @@
-##__author__ = "Jeremy Nelson, Mike Stabile"
-##
-##import unittest
-##
-##from flask import Flask
-##from .badges.blueprint import open_badge
-##
-##app = Flask(__name__)
-##
-##app.config = {"ORGANIZATION": { "url": "http://knowledgelinks.io"},
-##              "TESTING": True,
-##              "DEBUG": True,
-##              "BASE_URL": "http://localhost:8080"}
-##app.config["TRIPLESTORE_URL"] = "{}/bigdata/sparql".format(
-##    app.config["BASE_URL"])
-##app.config["REST_URL"] = "{}/fedora/rest".format(
-##    app.config["BASE_URL"])
-##
-##app.register_blueprint(open_badge)
-##
-##class TestRdfFramework(unittest.TestCase):
+__author__ = "Jeremy Nelson, Mike Stabile"
+
+import unittest
+import rdfframework.framework as framework
+
+class TestRdfFrameworkSingleton(unittest.TestCase):
+
+    def setUp(self):
+        self.rdf_singleton = framework.RdfFrameworkSingleton("", tuple(), dict())
+
+    def test_init(self):
+        new_singleton = framework.RdfFrameworkSingleton("", tuple(), dict())
+        self.assertIsInstance(self.rdf_singleton, 
+                         framework.RdfFrameworkSingleton)
+
+    def test_call_no_CFG(self):
+        self.assertEquals(self.rdf_singleton.__call__(),
+                          __file__)
+
+    def tearDown(self):
+        pass
+    
+    
 ##
 ##    def setUp(self):
 ##        framework.current_app = app
@@ -119,3 +121,6 @@
 ##
 ##    def test__generateForms(self):
 ##        pass
+
+if __name__ == "__main__":
+    unitest.main()

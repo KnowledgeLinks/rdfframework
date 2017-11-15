@@ -27,12 +27,14 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
+        'elasticsearch',
         'flask',
         'Flask-Login',
         'Flask-WTF',
         'passlib',
         'requests',
-        'dateutils'
+        'dateutils',
+        'rdflib'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
