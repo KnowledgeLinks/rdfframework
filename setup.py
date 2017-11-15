@@ -4,8 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                             'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
-with open('VERSION') as v_fo:
-     __version__ = v_fo.read()
+__version__ = "1.0.0"
 
 from setuptools import find_packages, setup
 
