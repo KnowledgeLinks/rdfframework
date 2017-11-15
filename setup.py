@@ -1,5 +1,9 @@
-__author__ = ",".join([ "Jeremy Nelson", "Mike Stabile"])
-__license__ = "GPLv3"
+__author__ = ",".join([ "KnowledgeLinks", "Jeremy Nelson", "Mike Stabile"])
+__author_email__ = ','.join(['knowledgelinks.io@gmail.com',
+                            'jermnelson@gmail.com',
+                            'mstabile75@gmail.com'
+                            ])
+__license__ = "MIT License"
 with open('VERSION') as v_fo:
      __version__ = v_fo.read()
 
@@ -13,13 +17,13 @@ setup(
     name='rdfframework',
     version= __version__,
     author=__author__,
-    author_email= ','.join(['jermnelson@gmail.com', 
-                            'mstabile75@gmail.com',
-                            'knowledgelinks.io@gmail.com']),
-    description="Application builder for KnowledgeLinks.io RDF vocabulary.",
+    author_email= __author_email__,
+    description="Application builder for KnowledgeLinks.io RDF applications.",
     long_description=readme(),
     keywords='RDF linked data application builder',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests',
+                                    'test_data',
+                                    'old_code_for_rework']),
     include_package_data=True,
     platforms='any',
     install_requires=[
@@ -31,19 +35,23 @@ setup(
         'dateutils'
     ],
     classifiers=[
-        'Framework :: Flask',
+        "Development Status :: 4 - Beta",
         'Environment :: Console',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.4',
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Database",
+        "Topic :: Text Processing :: General",
+        "Topic :: Text Processing :: Indexing",
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application'
     ],
     url='https://github.com/KnowledgeLinks/rdfframework/tree/development',
-    test_suite='nose.collector',
-    tests_require=['nose', 'nose-cover3'],
+    # test_suite='nose.collector',
+    # tests_require=['nose', 'nose-cover3'],
     zip_safe=False
 )

@@ -1,0 +1,47 @@
+{{ prefix }}
+
+# This query will pull all of the linkers and expand the properties out for
+# each kds:srcPropUri
+
+SELECT *
+{
+    GRAPH {{ definition_graph }}
+    {
+        SELECT DISTINCT ?s ?p ?o
+        {
+          {
+            # get all of the linkers
+            ?linker a kds:PropertyLinker . 
+            # expand out of all of the properties for each kds:srcPropUri
+            ?linker kds:srcPropUri ?s .
+            ?linker ?p ?o .
+            # filter out all of the kds:srcPropUri since it is now the subject
+            filter(?p!=kds:srcPropUri)
+          } UNION {
+            # get all of the linkers
+            ?linker a kds:PropertyLinker . 
+            # expand out of all of the properties for each kds:srcPropUri
+            ?linker kds:srcPropUri ?s .
+            BIND (kds:PropertyLinker as ?o) .
+            BIND (rdf:type as ?p) .
+            ?linker ?p ?o .
+           } UNION {
+            # get all of the linkers
+            ?linker a kds:OrderedPropertyLinker . 
+            # expand out of all of the properties for each kds:srcPropUri
+            ?linker kds:srcPropUri ?s .
+            ?linker ?p ?o .
+            # filter out all of the kds:srcPropUri since it is now the subject
+            filter(?p!=kds:srcPropUri)
+          } UNION {
+            # get all of the linkers
+            ?linker a kds:OrderedPropertyLinker . 
+            # expand out of all of the properties for each kds:srcPropUri
+            ?linker kds:srcPropUri ?s .
+            BIND (kds:OrderedPropertyLinker as ?o) .
+            BIND (rdf:type as ?p) .
+            ?linker ?p ?o .
+          }
+        }
+    }
+}

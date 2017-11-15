@@ -2,8 +2,7 @@ import os
 import logging
 import inspect
 
-from rdfframework.utilities import RdfNsManager, RdfConfigManager
-from rdfframework.sparql import run_sparql_query
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
 
 MNAME = "%s.%s" % \
         (os.path.basename(os.path.split(inspect.stack()[0][1])[0]),
@@ -16,7 +15,7 @@ NSM = RdfNsManager()
 CONVERT_BN_TO_URIS = """
 DELETE {
     ?bn ?bn_p ?bn_o .
-    ?f ?fp ?bn .  
+    ?f ?fp ?bn .
 }
 INSERT {
     ?f ?fp ?id .
@@ -34,7 +33,7 @@ where
 """
 
 GET_MERGE_URIS = """
-# This groups on the object literal and concats all of the subjects that 
+# This groups on the object literal and concats all of the subjects that
 # have the same value
 
 select ?uris
@@ -72,10 +71,10 @@ WHERE
 UPDATE_OLD_OBJ_REF = """
 DELETE {
  ?s ?p ?old
-}   
+}
 INSERT {
- ?s ?p ?new 
-}  
+ ?s ?p ?new
+}
 WHERE {
   ?old kds:mergeWith ?new.
   ?s ?p ?old
@@ -84,8 +83,8 @@ WHERE {
 
 DELETE_OLD = """
 DELETE {
- ?old ?p ?o . 
-}  
+ ?old ?p ?o .
+}
 WHERE {
   ?old kds:mergeWith ?new.
   ?old ?p ?o
@@ -99,11 +98,11 @@ class SparqlMerger(object):
 
     local_filename = "owltags.ttl"
 
-    def __init__(self, tstore, uri_select_query, namespace):
-        self.tstore = tstore
+    def __init__(self, conn, uri_select_query, namespace):
+        self.conn = conn
         self.uri_select_query = uri_select_query
         self.namespace = namespace
-    
+
     def run(self):
         self.get_uris()
         self.create_same_as_file()
@@ -117,12 +116,12 @@ class SparqlMerger(object):
         lg.setLevel(self.log_level)
 
         lg.info("Converting BNs to URIs")
-        run_sparql_query(CONVERT_BN_TO_URIS,
+        self.conn.query(CONVERT_BN_TO_URIS,
                          namespace=self.namespace,
                          mode='update')
         lg.info("FINISHED converting BNs to URIs")
         lg.info("Getting URI list")
-        self.uri_list = run_sparql_query(self.uri_select_query,
+        self.uri_list = self.conn.query(self.uri_select_query,
                                          namespace=self.namespace)
 
     def create_same_as_file(self):
@@ -159,7 +158,7 @@ class SparqlMerger(object):
                                                                 new_list[0]))
 
     def send_to_tstore(self):
-        result = self.tstore.load_local_file(self.local_filename, 
+        result = self.conn.load_local_file(self.local_filename,
                                              self.namespace)
         return result
 
@@ -171,12 +170,12 @@ class SparqlMerger(object):
         lg.setLevel(self.log_level)
 
         lg.info("Updating old object references")
-        run_sparql_query(UPDATE_OLD_OBJ_REF,
+        self.conn.query(UPDATE_OLD_OBJ_REF,
                          namespace=self.namespace,
                          mode='update')
 
         lg.info("Deleting old objects")
-        run_sparql_query(DELETE_OLD,
+        self.conn.query(DELETE_OLD,
                          namespace=self.namespace,
                          mode='update')
 

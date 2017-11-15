@@ -7,7 +7,8 @@ import copy
 import types
 
 from rdfframework import rdfclass
-from rdfframework.utilities import DictClass, pp, make_list, RdfConfigManager
+from rdfframework.utilities import DictClass, pp, make_list
+from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfdatatypes import pyrdf, BaseRdfDataType, Uri
 from rdfframework.rdfclass import RdfClassBase, remove_parents, list_hierarchy
 # import rdfframework.rdfclass as rdfclass
@@ -49,8 +50,10 @@ class RdfDataset(dict):
         if data:
             self.load_data(data, **kwargs)
 
-
-
+    def __repr__(self):
+        return "<Dataset([{'base_uri': '%s',\n'keys': '%s'}])>" % \
+               (self.base_uri,
+                [key.sparql for key in self.keys() if key.type != 'bnode'])
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
         """ Adds a triple to the dataset
 
@@ -85,10 +88,10 @@ class RdfDataset(dict):
                 return
             obj = self.get(obj,obj)
         try:
-            self[sub].add_property(pred, obj, obj_method)
+            self[sub].add_property(pred, obj)
         except KeyError:
             self[sub] = RdfClassBase(sub, **kwargs)
-            self[sub].add_property(pred, obj, obj_method)
+            self[sub].add_property(pred, obj)
 
     def format(self, **kwargs):
 
@@ -205,12 +208,17 @@ class RdfDataset(dict):
         # rtn_list.sort(key=lambda tup: tup[0]+tup[1]+tup[2])
         if output:
             def size(value):
+                if len(value) > 42:
+                    value = "... %s" % value[-39:]
                 spaces = 45 - len(value)
                 return "%s%s" %(value," " * spaces)
             if output == "view":
                 print("\n".join(
                         ["%s  %s%s%s" %
-                         (i, size(trip[0].sparql), size(trip[1].sparql), trip[2].sparql)
+                         (i,
+                          size(trip[0].sparql),
+                          size(trip[1].sparql),
+                          size(trip[2].sparql))
                          for i, trip in enumerate(rtn_list)]))
         else:
             return rtn_list
@@ -268,6 +276,7 @@ class RdfDataset(dict):
                 class_types: list of class_types in the dataset
                 non_defined: list of subjects that have no defined class
         """
+        kwargs['dataset'] = self
         for class_type in class_types:
             self[class_type['s']] = self._get_rdfclass(class_type, **kwargs)\
                     (class_type, **kwargs)
@@ -315,8 +324,14 @@ class RdfDataset(dict):
                     new_class = type("_".join(class_type['o']),
                                      tuple(bases),
                                      {})
+                    # new_class = types.new_class("_".join(class_type['o']),
+                    #                             tuple(bases),
+                    #                             {'multi_class': True})
                     new_class.hierarchy = list_hierarchy(class_type['o'][0],
                                                          bases)
+                    new_class.class_names = [base.__name__ \
+                            for base in bases \
+                            if base not in [RdfClassBase, dict]]
                     return new_class
         else:
             return select_class(class_type['o'])

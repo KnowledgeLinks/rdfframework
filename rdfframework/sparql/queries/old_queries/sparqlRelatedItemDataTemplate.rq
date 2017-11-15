@@ -1,0 +1,47 @@
+{{ prefix }}
+
+SELECT DISTINCT ?s ?p ?o
+{
+	{
+		?item {{ kds_propUri }} {{ prop_value }} .
+	  	?item ?p ?o.
+	  	BIND(?item as ?s) .
+	} UNION {
+	  	?item {{ kds_propUri }} {{ prop_value }}.
+	  	?item ?p0 ?s.
+	  	?s ?p ?o .
+	  	Filter(?p0 != rdf:type).
+		Filter(isiri(?s))
+	} UNION {
+	  	?item {{ kds_propUri }} {{ prop_value }}.
+	  	?s ?p0 ?item .
+	  	?s ?p ?o .
+	  	Filter(?p0 != rdf:type).
+		Filter(isiri(?s)||isblank(?s))
+	  	Filter(?p != ?p0)
+	} UNION {
+		?item {{ kds_propUri }} {{ prop_value }}.
+		?bn ?p0 ?item .
+  		?bn ?p1 ?o1 .
+  		?s ?p2 ?bn .
+		?s ?p ?o .
+  		FILTER isblank(?bn)
+  	} UNION {
+  		?item {{ kds_propUri }} {{ prop_value }}.
+  		?o ?p0 ?item .
+		?s ?p ?o .
+	}
+	# hide all of the repository generated data
+	BIND(IF(isblank(?o),"",STR(?o)) as ?o_)
+	BIND(IF(isblank(?p),"",STR(?p)) as ?p_)
+	FILTER(!(
+		STRSTARTS(?p_, "http://fedora.info/definitions/v4/")||
+		STRSTARTS(?o_, "http://fedora.info/definitions/v4/")||
+		STRSTARTS(?o_, "http://www.w3.org/ns/ldp#Container")||
+		STRSTARTS(?o_, "http://www.jcp.org/jcr/")||
+		STRSTARTS(?p_, "http://www.w3.org/ns/ldp#Container")||
+		STRSTARTS(?p_, "http://www.w3.org/ns/ldp#RDFSource")||
+		STRSTARTS(?o_, "http://www.w3.org/ns/ldp#RDFSource")||
+		STRSTARTS(?o_, "http://www.jcp.org/jcr/")
+	))
+}

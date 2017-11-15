@@ -1,5 +1,5 @@
 """ Class for getting data mappings"""
-    
+
 __author__="Mike Stabile, Jeremy Nelson"
 import os
 import inspect
@@ -9,7 +9,8 @@ import requests
 import pdb
 import elasticsearch.exceptions as es_except
 
-from rdfframework.utilities import pp, RdfConfigManager
+from rdfframework.utilities import pp
+from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfclass import rdfclass
 from elasticsearch import Elasticsearch
 
@@ -21,17 +22,17 @@ CFG = RdfConfigManager()
 
 class EsMappings():
     """ Class for manipulating elasticsearch mappings with the rdfframework
-    
+
     attributes:
-        
+
     """
-    # setup logging for class    
+    # setup logging for class
     ln = "%s:EsMapping" % MODULE_NAME
     log_level = logging.INFO
-    
+
     es_mapping = None
     es_settings = None
-            
+
     def __init__(self, **kwargs):
         self.es_url = kwargs.get('es_url',
                                  CFG.get('ES_URL','http://localhost:9200'))
@@ -53,7 +54,7 @@ class EsMappings():
 
     @classmethod
     def list_indexes(cls):
-        """ Returns a dictionary with the key as the es_index name and the 
+        """ Returns a dictionary with the key as the es_index name and the
             object is a list of rdfclasses for that index
 
             args:
@@ -76,7 +77,7 @@ class EsMappings():
             of the mapping defined by rdf class definitions
 
             args:
-                idx_obj: Dictionary of the index and a list of rdfclasses 
+                idx_obj: Dictionary of the index and a list of rdfclasses
                          included in the mapping
         """
         idx_name = list(idx_obj)[0]
@@ -84,7 +85,7 @@ class EsMappings():
         es_map = {
             "index": idx_name,
             "body" : {
-                "mappings": {}, 
+                "mappings": {},
                 "settings": {
                     "analysis": {
                         "analyzer": {
@@ -116,14 +117,14 @@ class EsMappings():
                 reset_idx: WARNING! If True the current referenced es index
                         will be deleted destroying all data in that index in
                         elasticsearch. if False an incremented index will be
-                        created and data-migration will start from the old to 
+                        created and data-migration will start from the old to
                         the new index
         """
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-        
+
         def next_es_index_version(curr_alias):
-            """ returns the next number for a new index 
+            """ returns the next number for a new index
 
                 args:
                     alias_def: the dictionary returned by es for get alias
@@ -154,7 +155,7 @@ class EsMappings():
         self.es.indices.create(index=idx_names['new'],
                                body=es_map['body'],
                                update_all_types=True)
-        # if the index was not deleted transfer documents from old to the 
+        # if the index was not deleted transfer documents from old to the
         # new index
         if not reset_idx and self.es.indices.exists(idx_names['old']):
             url = os.path.join(self.es_url,'_reindex').replace('\\','/')
@@ -170,12 +171,12 @@ class EsMappings():
         # add the alias to the new index
         self.es.indices.put_alias(index=idx_names['new'], name=alias)
 
-        
+
     def initialize_indices(self, **kwargs):
         """ creates all the indicies that are defined in the rdf definitions
 
             kwargs:
-                action: which action is to be perfomed 
+                action: which action is to be perfomed
                         initialize: (default) tests to see if the index exisits
                                     if not creates it
                         reset: deletes all of the indexes and recreate them

@@ -25,8 +25,8 @@ logging.basicConfig(level=logging.DEBUG)
 lg_r = logging.getLogger("requests")
 lg_r.setLevel(logging.CRITICAL)
 
-from rdfframework.utilities import DataStatus, iri, pp, RdfNsManager, \
-        RdfConfigManager
+from rdfframework.utilities import DataStatus, iri, pp
+from rdfframework.configuration import RdfConfigManager, RdfNsManager
 from rdfframework.sparql import run_sparql_query, get_all_item_data
 from rdfframework.search import EsBase, EsMappings
 from rdfframework.rdfdatasets import RdfDataset
@@ -59,7 +59,7 @@ class EsRdfBulkLoader(object):
     def _index_item(self, uri, num, batch_num):
         """ queries the triplestore for an item sends it to elasticsearch """
 
-        data = RdfDataset(get_all_item_data(uri, self.namespace), 
+        data = RdfDataset(get_all_item_data(uri, self.namespace),
                           uri).base_class.es_json()
         self.batch_data[batch_num].append(data)
         self.count += 1
