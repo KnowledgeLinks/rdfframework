@@ -2,22 +2,34 @@
 the rdfframework """
 
 import pdb
+import unittest
+
 import rdfframework.rdfclass
 
-from testconfig import config
+from config import config
 from rdfframework.rdfdatatypes import rdfdatatypes as rdt, BaseRdfDataType, Uri
 from rdfframework.framework import RdfFramework
 from rdfframework.rdfdatasets import RdfDataset
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.sparql import get_all_item_data
 
-r = rdfframework.rdfclass
+class TestSetupFrameworkInitialization(unittest.TestCase):
 
-RdfFramework(reset=False, config=config)
+    def setUp(self):
+        self.r = rdfframework.rdfclass
 
-cfg = RdfConfigManager()
+        self.rdf_framework = RdfFramework(reset=False, config=config)
 
-item_uri = "<http://library.kean.edu/173849#Work>"
-conn = cfg.data_tstore
-data = get_all_item_data(item_uri, conn)
-x = RdfDataset(data, item_uri)
+        self.cfg = RdfConfigManager()
+
+        self.item_uri = "<http://library.kean.edu/173849#Work>"
+        self.conn = cfg.data_tstore
+        self.data = get_all_item_data(item_uri, conn)
+        self.x = RdfDataset(data, item_uri)
+
+    def test_init_values(self):
+        self.assertEquals(self.r, rdfframework.rdfclass)
+        self.assertIsInstance(self.rdf_framework,
+                              RdfFramework)
+        self.assertEquals(self.item_iri,
+                          "<http://library.kean.edu/173849#Work>")

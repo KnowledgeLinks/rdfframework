@@ -33,7 +33,8 @@ setup(
         'passlib',
         'requests',
         'dateutils',
-        'rdflib'
+        'rdflib',
+        'beautifulsoup4'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
