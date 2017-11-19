@@ -4,8 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
-with open('VERSION') as v_fo:
-     __version__ = v_fo.read()
+__version__ = "0.0.1"
 
 from setuptools import find_packages, setup
 
@@ -21,9 +20,7 @@ setup(
     description="Application builder for KnowledgeLinks.io RDF applications.",
     long_description=readme(),
     keywords='RDF linked data application builder',
-    packages=find_packages(exclude=['tests',
-                                    'test_data',
-                                    'old_code_for_rework']),
+    packages=find_packages(exclude=['tests']),
     include_package_data=True,
     platforms='any',
     install_requires=[
@@ -38,7 +35,8 @@ setup(
         'passlib',
         'rdflib',
         'requests',
-        'dateutils'
+        'dateutils',
+        'beautifulsoup4'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
