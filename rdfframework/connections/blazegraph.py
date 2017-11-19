@@ -5,6 +5,7 @@ import inspect
 import logging
 import json
 import requests
+import threading
 import pdb
 
 from lxml import etree
@@ -188,6 +189,7 @@ class Blazegraph(object):
                 graph: uri of the graph to load the data. Default is None
                 create_namespace: False(default) or True will create the
                         namespace if it does not exist
+                threading(bool): Whether to use threading or not
         """
 
         log = logging.getLogger("%s.%s" % (self.log_name,
@@ -225,6 +227,19 @@ class Blazegraph(object):
             path_parts.append(self.container_dir)
 
         for file in file_list:
+            if kwargs.get('threading') == True:
+                for i, subj in enumerate(results[batch_start:batch_end]):
+                th = threading.Thread(name=batch_start + i + 1,
+                                      target=self._index_item,
+                                      args=(MSN.iri(subj['s']['value']),
+                                            i+1,batch_num,))
+                th.start()
+            lg.debug(datetime.datetime.now() - self.time_start)
+            main_thread = threading.main_thread()
+            for t in threading.enumerate():
+                if t is main_thread:
+                    continue
+                t.join()
             new_path = path_parts.copy()
             new_path.append(file[1])
             params['uri'] = "file:///%s" % os.path.join(*new_path)
