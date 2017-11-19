@@ -114,12 +114,12 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         conn = vendor(local_directory=params.get("local_directory"),
                       url=params.get("url"),
                       container_dir=params.get("container_dir"),
-                      namespace=params.get("namespace"))
+                      namespace=params.get("namespace"),
+                      namespace_params=params.get('namespace_params', {}))
         if not conn.has_namespace(conn.namespace):
             log.warn("namespace '%s' does not exist. Creating namespace",
                      conn.namespace)
-            conn.create_namespace(conn.namespace,
-                                  params.get('namespace_params', {}))
+            conn.create_namespace(conn.namespace)
         setattr(self, attr_name, conn)
 
     def __initialize_conns(self):

@@ -1,7 +1,7 @@
 __author__ = ",".join([ "KnowledgeLinks", "Jeremy Nelson", "Mike Stabile"])
 __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
-                            'jermnelson@gmail.com',
-                            'mstabile75@gmail.com'
+                             'jermnelson@gmail.com',
+                             'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
 with open('VERSION') as v_fo:
@@ -27,10 +27,16 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'flask',
-        'Flask-Login',
+        'urllib3<1.22,>=1.21.1',
+        'click',
+        'elasticsearch>5.4.0,<6',
+        'elasticsearch-dsl',
+        'Flask',
         'Flask-WTF',
+        'isodate',
+        'Markdown',
         'passlib',
+        'rdflib',
         'requests',
         'dateutils'
     ],

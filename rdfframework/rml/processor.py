@@ -20,12 +20,14 @@ import requests
 
 import jsonpath_ng
 import bibcat
-from bibcat.maps import get_map
+# from bibcat.maps import get_map
+
+from rdfframework.configuration import RdfNsManager
 
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
-NS_MGR = SimpleNamespace()
+NS_MGR = RdfNsManager()
 PREFIX = None
 __version__ = bibcat.__version__
 
@@ -61,7 +63,7 @@ class Processor(object):
             self.rml.parse(data=get_map(rml_rules).decode(), format='turtle')
         # Populate Namespaces Manager
         for prefix, namespace in self.rml.namespaces():
-            setattr(NS_MGR, prefix, rdflib.Namespace(namespace))
+            NS_MGR.bind(prefix, rdflib.Namespace(namespace))
         self.output, self.source, self.triplestore_url = None, None, None
         self.parents = set()
         self.constants = dict(version=__version__)
@@ -1000,14 +1002,10 @@ WHERE {{"""
 
 def __set_prefix__():
     global PREFIX
-    PREFIX = ""
-    for row in dir(NS_MGR):
-        if row.startswith("__") or row is None:
-            continue
-        PREFIX += "PREFIX {0}: <{1}>\n".format(row, getattr(NS_MGR, row))
+    PREFIX = NS_MGR.prefix()
     return PREFIX
 
-PREFIX = __set_prefix__()
+PREFIX = NS_MGR.prefix()
 
 DEDUP_RULE = PREFIX + """
 SELECT DISTINCT ?class ?bf_match
