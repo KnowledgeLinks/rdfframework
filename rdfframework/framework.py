@@ -152,15 +152,16 @@ class RdfFramework(metaclass=RdfFrameworkSingleton):
                 for path, files in obj['files'].items():
                     for file in files:
                         file_path = os.path.join(path, file)
-                        data = open(file_path).read()
-                        log.info(" uploading file: %s | namespace: %s",
-                                 file,
-                                 conn.namespace)
-                        data_type = file.split('.')[-1]
-                        result = conn.load_data(data,
-                                                datatype=data_type,
+                        # data = open(file_path).read()
+                        # log.info(" uploading file: %s | namespace: %s",
+                        #          file,
+                        #          conn.namespace)
+                        # data_type = file.split('.')[-1]
+                        result = conn.load_data(file_path,
+                                                #datatype=data_type,
                                                 graph=str(getattr(NSM.kdr,
-                                                                  file)))
+                                                                  file)),
+                                                is_file=True)
                         if result.status_code > 399:
                             raise ValueError("Cannot load '{}' into {}".format(
                                 file_name, conn))

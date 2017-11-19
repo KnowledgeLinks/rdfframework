@@ -98,13 +98,14 @@ class Blazegraph(object):
         url = self._make_url(namespace)
         if not sparql.lower().startswith("prefix"):
             sparql = "%s\n%s" % (NSM.prefix(), sparql)
+
         if mode == "get":
             data = {"query": sparql, "format": rtn_format}
-
         elif mode == "update":
             data = {"update": sparql}
         else:
             raise NotImplementedError("'mode' != to ['get', 'update']")
+
         result = requests.post(url, data=data)
         if result.status_code == 200:
             try:
@@ -134,12 +135,13 @@ class Blazegraph(object):
         """ loads data via file stream from python to triplestore
 
         Args:
-          data: The data to load
+          data: The data or filepath to load
           datatype(['ttl', 'xml', 'rdf']): the type of data to load
           namespace: the namespace to use
           graph: the graph to load the data to.
-          is_file(False): If true python will read the data paramater as a
-              file set the datatype accordingly
+          is_file(False): If true python will read the data argument as a
+              filepath, determine the datatype from the file extension,
+              read the file and send it to blazegraph as a datastream
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
@@ -154,6 +156,7 @@ class Blazegraph(object):
         if is_file:
             datatype = data.split(os.path.extsep)[-1]
             file_name = data
+            log.debug('starting data load of %s', file_name)
             data = open(data).read()
         try:
             content_type = datatype_map[datatype]
@@ -176,11 +179,14 @@ class Blazegraph(object):
         else:
             raise SyntaxError(result.text)
 
-    def load_local_directory(self, **kwargs):
+    def load_directory(self, method='data_stream', **kwargs):
         """ Uploads data to the Blazegraph Triplestore that is stored in files
             that are in a local directory
 
             kwargs:
+                method['local', 'data_stream']: 'local' uses the container dir
+                        'data_stream': reads the file and sends it as part of
+                        http request
                 file_directory: a string path to the file directory
                 file_extensions: a list of file extensions to filter
                         example ['xml', 'rdf']. If none include all files
@@ -189,7 +195,7 @@ class Blazegraph(object):
                 graph: uri of the graph to load the data. Default is None
                 create_namespace: False(default) or True will create the
                         namespace if it does not exist
-                threading(bool): Whether to use threading or not
+                use_threading(bool): Whether to use threading or not
         """
 
         log = logging.getLogger("%s.%s" % (self.log_name,
@@ -198,13 +204,17 @@ class Blazegraph(object):
         if kwargs.get('reset') == True:
             self.reset_namespace()
         namespace = kwargs.get('namespace', self.namespace)
+        graph = kwargs.get('graph')
         time_start = datetime.datetime.now()
+        include_root = kwargs.get('include_root', False)
+        if method == 'data_stream':
+            include_root = True
         file_directory = kwargs.get('file_directory', self.local_directory)
         file_extensions = kwargs.get('file_extensions', self.default_exts)
         file_list = list_files(file_directory,
                                file_extensions,
                                kwargs.get('include_subfolders', True),
-                               include_root=kwargs.get('include_root', False),
+                               include_root=include_root,
                                root_dir=kwargs.get('root_dir',
                                                    self.local_directory))
         log.info(" starting load of '%s' files into namespace '%s'",
@@ -220,36 +230,37 @@ class Blazegraph(object):
                            "auto-create the namespace."])
             raise ValueError(msg)
         params = {}
-        if kwargs.get('graph'):
-            params['context-uri'] = kwargs['graph']
-        path_parts = []
-        if self.container_dir:
-            path_parts.append(self.container_dir)
-
         for file in file_list:
-            if kwargs.get('threading') == True:
-                for i, subj in enumerate(results[batch_start:batch_end]):
-                th = threading.Thread(name=batch_start + i + 1,
-                                      target=self._index_item,
-                                      args=(MSN.iri(subj['s']['value']),
-                                            i+1,batch_num,))
+            if kwargs.get('use_threading') == True:
+                if method == 'data_stream':
+                    th = threading.Thread(name=file[1],
+                                          target=self.load_data,
+                                          args=(file[1],
+                                                None,
+                                                namespace,
+                                                graph,
+                                                True,))
+                else:
+                    th = threading.Thread(name=file[1],
+                                          target=self.load_local_file,
+                                          args=(file[1],
+                                                namespace,
+                                                graph,))
                 th.start()
-            lg.debug(datetime.datetime.now() - self.time_start)
+            else:
+              if method == 'data_stream':
+                  self.load_data(data=file[1],
+                                 namespace=namespace,
+                                 graph=graph,
+                                 is_file=True)
+              else:
+                  self.load_local_file(file[1], namespace, graph)
+        if kwargs.get('use_threading') == True:
             main_thread = threading.main_thread()
             for t in threading.enumerate():
                 if t is main_thread:
                     continue
                 t.join()
-            new_path = path_parts.copy()
-            new_path.append(file[1])
-            params['uri'] = "file:///%s" % os.path.join(*new_path)
-            result = requests.post(url=url, params=params)
-            if result.status_code > 300:
-                log.warn(" Error loading file: %s", params['uri'])
-                raise SyntaxError(result.text)
-            log.info("loaded %s into blazegraph - %s",
-                     file[0],
-                     self.format_response(result.text))
         log.info("%s file(s) loaded in: %s",
                  len(file_list),
                  datetime.datetime.now() - time_start)
@@ -264,7 +275,7 @@ class Blazegraph(object):
             xml_json[' '] = parts[-1]
         return str(xml_json).replace("{","").replace("}","")
 
-    def load_local_file(self, file_path, namespace=None, graph=None):
+    def load_local_file(self, file_path, namespace=None, graph=None, **kwargs):
         """ Uploads data to the Blazegraph Triplestore that is stored in files
             in  a local directory
 
@@ -286,13 +297,14 @@ class Blazegraph(object):
             new_path.append(self.container_dir)
         new_path.append(file_path)
         params['uri'] = "file:///%s" % os.path.join(*new_path)
-        log.info(" loading %s into blazegraph", file_path)
+        log.debug(" loading %s into blazegraph", file_path)
         result = requests.post(url=url, params=params)
         if result.status_code > 300:
             raise SyntaxError(result.text)
-        log.info("%s file(s) loaded in: %s",
-                 1,
-                 datetime.datetime.now() - time_start)
+        log.info("loaded '%s' in time: %s blazegraph response: %s",
+                 file_path,
+                 datetime.datetime.now() - time_start,
+                 self.format_response(result.text))
         return result
 
     def has_namespace(self, namespace):

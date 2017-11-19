@@ -40,12 +40,18 @@ def list_files(file_directory,
             break
         if not include_root:
             root_str = "/".join(root.split("/")[dir_parts_len:])
-        files = [(x,
-                  os.path.join(root_str, x),
-                  os.path.getmtime(os.path.join(root, x)))
-                 for x in filenames \
-                 if "." in x \
-                 and x.split(".")[len(x.split("."))-1] in file_extensions]
+        if file_extensions:
+            files = [(x,
+                      os.path.join(root_str, x),
+                      os.path.getmtime(os.path.join(root, x)))
+                     for x in filenames \
+                     if "." in x \
+                     and x.split(".")[len(x.split("."))-1] in file_extensions]
+        else:
+            files = [(x,
+                      os.path.join(root_str, x),
+                      os.path.getmtime(os.path.join(root, x)))
+                     for x in filenames]
         rtn_list += files
         level += 1
     rtn_list.sort(key=lambda tup: tup[0], reverse=True)
