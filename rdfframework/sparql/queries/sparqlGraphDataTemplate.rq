@@ -1,6 +1,0 @@
-{{ prefix }}
-
-SELECT ?s ?p ?o
-{
-  	GRAPH {{ graph }} { ?s ?p ?o }
-}
