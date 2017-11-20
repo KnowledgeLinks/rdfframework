@@ -68,7 +68,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
     def __init__(self, obj=None):
         if obj:
-            x=y
             self.__load_config(obj)
 
     def __load_config(self, obj):

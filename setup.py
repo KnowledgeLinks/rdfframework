@@ -32,6 +32,7 @@ setup(
         'Flask-WTF',
         'isodate',
         'Markdown',
+        'lxml',
         'passlib',
         'rdflib',
         'requests',
