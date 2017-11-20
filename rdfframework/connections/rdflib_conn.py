@@ -1,4 +1,7 @@
-""" Blazegraph API for use with RDF framework """
+""" rdflib API for use with RDF framework """
+
+#! NOT WORKING AT THIS TIME
+
 import os
 import datetime
 import inspect
@@ -12,6 +15,7 @@ from lxml import etree
 from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdflib import Namespace, Graph, URIRef
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -19,33 +23,83 @@ MNAME = pyfile_path(inspect.stack()[0][1])
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
-class Blazegraph(object):
-    """ An API for interacting between a Blazegraph triplestore and the
+
+class RdflibTriplestore(metaclass=RdfLibTstoreSingelton):
+    """ psuedo triplestore functionality for managing graphs and namespaces
+        similar to a triplestore like blazegraph"""
+    namespaces = {'kb': Graph()}
+
+    def has_namespace(self, name):
+        """ sees if the namespace exists
+
+        args:
+            name(str): the name of the namespace
+
+        returns:
+            bool
+        """
+        if name in self.namespace:
+            return True
+        else:
+            return False
+
+    def create_namespace(self, name, ignore_errors=False):
+        """creates a namespace if it does not exist
+
+        args:
+            name: the name of the namespace
+            ignore_errors(bool): Will ignore if a namespace already exists or
+                    there is an error creating the namespace
+
+        returns:
+            True if created
+            False if not created
+            error if namespace already exists
+        """
+        if not self.has_namespace(name):
+            self.namespaces[name] = Graph()
+            return True
+        elif ignore_errors:
+            return True
+        else:
+            raise RuntimeError("namespace '%s' already exists" % name)
+
+    def delete_namespace(self, name, ignore_errors=False):
+        """ deletes a namespace
+
+        args:
+            name: the name of the namespace
+            ignore_errors(bool): Will ignore if a namespace doesn not exist or
+                    there is an error deleting the namespace
+
+        returns:
+            True if deleted
+            False if not deleted
+            error if namespace already exists
+        """
+        if self.has_namespace(name):
+            del self.namespaces[name]
+            return True
+        elif ignore_errors:
+            return True
+        else:
+            raise RuntimeError("namespace '%s' does not exist" % name)
+
+
+class RdfLibConn(object):
+    """ An API for interacting between rdflib python package and the
         rdfframework
 
         args:
-            url: The url to the triplestore
+            url: Not Required or relevant for rdflib
             namespace: The namespace to use
             local_directory: the path to the file data directory as python
                     reads the file path.
-            container_dir: the path to the file data directory as the docker
-                    container/Blazegraph see the file path.
+            container_dir: Not Required or relevant for rdflib
         """
-    log_name = "%s-Blazegraph" % MNAME
+    log_name = "%s-RdfLibConn" % MNAME
     log_level = logging.INFO
 
-    # maps the blazegraph paramater to the userfriendly short name
-    ns_property_map = {
-        "axioms": "com.bigdata.rdf.store.AbstractTripleStore.axiomsClass",
-        "geoSpatial": "com.bigdata.rdf.store.AbstractTripleStore.geoSpatial",
-        "isolatableIndices": "com.bigdata.rdf.sail.isolatableIndices",
-        "justify": "com.bigdata.rdf.store.AbstractTripleStore.justify",
-        "namespace": "com.bigdata.rdf.sail.namespace",
-        "quads": "com.bigdata.rdf.store.AbstractTripleStore.quads",
-        "rdr": "com.bigdata.rdf.store.AbstractTripleStore.statementIdentifiers",
-        "textIndex": "com.bigdata.rdf.store.AbstractTripleStore.textIndex",
-        "truthMaintenance": "com.bigdata.rdf.sail.truthMaintenance"
-    }
     # file externsions that contain rdf data
     default_exts = ['xml', 'rdf', 'ttl', 'gz', 'nt']
     default_ns = 'kb'
@@ -217,7 +271,6 @@ class Blazegraph(object):
             self.reset_namespace()
         namespace = kwargs.get('namespace', self.namespace)
         container_dir = kwargs.get('container_dir', self.container_dir)
-        root_dir = kwargs.get('root_dir', self.local_directory)
         graph = kwargs.get('graph')
         time_start = datetime.datetime.now()
         include_root = kwargs.get('include_root', False)
@@ -229,7 +282,8 @@ class Blazegraph(object):
                                file_extensions,
                                kwargs.get('include_subfolders', True),
                                include_root=include_root,
-                               root_dir=root_dir)
+                               root_dir=kwargs.get('root_dir',
+                                                   self.local_directory))
         log.info(" starting load of '%s' files into namespace '%s'",
                  len(file_list),
                  self.namespace)
@@ -290,16 +344,12 @@ class Blazegraph(object):
 
     def load_local_file(self, file_path, namespace=None, graph=None, **kwargs):
         """ Uploads data to the Blazegraph Triplestore that is stored in files
-            in directory that is available locally to blazegraph
+            in  a local directory
 
             args:
                 file_path: full path to the file
                 namespace: the Blazegraph namespace to load the data
                 graph: uri of the graph to load the data. Default is None
-
-            kwargs:
-                container_dir: the directory as seen by blazegraph - defaults to
-                        instance attribute if not passed
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
@@ -310,8 +360,7 @@ class Blazegraph(object):
         if graph:
             params['context-uri'] = graph
         new_path = []
-        container_dir = pick(kwargs.get('container_dir'), self.container_dir)
-        if container_dir:
+        if self.container_dir:
             new_path.append(self.container_dir)
         new_path.append(file_path)
         params['uri'] = "file:///%s" % os.path.join(*new_path)
@@ -332,27 +381,15 @@ class Blazegraph(object):
             namespace: the name of the namespace
         """
 
-        result = requests.get(self._make_url(namespace))
-        if result.status_code == 200:
-            return True
-        elif result.status_code == 404:
-            return False
+        return self.rdflib_tstore.has_namespace(namespace)
 
     def create_namespace(self, namespace=None, params=None):
         """ Creates a namespace in the triplestore
 
         args:
             namespace: the name of the namspace to create
-            params: Dictionary of Blazegraph paramaters. defaults are:
+            params: ignore in rdflib connection
 
-                    {'axioms': 'com.bigdata.rdf.axioms.NoAxioms',
-                     'geoSpatial': False,
-                     'isolatableIndices': False,
-                     'justify': False,
-                     'quads': False,
-                     'rdr': False,
-                     'textIndex': False,
-                     'truthMaintenance': False}
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
@@ -361,36 +398,9 @@ class Blazegraph(object):
         params = pick(params, self.namespace_params)
         if not namespace:
             raise ReferenceError("No 'namespace' specified")
-        _params = {'axioms': 'com.bigdata.rdf.axioms.NoAxioms',
-                   'geoSpatial': False,
-                   'isolatableIndices': False,
-                   'justify': False,
-                   'namespace': namespace,
-                   'quads': True,
-                   'rdr': False,
-                   'textIndex': False,
-                   'truthMaintenance': False}
 
-        # if self.has_namespace(namespace):
-        #     raise IOError("Namespace already exists")
-        if params:
-            _params.update(params)
-        content_type = "text/plain"
-        url = self._make_url("prepareProperties").replace("/sparql", "")
-        params = ["%s=%s" % (map_val,
-                             json.dumps(_params[map_key]).replace("\"", "")) \
-                  for map_key, map_val in self.ns_property_map.items()]
-        params = "\n".join(params)
-        result = requests.post(url=url,
-                               headers={"Content-Type": content_type},
-                               data=params)
-        data = result.text
-        content_type = "application/xml"
-        url = self._make_url("x").replace("/x/sparql", "")
-        result = requests.post(url=url,
-                               headers={"Content-Type": content_type},
-                               data=data)
-        if result.status_code == 201:
+        result = self.rdflib_tstore.create_namespace(namespace)
+        if result:
             log.warning(result.text)
             return result.text
         else:
