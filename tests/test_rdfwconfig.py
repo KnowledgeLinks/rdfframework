@@ -1,5 +1,5 @@
 import unittest
-
+import pdb
 import rdfframework.configuration.rdfwconfig as configuration
 
 class TestConfigSingleton(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestConfigSingleton(unittest.TestCase):
     def test_init(self):
         new_config = configuration.ConfigSingleton("", tuple(), dict())
         self.assertIsInstance(
-            new_config, 
+            new_config,
             configuration.ConfigSingleton)
 
     def tearDown(self):
@@ -44,6 +44,9 @@ class TestRdfConfigManagerInitSimpleConfig(unittest.TestCase):
     def test_simple_config(self):
         config_mgr = configuration.RdfConfigManager(self.config)
         self.assert_(config_mgr.base_url)
-        
+
     def tearDown(self):
-        pass
+        for key, instance in configuration.ConfigSingleton._instances.items():
+                del instance
+        configuration.ConfigSingleton._instances = {}
+
