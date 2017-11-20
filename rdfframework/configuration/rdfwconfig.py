@@ -68,6 +68,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
     def __init__(self, obj=None):
         if obj:
+            x=y
             self.__load_config(obj)
 
     def __load_config(self, obj):
@@ -126,13 +127,17 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         """ Reads the loaded config and creates the defined database
             connections"""
 
-        if self.get('DATA_TRIPLESTORE'):
+        if self.get('DATA_TRIPLESTORE') and \
+                not isinstance(self.get('DATA_TRIPLESTORE'), EmptyDot):
             self.__make_tstore_conn('data_tstore', self.DATA_TRIPLESTORE)
-        if self.get('DEFINITION_TRIPLESTORE'):
+        if self.get('DEFINITION_TRIPLESTORE') and \
+                not isinstance(self.get('DEFINITION_TRIPLESTORE'), EmptyDot):
             self.__make_tstore_conn('def_tstore', self.DEFINITION_TRIPLESTORE)
-        if self.get('RML_MAPS_TRIPLESTORE'):
+        if self.get('RML_MAPS_TRIPLESTORE') and \
+                not isinstance(self.get('RML_MAPS_TRIPLESTORE'), EmptyDot):
             self.__make_tstore_conn('rml_tstore', self.RML_MAPS_TRIPLESTORE)
-        if self.get('ES_URL'):
+        if self.get('ES_URL') and \
+                not isinstance(self.get('ES_URL'), EmptyDot):
             setattr(self, 'es_conn', Elasticsearch([self.ES_URL]))
 
     def __initialize_directories(self):
