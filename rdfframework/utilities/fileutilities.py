@@ -24,6 +24,10 @@ def list_files(file_directory,
                 ['xml', 'rdf']. If none include all files
         include_subfolders: as implied
         include_root: whether to include the root in the path
+        root_dir: the root directory to remove if include_root is False
+
+    returns:
+        (tuple) (file_name, file_path_with_root_mod, modified_time, full_path)
     '''
 
     log = logging.getLogger("%s" % (inspect.stack()[0][3]))
@@ -32,25 +36,30 @@ def list_files(file_directory,
     rtn_list = []
     if not root_dir:
         root_dir = file_directory
-    dir_parts_len = len(root_dir.split("/"))
+    root_dir = root_dir.strip()
+    if root_dir.endswith(os.path.sep):
+        root_dir = root_dir.strip()[:-1]
+    dir_parts_len = len(root_dir.split(os.path.sep))
     level = 0
     for root, dirnames, filenames in os.walk(file_directory):
         root_str = root
         if level > 0 and not include_subfolders:
             break
         if not include_root:
-            root_str = "/".join(root.split("/")[dir_parts_len:])
+            root_str = os.path.sep.join(root.split(os.path.sep)[dir_parts_len:])
         if file_extensions:
             files = [(x,
                       os.path.join(root_str, x),
-                      os.path.getmtime(os.path.join(root, x)))
+                      os.path.getmtime(os.path.join(root, x)),
+                      os.path.join(root, x))
                      for x in filenames \
                      if "." in x \
                      and x.split(".")[len(x.split("."))-1] in file_extensions]
         else:
             files = [(x,
                       os.path.join(root_str, x),
-                      os.path.getmtime(os.path.join(root, x)))
+                      os.path.getmtime(os.path.join(root, x)),
+                      os.path.join(root, x))
                      for x in filenames]
         rtn_list += files
         level += 1
