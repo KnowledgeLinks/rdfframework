@@ -610,3 +610,6 @@ def make_class(obj, debug=False):
 class EmptyDot():
     def __getattr__(self, attr):
         return EmptyDot()
+
+    def __repr__(self):
+        return ""

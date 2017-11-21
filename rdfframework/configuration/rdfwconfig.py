@@ -29,7 +29,6 @@ class ConfigSingleton(type):
                 config = kwargs['config']
             if config:
                 cls._instances[cls]._RdfConfigManager__load_config(config) # pylint: disable=W0212
-                cls._instances[cls].is_initialized = True
         return cls._instances[cls]
 
 def initialized(func):
@@ -68,7 +67,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
     def __init__(self, obj=None):
         if obj:
-            x=y
             self.__load_config(obj)
 
     def __load_config(self, obj):
@@ -80,6 +78,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         """
         if self.is_initialized:
             raise ImportError("RdfConfigManager has already been initialized")
+
         for attr in dir(self):
             if not attr.startswith("_") and attr not in self.__reserved:
                 try:
@@ -91,6 +90,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             for attr in dir(new_class):
                 if not attr.startswith("_") and attr not in self.__reserved:
                     setattr(self, attr, getattr(new_class, attr))
+        self.is_initialized = True
         self.__initialize_conns()
         self.__initialize_directories()
 
@@ -126,18 +126,13 @@ class RdfConfigManager(metaclass=ConfigSingleton):
     def __initialize_conns(self):
         """ Reads the loaded config and creates the defined database
             connections"""
-
-        if self.get('DATA_TRIPLESTORE') and \
-                not isinstance(self.get('DATA_TRIPLESTORE'), EmptyDot):
+        if self.get('DATA_TRIPLESTORE'):
             self.__make_tstore_conn('data_tstore', self.DATA_TRIPLESTORE)
-        if self.get('DEFINITION_TRIPLESTORE') and \
-                not isinstance(self.get('DEFINITION_TRIPLESTORE'), EmptyDot):
+        if self.get('DEFINITION_TRIPLESTORE'):
             self.__make_tstore_conn('def_tstore', self.DEFINITION_TRIPLESTORE)
-        if self.get('RML_MAPS_TRIPLESTORE') and \
-                not isinstance(self.get('RML_MAPS_TRIPLESTORE'), EmptyDot):
+        if self.get('RML_MAPS_TRIPLESTORE'):
             self.__make_tstore_conn('rml_tstore', self.RML_MAPS_TRIPLESTORE)
-        if self.get('ES_URL') and \
-                not isinstance(self.get('ES_URL'), EmptyDot):
+        if self.get('ES_URL'):
             setattr(self, 'es_conn', Elasticsearch([self.ES_URL]))
 
     def __initialize_directories(self):
@@ -156,13 +151,15 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                              "Creating directory!")
                     os.makedirs(path)
 
-    @initialized
     def __repr__(self):
-        return "<%s.%s object at %s> (\n%s)" % (self.__class__.__module__,
-                                                self.__class__.__name__,
-                                                hex(id(self)),
-                                                pp.pformat( \
-                                                        DictClass(self).dict()))
+        if self.is_initialized:
+            return "<%s.%s object at %s> (\n%s)" % (self.__class__.__module__,
+                                                    self.__class__.__name__,
+                                                    hex(id(self)),
+                                                    pp.pformat( \
+                                                    DictClass(self).dict()))
+        else:
+            return "<RdfConfigManager has not been initialized>"
 
     @initialized
     def __getattr__(self, attr):
