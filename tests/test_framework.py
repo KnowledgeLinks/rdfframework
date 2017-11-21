@@ -26,7 +26,7 @@ class TestRdfFramework(unittest.TestCase):
         self.assertRaises(OSError, framework.RdfFramework)
 
     def tearDown(self):
-        pass    
+        pass
 
 if __name__ == "__main__":
     unitest.main()

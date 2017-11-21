@@ -14,7 +14,10 @@ class TestConfigSingleton(unittest.TestCase):
             configuration.ConfigSingleton)
 
     def tearDown(self):
-        pass
+        for key, instance in configuration.ConfigSingleton._instances.items():
+                del instance
+        configuration.ConfigSingleton._instances = {}
+
 
 
 class TestRdfConfigManagerInitialization(unittest.TestCase):
@@ -43,10 +46,12 @@ class TestRdfConfigManagerInitSimpleConfig(unittest.TestCase):
 
     def test_simple_config(self):
         config_mgr = configuration.RdfConfigManager(self.config)
-        self.assert_(config_mgr.base_url)
+        self.assertEqual(
+            config_mgr.base_url, 
+            self.config.get("base_url"))
 
     def tearDown(self):
-        for key, instance in configuration.ConfigSingleton._instances.items():
-                del instance
-        configuration.ConfigSingleton._instances = {}
+        pass
 
+if __name__ == '__main__':
+    unittest.main()
