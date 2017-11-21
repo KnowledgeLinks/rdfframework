@@ -5,7 +5,7 @@ import rdfframework.configuration.rdfwconfig as configuration
 class TestConfigSingleton(unittest.TestCase):
 
     def setUp(self):
-        pass
+        configuration.ConfigSingleton._instances = {}
 
     def test_init(self):
         new_config = configuration.ConfigSingleton("", tuple(), dict())
@@ -14,8 +14,6 @@ class TestConfigSingleton(unittest.TestCase):
             configuration.ConfigSingleton)
 
     def tearDown(self):
-        for key, instance in configuration.ConfigSingleton._instances.items():
-                del instance
         configuration.ConfigSingleton._instances = {}
 
 
@@ -23,6 +21,7 @@ class TestConfigSingleton(unittest.TestCase):
 class TestRdfConfigManagerInitialization(unittest.TestCase):
 
     def setUp(self):
+        configuration.RdfConfigManager.clear()
         self.config_mgr = configuration.RdfConfigManager()
 
     def test_init_no_params(self):
@@ -41,13 +40,14 @@ class TestRdfConfigManagerInitialization(unittest.TestCase):
 class TestRdfConfigManagerInitSimpleConfig(unittest.TestCase):
 
     def setUp(self):
+        configuration.RdfConfigManager.clear()
         self.config = {"base_url": "http://example.org/"}
 
 
     def test_simple_config(self):
         config_mgr = configuration.RdfConfigManager(self.config)
         self.assertEqual(
-            config_mgr.base_url, 
+            config_mgr.base_url,
             self.config.get("base_url"))
 
     def tearDown(self):

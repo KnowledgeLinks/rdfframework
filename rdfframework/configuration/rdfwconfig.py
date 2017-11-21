@@ -31,6 +31,9 @@ class ConfigSingleton(type):
                 cls._instances[cls]._RdfConfigManager__load_config(config) # pylint: disable=W0212
         return cls._instances[cls]
 
+    def clear(cls):
+        cls._instances = {}
+
 def initialized(func):
     """ decorator for testing if the configmanager has been initialized
         prior to calling any attribute """
@@ -65,9 +68,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
     is_initialized = False
     locked = False
 
-    def __init__(self, obj=None):
-        if obj:
-            self.__load_config(obj)
+    def __init__(self, config=None):
+        if config:
+            self.__load_config(config)
 
     def __load_config(self, obj):
         """ Reads a python config file and adds that values as attributes to
@@ -176,8 +179,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
     @initialized
     def __str__(self):
-        return str(self.dict())
-
+        try:
+            return str(self.dict())
+        except TypeError:
+            return ""
 
     def __setattr__(self, attr, value, override=False):
         if self.is_initialized and self.locked:
@@ -229,3 +234,11 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             if not attr.startswith("_") and attr not in self.__reserved:
                 return_list.append((attr, getattr(self, attr)))
         return return_list
+
+    # def __del__(self):
+    #     try:
+    #         print ("deleting ", self)
+    #     except TypeError:
+    #         print ("deleting RdfConfigManager")
+    #     except:
+    #         pdb.set_trace()
