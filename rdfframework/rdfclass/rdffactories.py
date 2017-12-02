@@ -12,11 +12,11 @@ from hashlib import sha1
 
 from rdfframework.utilities import render_without_request, make_list, \
         pyfile_path, pp, RDF_CLASSES, INFERRED_CLASS_PROPS
-from rdfframework.rdfdatatypes import BaseRdfDataType, pyrdf, Uri
+from rdfframework.datatypes import BaseRdfDataType, pyrdf, Uri, RdfNsManager
 from rdfframework.rdfdatasets import RdfDataset
 from rdfframework.rdfclass import RdfClassBase, make_property, link_property
 from rdfframework import rdfclass
-from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdfframework.configuration import RdfConfigManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 

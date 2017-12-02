@@ -1,6 +1,6 @@
 """ MODULE contains a Uri mapping to Rdf Property Processing class """
 
-from rdfframework.rdfdatatypes import Uri
+from rdfframework.datatypes import Uri
 # from rdfframework.rdfclass import RdfClassBase
 
 class PropSingleton(type):

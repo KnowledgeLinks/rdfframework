@@ -1,5 +1,6 @@
 __author__ = "Mike Stabile"
 
+from .metaclasses import *
 from .rdfvocabcorrelations import *
 from .codetimer import *
 from .debug import *

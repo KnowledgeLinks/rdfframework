@@ -5,9 +5,10 @@ import types
 from rdfframework import rdfclass
 from rdfframework.utilities import find_values, make_doc_string, LABEL_FIELDS, \
         RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS, pick
-from rdfframework.rdfdatatypes import BaseRdfDataType, Uri, DT_LOOKUP, BlankNode
+from rdfframework.datatypes import BaseRdfDataType, Uri, DT_LOOKUP, BlankNode, \
+        RdfNsManager
 from rdfframework.processors import prop_processor_mapping
-from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdfframework.configuration import RdfConfigManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 

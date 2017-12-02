@@ -32,6 +32,24 @@ ENV = Environment(loader=FileSystemLoader(
     [os.path.join(FRAMEWORK_BASE, "sparql", "queries"),
      os.path.join(FRAMEWORK_BASE, "turtle")]))
 
+class memorize():
+    def __init__(self, function):
+        self.function = function
+        self.memorized = {}
+
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.memorized[args]
+        except KeyError:
+            self.memorized[args] = self.function(*args, **kwargs)
+            return self.memorized[args]
+        except TypeError:
+            try:
+                return self.memorized[str(args)]
+            except KeyError:
+                self.memorized[str(args)] = self.function(*args, **kwargs)
+                return self.memorized[str(args)]
+
 def pyfile_path(path):
     """ converst a file path argment to the is path within the framework
 

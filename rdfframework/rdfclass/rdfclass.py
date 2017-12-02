@@ -5,8 +5,8 @@ from hashlib import sha1
 
 from rdfframework import rdfclass
 from rdfframework.utilities import LABEL_FIELDS, VALUE_FIELDS, make_doc_string
-from rdfframework.rdfdatatypes import BaseRdfDataType, Uri, BlankNode
-from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, RdfNsManager
+from rdfframework.configuration import RdfConfigManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 

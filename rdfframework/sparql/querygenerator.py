@@ -6,7 +6,7 @@ import pdb
 
 
 from rdfframework.utilities import render_without_request
-from rdfframework.configuration import RdfNsManager
+from rdfframework.datatypes import RdfNsManager
 
 NSM = RdfNsManager()
 DEBUG = True

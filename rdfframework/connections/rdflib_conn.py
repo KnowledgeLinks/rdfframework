@@ -14,7 +14,8 @@ import pdb
 from lxml import etree
 from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
-from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdfframework.configuration import RdfConfigManager
+from rdfframework.datatypes import RdfNsManager
 from rdflib import Namespace, Graph, URIRef
 
 __author__ = "Mike Stabile, Jeremy Nelson"

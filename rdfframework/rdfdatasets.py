@@ -9,7 +9,7 @@ import types
 from rdfframework import rdfclass
 from rdfframework.utilities import DictClass, pp, make_list
 from rdfframework.configuration import RdfConfigManager
-from rdfframework.rdfdatatypes import pyrdf, BaseRdfDataType, Uri
+from rdfframework.datatypes import pyrdf, BaseRdfDataType, Uri
 from rdfframework.rdfclass import RdfClassBase, remove_parents, list_hierarchy
 # import rdfframework.rdfclass as rdfclass
 CFG = RdfConfigManager()

@@ -16,10 +16,11 @@ import shutil
 
 from flask import json
 from rdfframework.utilities import render_without_request, list_files, DictClass
-from rdfframework.configuration import RdfConfigManager, RdfNsManager
+from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfclass import RdfPropertyFactory, RdfClassFactory
 from rdfframework.rdfdatasets import RdfDataset
 from rdfframework.sparql import get_graph
+from rdfframework.datatypes import RdfNsManager
 
 MODULE_NAME = os.path.basename(inspect.stack()[0][1])
 CFG = RdfConfigManager()
