@@ -106,7 +106,7 @@ class BaseRdfDataType(object, metaclass=InstanceCheckMeta):
         return rdflib.Literal(self.value)
 
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=1000)
 class Uri(BaseRdfDataType, str, metaclass=PerformanceMeta):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"

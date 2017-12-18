@@ -36,19 +36,35 @@ class memorize():
     def __init__(self, function):
         self.__wrapped__ = function
         self.memorized = {}
+        self.__len = 0
+        self.lastused = []
+        self.full = False
+
+    def pop_first_used(self):
+        if self.full or self.__len > 10000:
+            self.full = True
+            key = self.lastused.pop(0)
+            del self.memorized[key]
+            return
+        self.__len += 1
 
     def __call__(self, *args, **kwargs):
         try:
             return self.memorized[args]
         except KeyError:
             self.memorized[args] = self.__wrapped__(*args, **kwargs)
+            self.lastused.append(args)
+            self.pop_first_used()
             return self.memorized[args]
         except TypeError:
             try:
                 return self.memorized[str(args)]
             except KeyError:
-                self.memorized[str(args)] = self.__wrapped__(*args, **kwargs)
-                return self.memorized[str(args)]
+                nargs = str(args)
+                self.memorized[nargs] = self.__wrapped__(*args, **kwargs)
+                self.lastused.append(nargs)
+                self.pop_first_used()
+                return self.memorized[nargs]
 
 def pyfile_path(path):
     """ converst a file path argment to the is path within the framework

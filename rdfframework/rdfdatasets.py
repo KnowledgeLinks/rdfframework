@@ -494,7 +494,7 @@ PARAM_LOOKUP = {"limit": ListLimiter,
                 "stripend": StripEnd,
                 "distinct": MakeDistinct}
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=1000)
 def parse_json_qry(qry_str):
     """ Parses a json query string into its parts
 

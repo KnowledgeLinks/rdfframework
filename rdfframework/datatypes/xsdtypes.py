@@ -2,6 +2,7 @@ import inspect
 import functools
 import pdb
 import rdflib
+import json
 
 from decimal import Decimal
 from rdfframework.utilities import cbool, new_id, PerformanceMeta, memorize
@@ -40,6 +41,9 @@ class BlankNode(BaseRdfDataType, metaclass=PerformanceMeta):
 
     def __str__(self):
         return self.value[2:]
+
+    def __eq__(self, other):
+        return self.value == other.value
 
     @property
     def rdflib(self):
@@ -363,6 +367,24 @@ for xsd_class in xsd_class_list:
         DT_LOOKUP[xsd_class.datatype] = xsd_class
     DT_LOOKUP[xsd_class] = xsd_class
 
+def hash_dict(func):
+    """Transform mutable dictionnary
+    Into immutable
+    Useful to be compatible with cache
+    """
+    class HDict(dict):
+        def __hash__(self):
+            return hash(str(self))
+
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        args = tuple([HDict(arg) if isinstance(arg, dict) else arg for arg in args])
+        kwargs = {k: HDict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        return func(*args, **kwargs)
+    return wrapped
+
+# @hashable_lru
+# @hash_dict
 # @functools.lru_cache(maxsize=None)
 @memorize
 def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
@@ -374,9 +396,8 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
             datatype: "xsd:string", "xsd:int" , etc
     """
     try:
-        if isinstance(value, BaseRdfDataType):
-            return value
-        elif isinstance(value, dict):
+
+        if isinstance(value, dict):
             # test to see if the type is a literal, a literal will have a another
             # dictionary key call datatype. Feed the datatype to the lookup to
             # return the value else convert it to a XsdString
@@ -397,6 +418,8 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
                         return rtn_val
             else:
                 return DT_LOOKUP[value['type']](value['value'])
+        elif isinstance(value, BaseRdfDataType):
+            return value
         else:
             return DT_LOOKUP[type(value)](value)
     except:
