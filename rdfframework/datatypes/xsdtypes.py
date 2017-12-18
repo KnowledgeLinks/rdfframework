@@ -1,8 +1,10 @@
 import inspect
 import functools
+import pdb
+import rdflib
 
 from decimal import Decimal
-from rdfframework.utilities import cbool, new_id, PerformanceMeta
+from rdfframework.utilities import cbool, new_id, PerformanceMeta, memorize
 from dateutil.parser import parse
 from datetime import date, datetime, time, timezone
 from .namespaces import Uri, BaseRdfDataType, PERFORMANCE_ATTRS
@@ -32,6 +34,17 @@ class BlankNode(BaseRdfDataType, metaclass=PerformanceMeta):
 
     def __hash__(self):
         return self.hash_val
+
+    def __repr__(self):
+        return  self.value
+
+    def __str__(self):
+        return self.value[2:]
+
+    @property
+    def rdflib(self):
+        """ Returns the rdflibURI reference """
+        return rdflib.BNode(self.value[2:])
 
 class XsdString(str, BaseRdfDataType):
     """ String instance of rdf xsd:string type value"""
@@ -339,9 +352,9 @@ for xsd_class in xsd_class_list:
     for attr in attr_list:
         if hasattr(xsd_class, attr):
             DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
-        elif hasattr(xsd_class, 'function') and \
-                hasattr(xsd_class.function, attr):
-            DT_LOOKUP[getattr(xsd_class.function, attr)] = xsd_class
+        elif hasattr(xsd_class, '__wrapped__') and \
+                hasattr(xsd_class.__wrapped__, attr):
+            DT_LOOKUP[getattr(xsd_class.__wrapped__, attr)] = xsd_class
     if hasattr(xsd_class, "datatype"):
         DT_LOOKUP[xsd_class.datatype.sparql] = xsd_class
         DT_LOOKUP[xsd_class.datatype.sparql_uri] = xsd_class
@@ -350,7 +363,8 @@ for xsd_class in xsd_class_list:
         DT_LOOKUP[xsd_class.datatype] = xsd_class
     DT_LOOKUP[xsd_class] = xsd_class
 
-@functools.lru_cache(maxsize=None)
+# @functools.lru_cache(maxsize=None)
+@memorize
 def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
     """ Coverts an input to one of the rdfdatatypes classes
 
@@ -359,31 +373,35 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
             class_type: "literal", "uri" or "blanknode"
             datatype: "xsd:string", "xsd:int" , etc
     """
-    if isinstance(value, BaseRdfDataType):
-        return value
-    elif isinstance(value, dict):
-        # test to see if the type is a literal, a literal will have a another
-        # dictionary key call datatype. Feed the datatype to the lookup to
-        # return the value else convert it to a XsdString
-        if value.get('type') == "literal":
-            if not value.get("datatype"):
-                return XsdString(value['value'])
+    try:
+        if isinstance(value, BaseRdfDataType):
+            return value
+        elif isinstance(value, dict):
+            # test to see if the type is a literal, a literal will have a another
+            # dictionary key call datatype. Feed the datatype to the lookup to
+            # return the value else convert it to a XsdString
+            if value.get('type') == "literal":
+                if not value.get("datatype"):
+                    return XsdString(value['value'])
+                else:
+                    try:
+                        if value.get("lang"):
+                            # The lang keyword only applies to XsdString types
+                            return DT_LOOKUP[value['datatype']](value['value'],
+                                    lang=value.get("lang"))
+                        else:
+                            return DT_LOOKUP[value['datatype']](value['value'])
+                    except:
+                        rtn_val = BaseRdfDataType(value['value'])
+                        rtn_val.datatype = Uri(value['datatype'])
+                        return rtn_val
             else:
-                try:
-                    if value.get("lang"):
-                        # The lang keyword only applies to XsdString types
-                        return DT_LOOKUP[value['datatype']](value['value'],
-                                lang=value.get("lang"))
-                    else:
-                        return DT_LOOKUP[value['datatype']](value['value'])
-                except:
-                    rtn_val = BaseRdfDataType(value['value'])
-                    rtn_val.datatype = Uri(value['datatype'])
-                    return rtn_val
+                return DT_LOOKUP[value['type']](value['value'])
         else:
-            return DT_LOOKUP[value['type']](value['value'])
-    else:
-        return DT_LOOKUP[type(value)](value['value'])
+            return DT_LOOKUP[type(value)](value)
+    except:
+        pdb.set_trace()
+        pass
 """
 #! To be implemented
 

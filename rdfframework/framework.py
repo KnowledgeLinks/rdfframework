@@ -33,7 +33,8 @@ class RdfFrameworkSingleton(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
         if not CFG.is_initialized:
-            print("The RdfConfigManager has not been initialized!")
+            # print("The RdfConfigManager has not been initialized!")
+            pass
         if cls not in cls._instances:
             cls._instances[cls] = super(RdfFrameworkSingleton,
                     cls).__call__(*args, **kwargs)

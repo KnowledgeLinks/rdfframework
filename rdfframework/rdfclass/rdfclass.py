@@ -118,6 +118,14 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         self._initilize_props()
         self._set_subject(subject)
 
+    def __hash__(self):
+        return hash(self.subject)
+
+    def __eq__(self, other):
+        if self.subject == other:
+            return True
+        return False
+
     def add_property(self, pred, obj):
         """ adds a property and its value to the class instance
 
@@ -368,7 +376,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             """ test to see if the value is a uri or bnode
 
             Returns: Uri or Bnode """
-            if not isinstance(value, (Uri.function, BlankNode)):
+            if not isinstance(value, (Uri.__wrapped__, BlankNode)):
                 if value.startswith("_:"):
                     return BlankNode(value)
                 else:
@@ -408,6 +416,18 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                         self['rdf_type'].append(base_name)
         except (AttributeError, TypeError):
             pass
+
+    @property
+    def sparql(self):
+        return self.subject.sparql
+
+    @property
+    def rdflib(self):
+        return self.subject.rdflib
+
+    @property
+    def sparql_uri(self):
+        return self.subject.sparql_uri
 
 def print_doc(self=None):
     """ simple function for print the classes docstring. Used for assigning

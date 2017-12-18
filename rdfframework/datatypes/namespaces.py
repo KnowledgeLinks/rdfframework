@@ -6,6 +6,7 @@ import logging
 import binascii
 import base64
 import functools
+import rdflib
 
 # from decimal import Decimal
 from rdfframework.utilities import cbool, is_not_null, DictClass, new_id, \
@@ -15,7 +16,7 @@ from rdfframework.utilities import cbool, is_not_null, DictClass, new_id, \
 from .datatypeerrors import NsPrefixExistsError, NsUriExistsError, \
         NsUriBadEndingError
 from .uriformatters import http_formatter, uri_formatter, ttl_formatter, \
-        pyuri_formatter
+        pyuri_formatter, rdflib_formatter
 
 import base64
 
@@ -77,6 +78,9 @@ class BaseRdfDataType(object, metaclass=InstanceCheckMeta):
     def __repr__(self):
         return self._format(method=self.default_method)
 
+    def __str__(self):
+        return str(self.value)
+
     @property
     def sparql(self):
         return self._format(method="sparql")
@@ -97,9 +101,13 @@ class BaseRdfDataType(object, metaclass=InstanceCheckMeta):
     def to_json(self):
         return self._format(method="json")
 
+    @property
+    def rdflib(self):
+        return rdflib.Literal(self.value)
+
 
 @functools.lru_cache(maxsize=None)
-class Uri(BaseRdfDataType, metaclass=PerformanceMeta):
+class Uri(BaseRdfDataType, str, metaclass=PerformanceMeta):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
     type = "uri"
@@ -108,24 +116,35 @@ class Uri(BaseRdfDataType, metaclass=PerformanceMeta):
     performance_mode = True
     performance_attrs = PERFORMANCE_ATTRS
 
+    def __new__(cls, *args, **kwargs):
+        value = args[0]
+        if not isinstance(args[0], tuple):
+            value = NSM.get_uri_parts(args[0])
+        args = [pyuri_formatter(*value)]
+        newobj = str.__new__(cls, *args)
+        newobj.value = value
+        newobj.pyuri = args[0]
+        return newobj
+
     def __init__(self, value):
-        if not isinstance(value, tuple):
-            value = NSM.get_uri_parts(value)
-        self.value = value
+        # if not isinstance(value, tuple):
+        #     value = NSM.get_uri_parts(value)
+        # self.value = value
         # if the performance_mode is set than the value for the listed
         # attributes is calculated at instanciation
         if self.performance_mode:
             for attr in self.performance_attrs:
-                setattr(self, attr, str(getattr(self, "__%s__" % attr)))
+                if attr != 'pyuri':
+                    setattr(self, attr, str(getattr(self, "__%s__" % attr)))
         self.hash_val = hash(self.pyuri)
 
-    def __eq__(self, value):
-        if not isinstance(value, Uri.__wrapped__):
-            value = Uri(value)
-        # test_val = Uri(value)
-        if self.value == value.value:
-            return True
-        return False
+    # def __eq__(self, value):
+    #     if not isinstance(value, Uri.__wrapped__):
+    #         # pdb.set_trace()
+    #         value = Uri(value)
+    #     if self.value == value.value:
+    #         return True
+    #     return False
 
     @property
     def sparql(self):
@@ -139,15 +158,20 @@ class Uri(BaseRdfDataType, metaclass=PerformanceMeta):
         """
         return uri_formatter(*self.value)
 
-    @property
-    def pyuri(self):
-        """ Returns the URI in a python friendly format """
-        return pyuri_formatter(*self.value)
+    # @property
+    # def pyuri(self):
+    #     """ Returns the URI in a python friendly format """
+    #     return pyuri_formatter(*self.value)
 
     @property
     def to_json(self):
         """ Returns the json formatting """
         return self.sparql_uri
+
+    @property
+    def rdflib(self):
+        """ Returns the rdflibURI reference """
+        return rdflib_formatter(*self.value)
 
     @property
     def clean_uri(self):
@@ -156,8 +180,8 @@ class Uri(BaseRdfDataType, metaclass=PerformanceMeta):
         """
         return http_formatter(*self.value)
 
-    def __str__(self):
-        return self.sparql
+    # def __str__(self):
+    #     return self.sparql
 
     def __repr__(self):
         return self.pyuri
@@ -211,12 +235,14 @@ class RdfNamespaceMeta(type):
         """
         ns_uri = RdfNsManager.clean_iri(str(args[1])).strip()
         if ns_uri[-1] not in ['/', '#']:
-            raise NsUriBadEndingError("incorrect ending for '%s'" % ns_uri)
+            raise NsUriBadEndingError("incorrect ending for '%s', '%s'" %
+                                      args[:2])
         return (args[0].lower(), ns_uri)
 
     def __call__(cls, *args, **kwargs):
-        args = cls.__format_args__(*args)
+
         try:
+            args = cls.__format_args__(*args)
             is_new = cls.__is_new_ns__(args)
             if is_new == True:
                 new_ns = super(RdfNamespaceMeta, cls).__call__(*args, **kwargs)
@@ -227,7 +253,9 @@ class RdfNamespaceMeta(type):
                     pass
                 return new_ns
             return is_new
-        except (NsUriExistsError, NsPrefixExistsError) as err:
+        except (NsUriExistsError,
+                NsPrefixExistsError,
+                NsUriBadEndingError) as err:
             if kwargs.get('override') == True:
                 setattr(err.old_ns, '__ns__' , err.new_ns)
                 return err.old_ns

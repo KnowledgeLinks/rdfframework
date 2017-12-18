@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Namespace, Graph, URIRef, ConjunctiveGraph
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -24,11 +24,20 @@ MNAME = pyfile_path(inspect.stack()[0][1])
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
+class RdflibTstoreSingleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(RdflibTstoreSingleton,
+                    cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
-class RdflibTriplestore(metaclass=RdfLibTstoreSingelton):
+
+
+class RdflibTriplestore(metaclass=RdflibTstoreSingleton):
     """ psuedo triplestore functionality for managing graphs and namespaces
         similar to a triplestore like blazegraph"""
-    namespaces = {'kb': Graph()}
+    namespaces = {'kb': ConjunctiveGraph()}
 
     def has_namespace(self, name):
         """ sees if the namespace exists
@@ -39,7 +48,7 @@ class RdflibTriplestore(metaclass=RdfLibTstoreSingelton):
         returns:
             bool
         """
-        if name in self.namespace:
+        if name in self.namespaces:
             return True
         else:
             return False
@@ -58,7 +67,7 @@ class RdflibTriplestore(metaclass=RdfLibTstoreSingelton):
             error if namespace already exists
         """
         if not self.has_namespace(name):
-            self.namespaces[name] = Graph()
+            self.namespaces[name] = ConjunctiveGraph()
             return True
         elif ignore_errors:
             return True
@@ -86,8 +95,21 @@ class RdflibTriplestore(metaclass=RdfLibTstoreSingelton):
         else:
             raise RuntimeError("namespace '%s' does not exist" % name)
 
+    def get_namespace(self, namespace):
+        """ returns the rdflib graph for the specified namespace
 
-class RdfLibConn(object):
+        args:
+            namespace: the name of the namespace
+        """
+
+        if namespace == 'temp':
+            return Graph()
+        else:
+            return self.namespaces[namespace]
+
+
+
+class RdflibConn(object):
     """ An API for interacting between rdflib python package and the
         rdfframework
 
@@ -104,11 +126,14 @@ class RdfLibConn(object):
     # file externsions that contain rdf data
     default_exts = ['xml', 'rdf', 'ttl', 'gz', 'nt']
     default_ns = 'kb'
-    default_graph = "bd:nullGraph"
+    default_graph = None
     qry_results_formats = ['json',
                            'xml',
                            'application/sparql-results+json',
                            'application/sparql-results+xml']
+
+    tstore = RdflibTriplestore()
+
     def __init__(self,
                  url=None,
                  namespace=None,
@@ -118,9 +143,7 @@ class RdfLibConn(object):
                  graph=None):
 
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
-        self.url = pick(url,
-                        CFG.DATA_TRIPLESTORE.url,
-                        CFG.DEFINITION_TRIPLESTORE.url)
+        self.url = "No Url for Rdflib tstore"
         self.namespace = pick(namespace,
                               CFG.DATA_TRIPLESTORE.namespace,
                               CFG.DEFINITION_TRIPLESTORE.namespace,
@@ -133,12 +156,15 @@ class RdfLibConn(object):
                           CFG.DATA_TRIPLESTORE.graph,
                           CFG.DEFINITION_TRIPLESTORE.graph,
                           self.default_graph)
-        if self.url is None:
-            msg = ["A Blazegraph url must be defined. Either pass 'url'",
-                   "or initialize the 'RdfConfigManager'"]
-            raise AttributeError(" ".join(msg))
 
-    def query(self, sparql, mode="get", namespace=None, rtn_format="json"):
+        self.conn = self.tstore.get_namespace(self.namespace)
+
+    def query(self,
+              sparql,
+              mode="get",
+              namespace=None,
+              rtn_format="json",
+              **kwargs):
         """ runs a sparql query and returns the results
 
             args:
@@ -147,30 +173,34 @@ class RdfLibConn(object):
                 mode: ['get'(default), 'update'] the type of sparql query
                 rtn_format: ['json'(default), 'xml'] format of query results
         """
+        log = logging.getLogger("%s.%s" % (self.log_name,
+                                           inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
+        if kwargs.get("debug"):
+            log.setLevel(logging.DEBUG)
+        conn = self.conn
+        if namespace and namespace != self.namespace:
+            conn = self.tstore.get_namespace(namespace)
         if rtn_format not in self.qry_results_formats:
             raise KeyError("rtn_format was '%s'. Allowed values are %s" % \
                            (rtn_format, self.qry_results_formats))
-        url = self._make_url(namespace)
-        if not sparql.lower().startswith("prefix"):
+        if not sparql.strip().lower().startswith("prefix"):
             sparql = "%s\n%s" % (NSM.prefix(), sparql)
-
+        start = datetime.datetime.now()
         if mode == "get":
-            data = {"query": sparql, "format": rtn_format}
-        elif mode == "update":
-            data = {"update": sparql}
-        else:
-            raise NotImplementedError("'mode' != to ['get', 'update']")
-
-        result = requests.post(url, data=data)
-        if result.status_code == 200:
-            try:
-                return result.json().get('results', {}).get('bindings', [])
-            except json.decoder.JSONDecodeError:
-                if mode == 'update':
-                    return BeautifulSoup(result.text, 'lxml').get_text()
-                return result.text
-        else:
-            raise SyntaxError(result.text)
+            result = json.loads( \
+                     conn.query(sparql).serialize(\
+                     format=rtn_format).decode()).get('results',
+                                                      {}).get('bindings', [])
+        if mode == "update":
+            result = conn.update(sparql)
+        log.debug("\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
+                  mode,
+                  namespace,
+                  rtn_format,
+                  '',#sparql,
+                  (datetime.datetime.now()-start))
+        return result
 
     def update_query(self, sparql, namespace=None):
         """ runs a sparql update query and returns the results
@@ -186,7 +216,8 @@ class RdfLibConn(object):
                   datatype="ttl",
                   namespace=None,
                   graph=None,
-                  is_file=False):
+                  is_file=False,
+                  **kwargs):
         """ loads data via file stream from python to triplestore
 
         Args:
@@ -201,12 +232,17 @@ class RdfLibConn(object):
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
         log.setLevel(self.log_level)
+        if kwargs.get('debug'):
+            log.setLevel(logging.DEBUG)
         time_start = datetime.datetime.now()
         datatype_map = {
-            'ttl': 'text/turtle',
-            'xml': 'application/rdf+xml',
-            'rdf': 'application/rdf+xml',
-            'nt': 'text/plain'
+            'ttl': 'turtle',
+            'xml': 'xml',
+            'rdf': 'xml',
+            'nt': 'nt',
+            'n3': 'n3',
+            'nquads': 'nquads',
+            'hturtle': 'hturtle'
         }
         if is_file:
             datatype = data.split(os.path.extsep)[-1]
@@ -218,21 +254,23 @@ class RdfLibConn(object):
         except KeyError:
             raise NotImplementedError("'%s' is not an implemented data fromat",
                                       datatype)
-        context_uri = pick(graph, self.graph)
-        result = requests.post(url=self._make_url(namespace),
-                               headers={"Content-Type": content_type},
-                               params={"context-uri": context_uri},
-                               data=data.encode('utf-8'))
-        if result.status_code == 200:
-            if is_file:
-                log.info (" loaded %s into blazegraph - %s",
-                          file_name,
-                          self.format_response(result.text))
-            else:
-                log.info(" loaded data - %s", self.format_response(result.text))
-            return result
+        conn = self.conn
+        if namespace:
+            conn = self.tstore.get_namespace(namespace)
         else:
-            raise SyntaxError(result.text)
+            namespace = self.namespace
+        graph = pick(graph, self.graph)
+        start = datetime.datetime.now()
+        result = conn.parse(data=data, publicID=graph, format=content_type)
+        if is_file:
+            log.info (" loaded %s into rdflib namespace '%s'",
+                      file_name,
+                      namespace)
+        else:
+            log.info(" loaded data into rdflib namespace '%s' in time: %s",
+                     namespace,
+                     (datetime.datetime.now() - start))
+            return result
 
     def load_directory(self, method='data_stream', **kwargs):
         """ Uploads data to the Blazegraph Triplestore that is stored in files
@@ -288,7 +326,6 @@ class RdfLibConn(object):
         log.info(" starting load of '%s' files into namespace '%s'",
                  len(file_list),
                  self.namespace)
-        url = self._make_url(namespace)
         if kwargs.get('create_namespace') and namespace:
             if not self.has_namespace(namespace):
                 self.create_namespace(namespace)
@@ -332,16 +369,6 @@ class RdfLibConn(object):
         log.info("%s file(s) loaded in: %s",
                  len(file_list),
                  datetime.datetime.now() - time_start)
-
-    @staticmethod
-    def format_response(text):
-        try:
-            xml_json = dict(etree.XML(text).items())
-        except:
-            parts = text.split(">")
-            xml_json = dict(etree.XML(">".join(parts[:-1] + [''])))
-            xml_json[' '] = parts[-1]
-        return str(xml_json).replace("{","").replace("}","")
 
     def load_local_file(self, file_path, namespace=None, graph=None, **kwargs):
         """ Uploads data to the Blazegraph Triplestore that is stored in files
@@ -395,17 +422,7 @@ class RdfLibConn(object):
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
         log.setLevel(self.log_level)
-        namespace = pick(namespace, self.namespace)
-        params = pick(params, self.namespace_params)
-        if not namespace:
-            raise ReferenceError("No 'namespace' specified")
-
-        result = self.rdflib_tstore.create_namespace(namespace)
-        if result:
-            log.warning(result.text)
-            return result.text
-        else:
-            raise RuntimeError(result.text)
+        return self.tstore.create_namespace(namespace)
 
     def delete_namespace(self, namespace):
         """ Deletes a namespace fromt the triplestore
@@ -421,33 +438,12 @@ class RdfLibConn(object):
                                            inspect.stack()[0][3]))
         log.setLevel(self.log_level)
 
-        url = self._make_url(namespace).replace("/sparql", "")
-        result = requests.delete(url=url)
-        if result.status_code == 200:
-            log.critical(result.text)
-            return result.text
-        raise RuntimeError(result.text)
+        return self.tstore.delete_namespace(namespace)
 
-    def _make_url(self, namespace=None):
-        """ Creates the REST Url based on the supplied namespace
-
-        args:
-            namespace: string of the namespace
-        """
-        rtn_url = self.url
-        namespace = pick(namespace, self.namespace)
-        if namespace:
-            rtn_url = os.path.join(self.url.replace("sparql", ""),
-                                   "namespace",
-                                   namespace,
-                                   "sparql").replace("\\", "/")
-        elif not rtn_url.endswith("sparql"):
-            rtn_url = os.path.join(self.url, "sparql").replace("\\", "/")
-        return rtn_url
 
     def __repr__(self):
-        return "<Blazegraph([{'host': '%s', 'namespace': '%s'}])>" % \
-               (self.url, self.namespace)
+        return "<rdflib([{'id': '%s', 'namespace': '%s'}])>" % \
+               (self.conn.__repr__(), self.namespace)
 
     def reset_namespace(self, namespace=None, params=None):
         """ Will delete and recreate specified namespace
@@ -466,7 +462,7 @@ class RdfLibConn(object):
                  self.url)
         try:
             self.delete_namespace(namespace)
-        except RuntimeError:
+        except KeyError:
             pass
         self.create_namespace(namespace, params)
 
@@ -569,69 +565,3 @@ class RdfLibConn(object):
                    os.path.join(root_dir, os.path.splitext(file[1])[0])) \
          for file in files]
 
-BULK_LOADER_XML = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-    <properties>
-        <!-- RDF Format (Default is rdf/xml) -->
-        <entry key="format">{data_format}</entry>
-        <!-- Base URI (Optional) -->
-        <entry key="baseURI"></entry>
-        <!-- Default Graph URI (Optional - Required for quads mode namespace) -->
-        <entry key="defaultGraph">{graph}</entry>
-        <!-- Suppress all stdout messages (Optional) -->
-        <entry key="quiet">{messages}</entry>
-        <!-- Show additional messages detailing the load performance. (Optional) -->
-        <entry key="verbose">{verbose}</entry>
-       <!-- Compute the RDF(S)+ closure. (Optional) -->
-             <entry key="closure">{closure}</entry>
-       <!-- Files will be renamed to either .good or .fail as they are processed.
-                   The files will remain in the same directory. -->
-       <entry key="durableQueues">{durable_queues}</entry>
-       <!-- The namespace of the KB instance. Defaults to kb. -->
-       <entry key="namespace">{namespace}</entry>
-       <!-- The configuration file for the database instance. It must be readable by the web application. -->
-             <entry key="propertyFile">{property_file}</entry>
-       <!-- Zero or more files or directories containing the data to be loaded.
-                   This should be a comma delimited list. The files must be readable by the web application. -->
-           <entry key="fileOrDirs">{file_or_dirs}</entry>
-      </properties>
-"""
-
-BULK_LOADER_XML2 = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-    <properties>
-        <!-- RDF Format (Default is rdf/xml) -->
-        <entry key="format">rdf/xml</entry>
-        <!-- Base URI (Optional) -->
-        <entry key="baseURI"></entry>
-        <!-- Default Graph URI (Optional - Required for quads mode namespace) -->
-        <entry key="defaultGraph"></entry>
-        <!-- Suppress all stdout messages (Optional) -->
-        <entry key="quiet">false</entry>
-        <!-- Show additional messages detailing the load performance. (Optional) -->
-        <entry key="verbose">0</entry>
-       <!-- Compute the RDF(S)+ closure. (Optional) -->
-             <entry key="closure">false</entry>
-       <!-- Files will be renamed to either .good or .fail as they are processed.
-                   The files will remain in the same directory. -->
-       <entry key="durableQueues">true</entry>
-       <!-- The namespace of the KB instance. Defaults to kb. -->
-       <entry key="namespace">kb</entry>
-       <!-- The configuration file for the database instance. It must be readable by the web application. -->
-             <entry key="propertyFile">/opt/triplestore/RWStore.properties</entry>
-       <!-- Zero or more files or directories containing the data to be loaded.
-                   This should be a comma delimited list. The files must be readable by the web application. -->
-           <entry key="fileOrDirs"></entry>
-      </properties>"""
-
-BULK_LOADER_PARAMS = {
-    'data_format':'text/turtle',
-    'graph': "bd:nullGraph",
-    'messages': True,
-    'closure': False,
-    'verbose': 1,
-    'durable_queues': True,
-    'namespace': "kb",
-    'file_or_dirs': "adfadf",
-    'property_file': "/opt/triplestore/RWStore.properties"
-}

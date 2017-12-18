@@ -34,20 +34,20 @@ ENV = Environment(loader=FileSystemLoader(
 
 class memorize():
     def __init__(self, function):
-        self.function = function
+        self.__wrapped__ = function
         self.memorized = {}
 
     def __call__(self, *args, **kwargs):
         try:
             return self.memorized[args]
         except KeyError:
-            self.memorized[args] = self.function(*args, **kwargs)
+            self.memorized[args] = self.__wrapped__(*args, **kwargs)
             return self.memorized[args]
         except TypeError:
             try:
                 return self.memorized[str(args)]
             except KeyError:
-                self.memorized[str(args)] = self.function(*args, **kwargs)
+                self.memorized[str(args)] = self.__wrapped__(*args, **kwargs)
                 return self.memorized[str(args)]
 
 def pyfile_path(path):
@@ -634,3 +634,21 @@ class EmptyDot():
 
     def __str__(self):
         return ""
+
+class UniqueList(list):
+    """ Extends python list preventing double elements from being added to the
+    list """
+
+    def append(self, value):
+        # pdb.set_trace()
+        if value not in self:
+            super(self.__class__, self).append(value)
+
+    def __iadd__(self, value):
+        if isinstance(value, list):
+            for item in value:
+                self.append(item)
+        else:
+            self.append(value)
+        return self
+

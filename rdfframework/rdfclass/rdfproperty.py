@@ -77,7 +77,7 @@ class RdfLinkedPropertyMeta(RdfPropertyMeta):
         linked_cls = kwargs.pop('linked_cls')
         prop_defs = {attr: getattr(bases[0], attr)
                      for attr in dir(bases[0])
-                     if isinstance(attr, Uri.function)}
+                     if isinstance(attr, Uri.__wrapped__)}
         prop_name = bases[0]._prop_name
 
         new_def = filter_prop_defs(prop_defs, linked_cls, cls_name)

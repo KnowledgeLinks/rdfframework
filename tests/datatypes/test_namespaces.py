@@ -16,12 +16,14 @@ class TestUri(unittest.TestCase):
                                    "xsd_strings",
                                    "http://www.w3.org/2001/XMLSchema#string",
                                    rdt.RdfNsManager().xsd.strings)
+        self.test_outputs_test_uri = self.nsm.xsd.string
         self.test_outputs = (('sparql', 'xsd:string'),
                              ('sparql_uri',
                               '<http://www.w3.org/2001/XMLSchema#string>'),
                              ('clean_uri',
                               'http://www.w3.org/2001/XMLSchema#string'),
                              ('pyuri', 'xsd_string'))
+        self.test_no_ns_outputs_test_uri = rdt.Uri("http://test.com/test")
         self.test_no_ns_outputs = (('sparql', '<http://test.com/test>'),
                                    ('sparql_uri', '<http://test.com/test>'),
                                    ('clean_uri', 'http://test.com/test'),
@@ -31,12 +33,6 @@ class TestUri(unittest.TestCase):
                                   'http://test.com/test',
                                   'pyuri_aHR0cDovL3Rlc3QuY29tLw==_test',
                                   rdt.Uri('<http://test.com/test>'))
-
-    def test_no_ns_inputs(self):
-        first = rdt.Uri(self.test_no_ns_inputs[0])
-        for val in self.test_no_ns_inputs:
-            self.assertEqual(rdt.Uri(val), first,
-                             "\ninput value: %s" % val)
 
     def test_equal_inputs(self):
         self.assertTrue(all(rdt.Uri(x)==rdt.Uri(self.test_equal_values[0]) \
@@ -51,16 +47,22 @@ class TestUri(unittest.TestCase):
         self.assertEqual(id(test_uri), id(rdt.Uri(test_uri)))
 
     def test_ouput_formats(self):
-        test_uri = self.nsm.xsd.string
+        test_uri = self.test_outputs_test_uri
         for args in self.test_outputs:
-            self.assertEqual(getattr(test_uri, args[0]), args[1])
+            self.assertEqual(getattr(test_uri, args[0]), args[1],
+                             "format='%s'" % args[0])
 
     def test_no_ns_ouput_formats(self):
-        test_uri = rdt.Uri("http://test.com/test")
+        test_uri = self.test_no_ns_outputs_test_uri
         for args in self.test_no_ns_outputs:
-            self.assertEqual(getattr(test_uri, args[0]), args[1])
+            self.assertEqual(getattr(test_uri, args[0]), args[1],
+                             "format='%s'" % args[0])
 
-
+    def test_no_ns_inputs(self):
+        first = rdt.Uri(self.test_no_ns_inputs[0])
+        for val in self.test_no_ns_inputs:
+            self.assertEqual(rdt.Uri(val), first,
+                             "\ninput value: %s" % val)
 
     def tearDown(self):
         pass

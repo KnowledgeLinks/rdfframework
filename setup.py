@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 from setuptools import find_packages, setup
 
@@ -37,7 +37,8 @@ setup(
         'rdflib',
         'requests',
         'dateutils',
-        'beautifulsoup4'
+        'beautifulsoup4',
+        'cssselect'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

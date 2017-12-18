@@ -47,14 +47,34 @@ class Blazegraph(object):
         "textIndex": "com.bigdata.rdf.store.AbstractTripleStore.textIndex",
         "truthMaintenance": "com.bigdata.rdf.sail.truthMaintenance"
     }
-    # file externsions that contain rdf data
-    default_exts = ['xml', 'rdf', 'ttl', 'gz', 'nt']
+
     default_ns = 'kb'
     default_graph = "bd:nullGraph"
-    qry_results_formats = ['json',
-                           'xml',
-                           'application/sparql-results+json',
-                           'application/sparql-results+xml']
+    qry_results_formats = {'rdf': 'application/sparql-results+xml',
+                           'xml': 'application/sparql-results+xml',
+                           'json': 'application/sparql-results+json',
+                           'binary': 'application/x-binary-rdf-results-table',
+                           'tsv': 'text/tab-separated-values',
+                           'cxv': 'text/csv'}
+    # file extensions that contain rdf data
+    rdf_formats = {'rdf': 'application/rdf+xml',
+                   'xml': 'application/rdf+xml',
+                   'json-ld': 'application/ld+json',
+                   'nt': 'text/plain',
+                   'gz': 'text/plain',
+                   'ntx': 'application/x-n-triples-RDR',
+                   'ttl': 'application/x-turtle',
+                   'turtle': 'application/x-turtle',
+                   'ttlx': 'application/x-turtle-RDR',
+                   'n3': 'text/rdf+n3',
+                   'trix': 'application/trix',
+                   'trig': 'application/x-trig',
+                   'nq': 'text/x-nquads',
+                   'json': 'application/sparql-results+json'}
+
+    qry_formats = rdf_formats.copy()
+    qry_formats.update(qry_results_formats)
+
     def __init__(self,
                  url=None,
                  namespace=None,
@@ -84,7 +104,12 @@ class Blazegraph(object):
                    "or initialize the 'RdfConfigManager'"]
             raise AttributeError(" ".join(msg))
 
-    def query(self, sparql, mode="get", namespace=None, rtn_format="json"):
+    def query(self,
+              sparql,
+              mode="get",
+              namespace=None,
+              rtn_format="json",
+              **kwargs):
         """ runs a sparql query and returns the results
 
             args:
@@ -92,13 +117,22 @@ class Blazegraph(object):
                 namespace: the namespace to run the sparql query against
                 mode: ['get'(default), 'update'] the type of sparql query
                 rtn_format: ['json'(default), 'xml'] format of query results
+
+            kwargs:
+                debug(bool): If True sets logging level to debug
         """
-        if rtn_format not in self.qry_results_formats:
+        log = logging.getLogger("%s.%s" % (self.log_name,
+                                           inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
+        if kwargs.get("debug"):
+            log.setLevel(logging.DEBUG)
+        if rtn_format not in self.qry_formats:
             raise KeyError("rtn_format was '%s'. Allowed values are %s" % \
                            (rtn_format, self.qry_results_formats))
         url = self._make_url(namespace)
         if not sparql.lower().startswith("prefix"):
             sparql = "%s\n%s" % (NSM.prefix(), sparql)
+
 
         if mode == "get":
             data = {"query": sparql, "format": rtn_format}
@@ -107,10 +141,23 @@ class Blazegraph(object):
         else:
             raise NotImplementedError("'mode' != to ['get', 'update']")
 
-        result = requests.post(url, data=data)
+        headers = {'Accept': self.qry_formats[rtn_format]}
+
+        start = datetime.datetime.now()
+        result = requests.post(url, data=data, headers=headers)
+        log.debug("\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
+                  mode,
+                  namespace,
+                  rtn_format,
+                  sparql,
+                  (datetime.datetime.now()-start))
+        # pdb.set_trace()
         if result.status_code == 200:
             try:
-                return result.json().get('results', {}).get('bindings', [])
+                bindings = result.json().get('results', {}).get('bindings', [])
+                log.debug("result count: %s",
+                          len(bindings))
+                return bindings
             except json.decoder.JSONDecodeError:
                 if mode == 'update':
                     return BeautifulSoup(result.text, 'lxml').get_text()
@@ -225,7 +272,7 @@ class Blazegraph(object):
         if method == 'data_stream':
             include_root = True
         file_directory = kwargs.get('file_directory', self.local_directory)
-        file_extensions = kwargs.get('file_extensions', self.default_exts)
+        file_extensions = kwargs.get('file_extensions', self.rdf_formats)
         file_list = list_files(file_directory,
                                file_extensions,
                                kwargs.get('include_subfolders', True),
@@ -483,7 +530,7 @@ class Blazegraph(object):
         if kwargs.get('reset') == True:
             self.reset_namespace()
         file_directory = kwargs.get('file_directory', self.local_directory)
-        file_extensions = kwargs.get('file_extensions', self.default_exts)
+        file_extensions = kwargs.get('file_extensions', self.rdf_formats)
         root_dir = kwargs.get('root_dir', self.local_directory)
         file_list = list_files(file_directory,
                                file_extensions,
