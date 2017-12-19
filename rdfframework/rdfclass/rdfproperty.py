@@ -43,7 +43,7 @@ class RdfPropertyMeta(type):
         new_def = prepare_prop_defs(prop_defs, prop_name, cls_names)
         new_def = filter_prop_defs(prop_defs, hierarchy, cls_names)
         new_def['__doc__'] = doc_string
-        new_def['class_namea'] = cls_names
+        new_def['class_name'] = cls_names
         new_def['_prop_name'] = prop_name
         if prop_name == 'rdf_type':
             new_def['append'] = unique_append

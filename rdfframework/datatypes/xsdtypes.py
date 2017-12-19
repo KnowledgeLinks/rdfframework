@@ -43,7 +43,13 @@ class BlankNode(BaseRdfDataType, metaclass=PerformanceMeta):
         return self.value[2:]
 
     def __eq__(self, other):
-        return self.value == other.value
+        try:
+            return self.value == other.value
+        except AttributeError:
+            try:
+                return self.value == other.subject.value
+            except AttributeError:
+                return self.value == other
 
     @property
     def rdflib(self):

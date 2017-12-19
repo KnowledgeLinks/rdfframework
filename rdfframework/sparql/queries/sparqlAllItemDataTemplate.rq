@@ -99,6 +99,33 @@ SELECT DISTINCT ?s ?p ?o
         Filter(?p1 != ?p0) .
         Filter(isblank(?s)) .
     }
+    FILTER (?p=rdf:type||
+        ?p=bf:summary||
+        ?p=rdfs:label||
+        ?p=bf:title||
+        ?p=bf:mainTitle||
+        ?p=bf:instanceOf||
+        ?p=bf:subject||
+        ?p=rdf:value||
+        ?p=bf:contribution||
+        ?p=bf:role||
+        ?p=bf:agent||
+        ?p=bf:provisionActivity||
+        ?p=bf:date||
+        ?p=bf:identifiedBy||
+        ?p=bf:provisionActivityStatement ||
+        ?p=bf:itemOf||
+        ?p=rdfs:seeAlso||
+        ?p=bf:shelfMark||
+        ?p=rdfs:label||
+        ?p=bf:heldBy||
+        ?p=schema:logo||
+        ?p=schema:parentOrganization||
+        ?p=schema:address||
+        ?p=schema:streetAddress||
+        ?p=schema:addressLocality||
+        ?p=schema:addressRegion||
+        ?p=schema:postalCode)
     # hide all of the repository generated data
     # BIND(IF(isblank(?o),"",STR(?o)) as ?o_)
     # BIND(IF(isblank(?p),"",STR(?p)) as ?p_)

@@ -16,12 +16,13 @@ def get_all_item_data(item_uri, conn, graph=None, output='json', **kwargs):
         sparql = render_without_request("sparqlAllItemDataTemplate.rq",
                                         prefix=NSM.prefix(),
                                         item_uri=Uri(item_uri).sparql)
+        # print(sparql)
         return conn.query(sparql)
     elif output == 'rdf':
         sparql = render_without_request("sparqlAllItemDataTemplateConstruct.rq",
                                         prefix=NSM.prefix(),
                                         item_uri=Uri(item_uri).sparql)
-        print(sparql)
+        # print(sparql)
         return conn.query(sparql, rtn_format='rdf', **kwargs)
 
 def get_graph(graph, conn, **kwargs):
