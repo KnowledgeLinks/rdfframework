@@ -865,8 +865,8 @@ class SPARQLProcessor(Processor):
         data = get_all_item_data(item_uri=kwargs['instance'],
                                  conn=self.ext_conn,
                                  output='json',
-                                 debug=False)
-                                 # template="sparqlAllItemBfToSchemaDataTemplate.rq")
+                                 debug=False,
+                                 template="sparqlAllItemBfToSchemaDataTemplate.rq")
         self.ds = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
         print("sparql_processor ran in %s: total qry time: %s" % \
