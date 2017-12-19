@@ -56,9 +56,10 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application'
     ],
-    package_data = [
-        'sparql/queries': ["*.rq"]
-    ],
+    package_data = {
+        'rdfframework.sparql.queries': ["*.rq"],
+        'rdfframework.turtle': ["*.ttl"]
+    },
     url='https://github.com/KnowledgeLinks/rdfframework/tree/development',
     # test_suite='nose.collector',
     # tests_require=['nose', 'nose-cover3'],
