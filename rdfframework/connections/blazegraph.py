@@ -205,7 +205,9 @@ class Blazegraph(object):
             datatype = data.split(os.path.extsep)[-1]
             file_name = data
             log.debug('starting data load of %s', file_name)
-            data = open(data).read()
+            data = open(data, 'rb').read()
+        else:
+            data = data.encode('utf-8')
         try:
             content_type = datatype_map[datatype]
         except KeyError:
@@ -215,7 +217,7 @@ class Blazegraph(object):
         result = requests.post(url=self._make_url(namespace),
                                headers={"Content-Type": content_type},
                                params={"context-uri": context_uri},
-                               data=data.encode('utf-8'))
+                               data=data)
         if result.status_code == 200:
             if is_file:
                 log.info (" loaded %s into blazegraph - %s",
