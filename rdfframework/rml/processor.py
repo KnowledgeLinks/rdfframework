@@ -831,24 +831,24 @@ class SPARQLProcessor(Processor):
             sparql: String of SPARQL query
             output_format: String of type of outputform
         """
-        # print(output_format)
-        bindings = self.conn.query(sparql, rtn_format=output_format, debug=False)
-        # print("***************************************************************")
-        # print(sparql)
-        # print(bindings)
-        # if self.triplestore_url is None:
-        #     result = self.triplestore.query(sparql)
-        #     bindings = result.bindings
-        # else:
-        #     result = requests.post(
-        #         self.triplestore_url,
-        #         data={"query": sparql,
-        #               "format": output_format})
-        #     if output_format == "json":
-        #         bindings = result.json().get("results").get("bindings")
-        #     elif output_format == "xml":
-        #         xml_doc = etree.XML(result.text)
-        #         bindings = xml_doc.findall("results/bindings")
+        print(output_format)
+        # bindings = self.conn.query(sparql, rtn_format=output_format, debug=False)
+        print("***************************************************************")
+        print(sparql)
+        print(bindings)
+        if self.triplestore_url is None:
+            result = self.triplestore.query(sparql)
+            bindings = result.bindings
+        else:
+            result = requests.post(
+                self.triplestore_url,
+                data={"query": sparql,
+                      "format": output_format})
+            if output_format == "json":
+                bindings = result.json().get("results").get("bindings")
+            elif output_format == "xml":
+                xml_doc = etree.XML(result.text)
+                bindings = xml_doc.findall("results/bindings")
         return bindings
 
     def run(self, **kwargs):
@@ -862,16 +862,12 @@ class SPARQLProcessor(Processor):
         self.conn = RdflibConn(namespace='temp')
         self.timer = datetime.datetime.now() - datetime.datetime.now()
         start = datetime.datetime.now()
-        # data = get_all_item_data(item_uri=kwargs['instance'],
-        #                          conn=self.ext_conn,
-        #                          debug=True)
-        # self.conn.load_data(data=data, datatype='rdf')
         data = get_all_item_data(item_uri=kwargs['instance'],
                                  conn=self.ext_conn,
                                  output='json',
-                                 debug=True)
+                                 debug=False,
+                                 template="sparqlAllItemBfToSchemaDataTemplate.rq")
         self.ds = RdfDataset(data)
-        # pdb.set_trace()
         super(SPARQLProcessor, self).run(**kwargs)
         print("sparql_processor ran in %s: total qry time: %s" % \
               ((datetime.datetime.now() - start),
@@ -906,7 +902,7 @@ class SPARQLProcessor(Processor):
         else:
             bindings = self.__get_bindings__(sparql, output_format)
         # pdb.set_trace()
-        self.timer += (datetime.datetime.now() - start)
+        self.timer += datetime.datetime.now() - start
         for binding in bindings:
             if key:
                 try:
@@ -947,8 +943,8 @@ class SPARQLProcessor(Processor):
                 if pred_obj_map.reference is not None:
                     ref_key = str(pred_obj_map.reference)
                     if hasattr(pred_obj_map, 'json_query'):
-                        if pred_obj_map.json_query =="$.schema_logo":
-                            pdb.set_trace()
+                        # if pred_obj_map.json_query =="$.schema_logo":
+                        # pdb.set_trace()
                         if ref_key in binding:
                             for item in binding[ref_key]:
                                 self.output.add((entity,
@@ -971,7 +967,9 @@ class SPARQLProcessor(Processor):
                     json_query = pred_obj_map.json_query
                     # if json_query == "bf_itemOf.$":
                     #     pdb.set_trace()
+                    start = datetime.datetime.now()
                     pre_obj_bindings = self.ds.json_qry(json_query, {'$': entity})
+                    self.timer += (datetime.datetime.now() - start)
                 else:
                     sparql_query = PREFIX + pred_obj_map.query.format(**kwargs)
                     pre_obj_bindings = self.__get_bindings__(sparql_query,
