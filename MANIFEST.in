@@ -1,0 +1,2 @@
+recursive-include rdfframework/turtle *.ttl
+recursive-include rdfframework/sparql/queries *.rq
