@@ -1,1 +1,1 @@
-from .bftopic_merger import *
+# from .bftopic_merger import *

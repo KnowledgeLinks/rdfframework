@@ -15,11 +15,13 @@ vocabulary.
 # from .rdfdatasets import RdfDataset
 from .framework import RdfFramework
 
-# import rdfframework.connections
-# import rdfframework.datamergers
-# import rdfframework.configuration
-# import rdfframework.search
-# import rdfframework.sparql
+import rdfframework.connections
+import rdfframework.datamergers
+import rdfframework.configuration
+import rdfframework.search
+import rdfframework.sparql
+import rdfframework.rml
+import rdfframework.utilities
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.1'
+__version__ = '0.0.11'

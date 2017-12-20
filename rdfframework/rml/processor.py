@@ -819,6 +819,9 @@ class SPARQLProcessor(Processor):
 
         # Sets defaults
         self.limit, self.offset = 5000, 0
+        self.data_query = self.rml.value(
+                subject=NS_MGR.kds.DataQuery.rdflib,
+                predicate=NS_MGR.rml.query.rdflib)
 
     def __get_bindings__(self, sparql, output_format):
         """Internal method queries triplestore or remote
@@ -843,11 +846,14 @@ class SPARQLProcessor(Processor):
         self.timer = datetime.datetime.now() - datetime.datetime.now()
         start = datetime.datetime.now()
         if self.use_json_qry:
-            data = get_all_item_data(item_uri=kwargs['instance'],
-                    conn=self.ext_conn,
-                    output='json',
-                    debug=False,
-                    template="sparqlAllItemBfToSchemaDataTemplate.rq")
+            if self.data_query:
+                sparql = PREFIX + self.data_query.format(**kwargs)
+                data = self.ext_conn.query(sparql)
+            else:
+                data = get_all_item_data(item_uri=kwargs['instance'],
+                        conn=self.ext_conn,
+                        output='json',
+                        debug=False)
             self.ds = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
         print("sparql_processor ran in %s: total qry time: %s" % \

@@ -8,11 +8,15 @@ import requests
 import threading
 import pdb
 
-from lxml import etree
 from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
+
+try:
+    from lxml import etree
+except ImportError:
+    import xml.etree.ElementTree as etree
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -157,9 +161,13 @@ class Blazegraph(object):
         # pdb.set_trace()
         if result.status_code == 200:
             try:
-                bindings = result.json().get('results', {}).get('bindings', [])
-                log.debug("result count: %s",
-                          len(bindings))
+                if rtn_format == "json":
+                    bindings = result.json().get('results',
+                                                 {}).get('bindings', [])
+                elif rtn_format == 'xml':
+                    xml_doc = etree.XML(result.text)
+                    bindings = xml_doc.findall("results/bindings")
+                log.debug("result count: %s", len(bindings))
                 return bindings
             except json.decoder.JSONDecodeError:
                 if mode == 'update':
