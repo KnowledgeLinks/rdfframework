@@ -8,10 +8,9 @@ class TestBlazegraphDefaultInit(unittest.TestCase):
         pass
 
     def test_no_params(self):
-        self.assertRaises(AttributeError,
-            blazegraph.Blazegraph)
-    
-    
+        self.assertTrue(blazegraph.Blazegraph().url is not None)
+
+
     def tearDown(self):
         pass
 
