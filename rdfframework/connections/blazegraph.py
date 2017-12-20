@@ -50,6 +50,7 @@ class Blazegraph(object):
 
     default_ns = 'kb'
     default_graph = "bd:nullGraph"
+    default_url = 'http://localhost:9999/blazegraph/sparql'
     qry_results_formats = {'rdf': 'application/sparql-results+xml',
                            'xml': 'application/sparql-results+xml',
                            'json': 'application/sparql-results+json',
@@ -86,7 +87,9 @@ class Blazegraph(object):
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
         self.url = pick(url,
                         CFG.DATA_TRIPLESTORE.url,
-                        CFG.DEFINITION_TRIPLESTORE.url)
+                        CFG.DEFINITION_TRIPLESTORE.url,
+                        CFG.TRIPLESTORE_URL,
+                        self.default_url)
         self.namespace = pick(namespace,
                               CFG.DATA_TRIPLESTORE.namespace,
                               CFG.DEFINITION_TRIPLESTORE.namespace,

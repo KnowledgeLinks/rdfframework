@@ -105,25 +105,11 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             args:
                 attr_name: The name the connection will be assigned in the
                     config manager
-                params: The paramaters of the connectionf
+                params: The paramaters of the connection
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
-        if params.get('vendor') == 'blazegraph':
-            from rdfframework.connections import Blazegraph
-        vendor_dict = {"blazegraph": Blazegraph,
-                       "rdflib": "#! Need to build API"}
-        vendor = vendor_dict[params.vendor]
-        conn = vendor(local_directory=params.get("local_directory"),
-                      url=params.get("url"),
-                      container_dir=params.get("container_dir"),
-                      namespace=params.get("namespace"),
-                      namespace_params=params.get('namespace_params', {}))
-        if not conn.has_namespace(conn.namespace):
-            log.warn("namespace '%s' does not exist. Creating namespace",
-                     conn.namespace)
-            conn.create_namespace(conn.namespace)
+
+        from rdfframework.connections import make_tstore_conn
+        conn = make_tstore_conn(params)
         setattr(self, attr_name, conn)
 
     def __initialize_conns(self):

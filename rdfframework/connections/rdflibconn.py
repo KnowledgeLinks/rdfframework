@@ -144,7 +144,8 @@ class RdflibConn(object):
 
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
         self.url = "No Url for Rdflib tstore"
-        self.namespace = pick(namespace,
+        self.namespace = pick(url,
+                              namespace,
                               CFG.DATA_TRIPLESTORE.namespace,
                               CFG.DEFINITION_TRIPLESTORE.namespace,
                               self.default_ns)

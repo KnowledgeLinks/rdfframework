@@ -651,6 +651,9 @@ class EmptyDot():
     def __str__(self):
         return ""
 
+    def __nonzero__(self):
+        return False
+
 class UniqueList(list):
     """ Extends python list preventing double elements from being added to the
     list """

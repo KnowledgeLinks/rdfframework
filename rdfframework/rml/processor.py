@@ -24,7 +24,8 @@ import bibcat
 from bibcat.maps import get_map
 
 from rdfframework.datatypes import RdfNsManager, BaseRdfDataType
-from rdfframework.connections import Blazegraph, RdflibConn
+from rdfframework.connections import setup_conn, Blazegraph, RdflibConn, \
+        make_tstore_conn
 from rdfframework.sparql import get_all_item_data
 from rdfframework.rdfdatasets import RdfDataset
 from rdfframework.utilities import pick
@@ -48,7 +49,9 @@ class Processor(object):
 
     """
 
-    def __init__(self, rml_rules):
+    def __init__(self, rml_rules, **kwargs):
+        self.__setup_conn__(**kwargs)
+        self.use_json_qry = False
         self.rml = rdflib.Graph()
         if isinstance(rml_rules, list):
             for rule in rml_rules:
@@ -93,6 +96,11 @@ class Processor(object):
         for prefix, name in self.rml.namespaces():
             graph.namespace_manager.bind(prefix, name)
         return graph
+
+    def __setup_conn__(self, **kwargs):
+        """ sets the ext_conn based on the kwargs.
+        """
+        self.ext_conn = setup_conn(**kwargs)
 
     def __generate_delimited_objects__(self, **kwargs):
         """Internal methods takes a subject, predicate, element, and a list
@@ -182,17 +190,9 @@ class Processor(object):
         parent_map = kwargs.pop("parent_map")
         subject = kwargs.pop('subject')
         predicate = kwargs.pop('predicate')
-
-        # if str(parent_map) == 'file:///home/stabiledev/git/alliance-bibcat/#BIBFRAME_ITEM2Provider':
-        #     print(subject)
-        #     print(predicate)
-        #     pprint.pprint(self.triple_maps[str(parent_map)].__dict__)
-        #     pdb.set_trace()
         parent_objects = self.execute(
             self.triple_maps[str(parent_map)],
             **kwargs)
-        # if str(parent_map) == 'file:///home/stabiledev/git/alliance-bibcat/#BIBFRAME_ITEM2Provider':
-        #     pdb.set_trace()
         for parent_obj in parent_objects:
             if isinstance(parent_obj, BaseRdfDataType):
                 parent_obj = parent_obj.rdflib
@@ -239,6 +239,7 @@ class Processor(object):
         if query is not None:
             logical_source.query = query
         if json_query is not None:
+            self.use_json_qry = True
             logical_source.json_query = json_query
             logical_source.json_key = json_key
         return logical_source
@@ -332,12 +333,18 @@ class Processor(object):
             pred_obj_map.json_query = self.rml.value(
                 subject=obj_map_bnode,
                 predicate=NS_MGR.rml.reference.rdflib)
+            json_key = None
+            if hasattr(self.triple_maps[str(map_iri)].logicalSource,
+                       'json_key'):
+                json_key = self.triple_maps[str(map_iri)].logicalSource.json_key
             pred_obj_map.json_key = pick(self.rml.value(
                     subject=obj_map_bnode,
                     predicate=NS_MGR.rml.key.rdflib),
-                self.triple_maps[str(map_iri)].logicalSource.json_key)
+                    json_key)
             # BIBCAT Extensions
             pred_obj_map.delimiters = []
+            if pred_obj_map.json_query:
+                self.use_json_qry = True
             for obj in self.rml.objects(subject=obj_map_bnode,
                                         predicate=NS_MGR.kds.delimiter.rdflib):
                 pred_obj_map.delimiters.append(obj)
@@ -347,10 +354,8 @@ class Processor(object):
     def add_to_triplestore(self):
         """Method attempts to add output to Blazegraph RDF Triplestore"""
         if len(self.output) > 0:
-            result = requests.post(
-                self.triplestore_url,
-                data=self.output.serialize(),
-                headers={"Content-Type": "application/rdf+xml"})
+            result = self.ext_conn.load_data(data=self.output.serialize(),
+                                             datatype='rdf')
 
     def generate_term(self, **kwargs):
         """Method generates a rdflib.Term based on kwargs"""
@@ -402,7 +407,7 @@ class CSVProcessor(Processor):
             rml_rules = kwargs.pop("rml_rules")
         csv_file = kwargs.pop("csv_file")
         self.reader = csv.DictReader(open(csv_file, 'rb'))
-        super(CSVProcessor, self).__init__(rml_rules)
+        super(CSVProcessor, self).__init__(rml_rules, **kwargs)
 
     def __generate_reference__(self, triple_map, **kwargs):
         """Extracts the value of either column by key or by position """
@@ -433,7 +438,7 @@ class CSVRowProcessor(Processor):
             rml_rules = kwargs.pop("rml_rules")
         else:
             rml_rules = []
-        super(CSVRowProcessor, self).__init__(rml_rules)
+        super(CSVRowProcessor, self).__init__(rml_rules, **kwargs)
 
     def __generate_reference__(self, triple_map, **kwargs):
         """Generates a RDF entity based on triple map
@@ -519,7 +524,7 @@ class JSONProcessor(Processor):
             rml_rules = kwargs.pop("rml_rules")
         except KeyError:
             rml_rules = []
-        super(JSONProcessor, self).__init__(rml_rules)
+        super(JSONProcessor, self).__init__(rml_rules, **kwargs)
 
     def __generate_reference__(self, triple_map, **kwargs):
         json_obj = kwargs.get("obj")
@@ -626,13 +631,11 @@ class XMLProcessor(Processor):
     def __init__(self, **kwargs):
         if "rml_rules" in kwargs:
             rml_rules = kwargs.pop("rml_rules")
-        super(XMLProcessor, self).__init__(rml_rules)
+        super(XMLProcessor, self).__init__(rml_rules, **kwargs)
         if "namespaces" in kwargs:
             self.xml_ns = kwargs.pop("namespaces")
         else:
             self.xml_ns = dict()
-        if "triplestore_url" in kwargs:
-            self.triplestore_url = kwargs.get("triplestore_url")
         self.constants.update(kwargs)
 
     def __generate_reference__(self, triple_map, **kwargs):
@@ -810,20 +813,16 @@ class SPARQLProcessor(Processor):
     def __init__(self, **kwargs):
         if "rml_rules" in kwargs:
             rml_rules = kwargs.pop("rml_rules")
-        super(SPARQLProcessor, self).__init__(rml_rules)
+        super(SPARQLProcessor, self).__init__(rml_rules, **kwargs)
         __set_prefix__()
-        self.triplestore_url = kwargs.get("triplestore_url")
-        self.ext_conn = Blazegraph(self.triplestore_url)
-        if self.triplestore_url is None:
-            # Tries using rdflib Graph as triplestore
-            self.triplestore = kwargs.get("triplestore", self.__graph__())
+        #! self.triplestore = kwargs.get("triplestore", self.__graph__())
 
         # Sets defaults
         self.limit, self.offset = 5000, 0
 
     def __get_bindings__(self, sparql, output_format):
         """Internal method queries triplestore or remote
-        sparal endpont and returns the bindings
+        sparql endpont and returns the bindings
 
         Args:
 
@@ -831,25 +830,9 @@ class SPARQLProcessor(Processor):
             sparql: String of SPARQL query
             output_format: String of type of outputform
         """
-        print(output_format)
-        # bindings = self.conn.query(sparql, rtn_format=output_format, debug=False)
-        print("***************************************************************")
-        print(sparql)
-        print(bindings)
-        if self.triplestore_url is None:
-            result = self.triplestore.query(sparql)
-            bindings = result.bindings
-        else:
-            result = requests.post(
-                self.triplestore_url,
-                data={"query": sparql,
-                      "format": output_format})
-            if output_format == "json":
-                bindings = result.json().get("results").get("bindings")
-            elif output_format == "xml":
-                xml_doc = etree.XML(result.text)
-                bindings = xml_doc.findall("results/bindings")
-        return bindings
+        return self.ext_conn.query(sparql,
+                                   rtn_format=output_format,
+                                   debug=False)
 
     def run(self, **kwargs):
         self.output = self.__graph__()
@@ -857,17 +840,15 @@ class SPARQLProcessor(Processor):
             self.limit = kwargs.get('limit')
         if "offset" in kwargs:
             self.offset = kwargs.get('offset')
-        if "triplestore" in kwargs:
-            self.triplestore = kwargs.get('triplestore')
-        self.conn = RdflibConn(namespace='temp')
         self.timer = datetime.datetime.now() - datetime.datetime.now()
         start = datetime.datetime.now()
-        data = get_all_item_data(item_uri=kwargs['instance'],
-                                 conn=self.ext_conn,
-                                 output='json',
-                                 debug=False,
-                                 template="sparqlAllItemBfToSchemaDataTemplate.rq")
-        self.ds = RdfDataset(data)
+        if self.use_json_qry:
+            data = get_all_item_data(item_uri=kwargs['instance'],
+                    conn=self.ext_conn,
+                    output='json',
+                    debug=False,
+                    template="sparqlAllItemBfToSchemaDataTemplate.rq")
+            self.ds = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
         print("sparql_processor ran in %s: total qry time: %s" % \
               ((datetime.datetime.now() - start),
@@ -876,7 +857,8 @@ class SPARQLProcessor(Processor):
     def execute(self, triple_map, **kwargs):
         """Execute """
         subjects = []
-        if NS_MGR.ql.JSON.rdflib in triple_map.logicalSource.reference_formulations:
+        if NS_MGR.ql.JSON.rdflib in \
+                triple_map.logicalSource.reference_formulations:
             output_format = "json"
         else:
             output_format = "xml"
@@ -889,19 +871,16 @@ class SPARQLProcessor(Processor):
             **kwargs)
         start = datetime.datetime.now()
         key, json_query = None, None
-        if hasattr(triple_map.logicalSource, 'json_query'):
-            # pdb.set_trace()
+        if hasattr(triple_map.logicalSource, 'json_query') \
+                and self.use_json_qry:
             key = kwargs.get(str(triple_map.logicalSource.json_key))
             if not key:
                 key =[val for val in kwargs.values() \
                       if isinstance(val, rdflib.URIRef)][0]
             json_query = triple_map.logicalSource.json_query
-            # if json_query == "bf_itemOf.$":
-                # pdb.set_trace()
             bindings = self.ds.json_qry(json_query, {'$': key})
         else:
             bindings = self.__get_bindings__(sparql, output_format)
-        # pdb.set_trace()
         self.timer += datetime.datetime.now() - start
         for binding in bindings:
             if key:
@@ -935,14 +914,14 @@ class SPARQLProcessor(Processor):
 
                 if pred_obj_map.parentTriplesMap is not None:
                     self.__handle_parents__(
-                        parent_map=pred_obj_map.parentTriplesMap,
-                        subject=entity,
-                        predicate=predicate,
-                        **kwargs)
+                            parent_map=pred_obj_map.parentTriplesMap,
+                            subject=entity,
+                            predicate=predicate,
+                            **kwargs)
                     continue
                 if pred_obj_map.reference is not None:
                     ref_key = str(pred_obj_map.reference)
-                    if hasattr(pred_obj_map, 'json_query'):
+                    if pred_obj_map.json_query:
                         # if pred_obj_map.json_query =="$.schema_logo":
                         # pdb.set_trace()
                         if ref_key in binding:
@@ -963,7 +942,7 @@ class SPARQLProcessor(Processor):
                     continue
 
                 json_query = None
-                if hasattr(pred_obj_map, 'json_query'):
+                if pred_obj_map.json_query:
                     json_query = pred_obj_map.json_query
                     # if json_query == "bf_itemOf.$":
                     #     pdb.set_trace()
@@ -992,7 +971,7 @@ class SPARQLBatchProcessor(Processor):
     bottleneck"""
 
     def __init__(self, rml_rules, triplestore_url=None, triplestore=None):
-        super(SPARQLBatchProcessor, self).__init__(rml_rules)
+        super(SPARQLBatchProcessor, self).__init__(rml_rules, **kwargs)
         __set_prefix__()
         if triplestore_url is not None:
             self.triplestore_url = triplestore_url
