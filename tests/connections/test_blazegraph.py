@@ -10,7 +10,6 @@ class TestBlazegraphDefaultInit(unittest.TestCase):
     def test_no_params(self):
         self.assertTrue(blazegraph.Blazegraph().url is not None)
 
-
     def tearDown(self):
         pass
 

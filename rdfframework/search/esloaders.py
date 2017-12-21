@@ -29,7 +29,7 @@ from rdfframework.utilities import DataStatus, pp, render_without_request
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.sparql import get_all_item_data
 from rdfframework.search import EsBase, EsMappings
-from rdfframework.rdfdatasets import RdfDataset
+from rdfframework.datasets import RdfDataset
 from rdfframework.datatypes import RdfNsManager
 
 CFG = RdfConfigManager()

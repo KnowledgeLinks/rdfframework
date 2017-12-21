@@ -36,3 +36,56 @@ class PerformanceMeta(InstanceCheckMeta):
                     pass
                 clsdict[attr] = None
         return super(PerformanceMeta, mcs).__new__(mcs, cls, bases, clsdict)
+
+class KeyRegistryMeta(type):
+    """ Registry metaclass for a 'key' lookup specified as an attribute of a
+    class inheriting from the base class using this metaclass
+
+    Calling the base class by baseclase[key] will return the inherited class
+    that is specified by the 'key'
+
+    The base class needs to have defined a class attribute of
+
+    _registry
+
+    """
+    def __new__(meta, name, bases, class_dict):
+        cls = super(KeyRegistryMeta, meta).__new__(meta, name, bases, class_dict)
+        if not bases:
+            if not hasattr(cls, "__registry__"):
+                cls.__registry__ = {}
+                # raise AttributeError("base class '%s' requires a class attribute called '_registry' used to lookup registered keys" % \
+                #                      name)
+            return cls
+        if not hasattr(cls, "key"):
+            raise AttributeError("define 'key' at class level for your processor")
+        elif cls.__bases__[-1].__registry__.get(cls.key):
+            raise AttributeError("'key' has already been used with class %s" %
+                                 cls.__bases__[-1].__registry__.get(cls.key))
+        cls.__bases__[-1].__registry__[cls.key] = cls
+        if not '__registry__' in cls.__dict__:
+            cls.__registry__ = None
+        return cls
+
+    def __getitem__(cls, key):
+        if cls.__bases__[0] != object:
+            raise TypeError("'%s' object is not subscriptable" % cls)
+        try:
+            return cls.__bases__[-1].__registry__[key]
+        except KeyError:
+            raise LookupError("key '%s' has no associated class" % key)
+        except AttributeError:
+            try:
+                return cls.__registry__[key]
+            except KeyError:
+                raise LookupError("key '%s' has no associated class" % key)
+
+    def keys(cls):
+        if cls.__bases__[0] == object:
+            return cls.__registry__.keys()
+        raise AttributeError("%s has not attribute 'keys'" % cls)
+
+    def values(cls):
+        if cls.__bases__[0] == object:
+            return cls.__registry__.values()
+        raise AttributeError("%s has not attribute 'values'" % cls)

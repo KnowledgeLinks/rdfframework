@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
-
+from .triplestoreconn import TriplestoreConnection
 try:
     from lxml import etree
 except ImportError:
@@ -24,7 +24,7 @@ MNAME = pyfile_path(inspect.stack()[0][1])
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
-class Blazegraph(object):
+class Blazegraph(TriplestoreConnection):
     """ An API for interacting between a Blazegraph triplestore and the
         rdfframework
 
@@ -36,6 +36,7 @@ class Blazegraph(object):
             container_dir: the path to the file data directory as the docker
                     container/Blazegraph see the file path.
         """
+    key="blazegraph"
     log_name = "%s-Blazegraph" % MNAME
     log_level = logging.INFO
 

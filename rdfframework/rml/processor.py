@@ -27,7 +27,7 @@ from rdfframework.datatypes import RdfNsManager, BaseRdfDataType
 from rdfframework.connections import setup_conn, Blazegraph, RdflibConn, \
         make_tstore_conn
 from rdfframework.sparql import get_all_item_data
-from rdfframework.rdfdatasets import RdfDataset
+from rdfframework.datasets import RdfDataset
 from rdfframework.utilities import pick
 
 BIBCAT_BASE = os.path.abspath(

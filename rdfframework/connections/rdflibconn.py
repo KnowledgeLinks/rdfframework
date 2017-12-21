@@ -17,7 +17,7 @@ from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
 from rdflib import Namespace, Graph, URIRef, ConjunctiveGraph
-
+from .triplestoreconn import TriplestoreConnection
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 MNAME = pyfile_path(inspect.stack()[0][1])
@@ -109,7 +109,7 @@ class RdflibTriplestore(metaclass=RdflibTstoreSingleton):
 
 
 
-class RdflibConn(object):
+class RdflibConn(TriplestoreConnection):
     """ An API for interacting between rdflib python package and the
         rdfframework
 
@@ -120,6 +120,7 @@ class RdflibConn(object):
                     reads the file path.
             container_dir: Not Required or relevant for rdflib
         """
+    key = 'rdflib'
     log_name = "%s-RdfLibConn" % MNAME
     log_level = logging.INFO
 

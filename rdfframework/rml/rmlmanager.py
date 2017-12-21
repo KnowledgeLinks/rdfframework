@@ -8,7 +8,7 @@ import json
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.utilities import pyfile_path, pick
 from rdfframework.sparql import get_graph
-from rdfframework.rdfdatasets import RdfDataset
+from rdfframework.datasets import RdfDataset
 from rdfframework.datatypes import RdfNsManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"

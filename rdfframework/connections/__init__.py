@@ -1,8 +1,8 @@
 import logging
 import inspect
-
 from .blazegraph import Blazegraph
 from .rdflibconn import RdflibConn
+from .triplestoreconn import TriplestoreConnection
 import rdfframework.utilities
 
 __MNAME__ = rdfframework.utilities.pyfile_path(inspect.stack()[0][1])
@@ -25,9 +25,9 @@ def make_tstore_conn(self, params):
     vendor_dict = {"blazegraph": Blazegraph,
                    "rdflib": RdflibConn}
     try:
-        vendor = vendor_dict[params.get('vendor')]
+        vendor = TriplestoreConnection[params.get('vendor')]
     except KeyError:
-        vendor = Blazegraph
+        vendor = TriplestoreConnection['blazegraph']
     conn = vendor(local_directory=params.get("local_directory"),
                   url=params.get("url"),
                   container_dir=params.get("container_dir"),
@@ -63,9 +63,9 @@ def setup_conn(**kwargs):
     elif kwargs.get("tstore_def"):
         conn = make_tstore_conn(kwargs['tstore_def'])
     elif kwargs.get("triplestore_url"):
-        conn = Blazegraph(kwargs['triplestore_url'])
+        conn = TriplestoreConnection['blazegraph'](kwargs['triplestore_url'])
     elif kwargs.get("rdflib"):
-        conn = RdflibConn(kwargs.get('rdflib'))
+        conn = TriplestoreConnection['rdflib'](kwargs.get('rdflib'))
     elif RdfConfigManager().data_tstore and \
             not isinstance(RdfConfigManager().data_tstore,
                            rdfframework.utilities.EmptyDot):
@@ -73,7 +73,8 @@ def setup_conn(**kwargs):
     elif RdfConfigManager().TRIPLESTORE_URL and \
             not isinstance(RdfConfigManager().TRIPLESTORE_URL,
                            rdfframework.utilities.EmptyDot):
-        conn = Blazegraph(RdfConfigManager().TRIPLESTORE_URL)
+        conn = TriplestoreConnection['blazegraph'](\
+                RdfConfigManager().TRIPLESTORE_URL)
     else:
-        conn = Blazegraph()
+        conn = TriplestoreConnection['blazegraph']()
     return conn
