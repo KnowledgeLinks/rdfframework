@@ -5,14 +5,14 @@ import rdflib
 import json
 
 from decimal import Decimal
-from rdfframework.utilities import cbool, new_id, PerformanceMeta, memorize
+from rdfframework.utilities import cbool, new_id, PerformanceMeta, memorize, TestMeta2
 from dateutil.parser import parse
 from datetime import date, datetime, time, timezone
 from .namespaces import Uri, BaseRdfDataType, PERFORMANCE_ATTRS
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-class BlankNode(BaseRdfDataType, metaclass=PerformanceMeta):
+class BlankNode(BaseRdfDataType, metaclass=TestMeta2):
     """ blankNode URI/IRI class for working with RDF data """
     class_type = "BlankNode"
     type = "bnode"
@@ -104,6 +104,13 @@ class XsdString(str, BaseRdfDataType):
             rtn_val = self.value + str(other)
             rtn_lang = self.lang
         return XsdString(rtn_val, lang=rtn_lang)
+
+    @property
+    def rdflib(self):
+        if self.lang:
+            return rdflib.Literal(self.value, lang=self.lang)
+        return rdflib.Literal(self.value, datatype=self.datatype.rdflib)
+
 
 class XsdBoolean(BaseRdfDataType):
     """ Boolean instance of rdf xsd:boolean type value"""
@@ -286,7 +293,7 @@ class XsdDecimal(Decimal, BaseRdfDataType):
 
     datatype = Uri("xsd:decimal")
     class_type = "XsdDecimal"
-    py_type = int
+    py_type = Decimal
     es_type = "long"
 
     def __new__(cls, *args, **kwargs):

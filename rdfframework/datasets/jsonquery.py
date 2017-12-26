@@ -8,7 +8,7 @@ import pdb
 from cssselect.parser import parse as cssparse
 from rdfframework.datatypes import Uri, pyrdf, BlankNode
 from rdfframework.utilities import UniqueList
-from .qryprocessors import QryProcessor
+from .qryprocessors import JsonQryProcessor
 
 @functools.lru_cache(maxsize=1000)
 def parse_json_qry(qry_str):
@@ -25,10 +25,10 @@ def parse_json_qry(qry_str):
             parts = param.strip().split("=")
             try:
                 rtn_list.append(\
-                        QryProcessor[parts[0].strip().lower()](parts[1]))
+                        JsonQryProcessor[parts[0].strip().lower()](parts[1]))
             except IndexError:
                 rtn_list.append(\
-                        QryProcessor[parts[0].strip().lower()]())
+                        JsonQryProcessor[parts[0].strip().lower()]())
         return rtn_list
 
     def part_analyzer(part, idx):
@@ -370,68 +370,68 @@ def override_ascii_lower(string):
 cssselect.parser.ascii_lower = override_ascii_lower
 
 def json_qry(dataset, qry_str, params):
-        """ Takes a json query string and returns the results
+    """ Takes a json query string and returns the results
 
-        args:
-            dataset: RdfDataset to query against
-            qry_str: query string
-            params: dictionary of params
-        """
-        dallor_val = params.get("$")
-        if isinstance(dallor_val, rdflib.URIRef):
-            dallor_val = Uri(dallor_val)
-        parsed_qry = parse_json_qry(qry_str)
-        qry_parts = parsed_qry['qry_parts']
-        post_actions = parsed_qry['params']
-        # print(qry_parts)
-        rtn_list = UniqueList()
-        if params.get('dataset'):
-            dataset = params['dataset']
-        for or_part in qry_parts:
-            if or_part[1] == 0:
-                if isinstance(dallor_val, dict):
-                    result = dallor_val
-                else:
+    args:
+        dataset: RdfDataset to query against
+        qry_str: query string
+        params: dictionary of params
+    """
+    dallor_val = params.get("$")
+    if isinstance(dallor_val, rdflib.URIRef):
+        dallor_val = Uri(dallor_val)
+    parsed_qry = parse_json_qry(qry_str)
+    qry_parts = parsed_qry['qry_parts']
+    post_actions = parsed_qry['params']
+    # print(qry_parts)
+    rtn_list = UniqueList()
+    if params.get('dataset'):
+        dataset = params['dataset']
+    for or_part in qry_parts:
+        if or_part[1] == 0:
+            if isinstance(dallor_val, dict):
+                result = dallor_val
+            else:
+                try:
+                    result = dataset[dallor_val]
+                except KeyError:
                     try:
-                        result = dataset[dallor_val]
+                        result = dataset[Uri(dallor_val)]
                     except KeyError:
                         try:
-                            result = dataset[Uri(dallor_val)]
+                            result = dataset[BlankNode(dallor_val)]
                         except KeyError:
-                            try:
-                                result = dataset[BlankNode(dallor_val)]
-                            except KeyError:
-                                continue
+                            continue
 
-                forward = True
-                for part in or_part[0][1:]:
-                    if part == "*":
-                        forward = not forward
+            forward = True
+            for part in or_part[0][1:]:
+                if part == "*":
+                    forward = not forward
+                else:
+                    if forward:
+                        result = get_json_qry_item(result, part)
                     else:
-                        if forward:
-                            result = get_json_qry_item(result, part)
-                        else:
-                            result = get_reverse_json_qry_item(result,
-                                                               part,
-                                                               False)
-            else:
-                result = dataset
-                parts = or_part[0].copy()
-                parts.reverse()
-                forward = False
-                for part in parts[1:]:
-                    if part == "*":
-                        forward = not forward
+                        result = get_reverse_json_qry_item(result,
+                                                           part,
+                                                           False)
+        else:
+            result = dataset
+            parts = or_part[0].copy()
+            parts.reverse()
+            forward = False
+            for part in parts[1:]:
+                if part == "*":
+                    forward = not forward
+                else:
+                    if forward:
+                        result = get_json_qry_item(result, part)
                     else:
-                        if forward:
-                            result = get_json_qry_item(result, part)
-                        else:
-                            result = get_reverse_json_qry_item(result,
-                                                               part,
-                                                               False,
-                                                               dallor_val)
-            rtn_list += result
-        for action in post_actions:
-            rtn_list = action(rtn_list)
-        return rtn_list
+                        result = get_reverse_json_qry_item(result,
+                                                           part,
+                                                           False,
+                                                           dallor_val)
+        rtn_list += result
+    for action in post_actions:
+        rtn_list = action(rtn_list)
+    return rtn_list
 

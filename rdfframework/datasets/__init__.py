@@ -1,2 +1,2 @@
 from .rdfdatasets import RdfDataset
-from .qryprocessors import QryProcessor
+from .qryprocessors import JsonQryProcessor

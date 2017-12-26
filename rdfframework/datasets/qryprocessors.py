@@ -1,9 +1,9 @@
 import re
-from rdfframework.utilities import UniqueList, cbool, KeyRegistryMeta
+from rdfframework.utilities import UniqueList, cbool, KeyRegistryMeta, DatatypeRegistryMeta
 from rdfframework.datatypes import XsdString
 import pdb
 
-class QryProcessor(metaclass=KeyRegistryMeta):
+class JsonQryProcessor(metaclass=DatatypeRegistryMeta):
     """ Base class for json query processors.  Provides a 'key' registry
     for all inherited classes.
 
@@ -12,7 +12,7 @@ class QryProcessor(metaclass=KeyRegistryMeta):
 
     Example:
 
-    class NewProcessor(QryProcessor):
+    class NewProcessor(JsonQryProcessor):
         key = "testkey" #this the string the json_qry will use
 
         def __init__(self, query_str_arg):
@@ -21,9 +21,10 @@ class QryProcessor(metaclass=KeyRegistryMeta):
         def __call__(self, action_list):
             # do something to item in the action list
     """
+    # __required_idx_attrs__ = {'key'}
     pass
 
-class ListLimiter(QryProcessor):
+class ListLimiter(JsonQryProcessor):
     """ takes a list and a length limit and returns the list of appropriate
         length
     """
@@ -37,7 +38,7 @@ class ListLimiter(QryProcessor):
             return action_list[:self.length]
         return action_list[self.length:]
 
-class StripEnd(QryProcessor):
+class StripEnd(JsonQryProcessor):
     """ strips off the provided characters from the end of strings
     """
     key = "stripend"
@@ -49,7 +50,7 @@ class StripEnd(QryProcessor):
         return [XsdString(re.sub(self.regex, '', str(action)))\
                 for action in action_list]
 
-class MakeDistinct(QryProcessor):
+class MakeDistinct(JsonQryProcessor):
     """ Takes a list when called and removes dulplicates """
     key = "distinct"
 

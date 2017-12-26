@@ -15,13 +15,14 @@ vocabulary.
 # from .rdfdatasets import RdfDataset
 from .framework import RdfFramework
 
+import rdfframework.utilities
 import rdfframework.connections
 import rdfframework.datamergers
 import rdfframework.configuration
 import rdfframework.search
 import rdfframework.sparql
 import rdfframework.rml
-import rdfframework.utilities
+
 import rdfframework.datasets
 
 __author__ = "Mike Stabile, Jeremy Nelson"

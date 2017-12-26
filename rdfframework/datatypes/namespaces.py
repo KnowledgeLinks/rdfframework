@@ -10,7 +10,7 @@ import rdflib
 
 # from decimal import Decimal
 from rdfframework.utilities import cbool, is_not_null, DictClass, new_id, \
-        memorize, PerformanceMeta, InstanceCheckMeta
+        memorize, PerformanceMeta, InstanceCheckMeta, DatatypeRegistryMeta, TestMeta, TestMeta2
 # from dateutil.parser import parse
 # from datetime import date, datetime, time, timezone
 from .datatypeerrors import NsPrefixExistsError, NsUriExistsError, \
@@ -31,11 +31,17 @@ MNAME = inspect.stack()[0][1]
 # class instanciation
 PERFORMANCE_ATTRS = ['sparql', 'sparql_uri', 'pyuri', 'clean_uri']
 
-class BaseRdfDataType(object, metaclass=InstanceCheckMeta):
+class BaseRdfDataType(metaclass=TestMeta):
     """ Base for all rdf datatypes. Not designed to be used alone """
+    __required_idx_attrs__ = {"class_type"}
+    __optional_idx_attrs__ = {"datatype", "py_type"}
+    __special_idx_attrs__ = [{"datatype": ["sparql",
+                                           "sparql_uri",
+                                           "pyuri",
+                                           "clean_uri",
+                                           "rdflib"]}]
     type = "literal"
     default_method = "sparql"
-    py_type = None
     class_type = "RdfDataType"
 
     def __init__(self, value):
@@ -103,11 +109,11 @@ class BaseRdfDataType(object, metaclass=InstanceCheckMeta):
 
     @property
     def rdflib(self):
-        return rdflib.Literal(self.value)
+        return rdflib.Literal(self.value, datatype=self.datatype.rdflib)
 
 
 @functools.lru_cache(maxsize=1000)
-class Uri(BaseRdfDataType, str, metaclass=PerformanceMeta):
+class Uri(BaseRdfDataType, str, metaclass=TestMeta2):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
     type = "uri"

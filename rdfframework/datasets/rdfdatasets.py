@@ -62,7 +62,7 @@ class RdfDataset(dict):
     def __repr__(self):
         return "<Dataset([{'base_uri': '%s',\n'keys': '%s'}])>" % \
                (self.base_uri,
-                [key.sparql for key in self.keys() if key.type != 'bnode'])
+                [key.sparql for key in self if key.type != 'bnode'])
 
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
         """ Adds a triple to the dataset
