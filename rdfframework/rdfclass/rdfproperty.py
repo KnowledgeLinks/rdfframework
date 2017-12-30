@@ -5,7 +5,7 @@ import types
 from rdfframework import rdfclass
 from rdfframework.utilities import find_values, make_doc_string, LABEL_FIELDS, \
         RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS, pick
-from rdfframework.datatypes import BaseRdfDataType, Uri, DT_LOOKUP, BlankNode, \
+from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, \
         RdfNsManager
 from rdfframework.processors import prop_processor_mapping
 from rdfframework.configuration import RdfConfigManager
@@ -175,7 +175,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 es_map['type'] = self.es_idx_types[idx_types[0]]
         try:
             if not es_map.get('type'):
-                fld_type = DT_LOOKUP.get(ranges[0]).es_type
+                fld_type = BaseRdfDataType[ranges[0]].es_type
                 es_map['type'] = fld_type
                 if cls._prop_name == 'rdf_type':
                     es_map['type'] = 'keyword'
@@ -187,7 +187,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         if es_map['type'] == "nested":
             del es_map['type']
         try:
-            fld_format = DT_LOOKUP.get(ranges[0]).es_format
+            fld_format = BaseRdfDataType[ranges[0]].es_format
             es_map['format'] = fld_format
         except (KeyError, AttributeError):
             pass

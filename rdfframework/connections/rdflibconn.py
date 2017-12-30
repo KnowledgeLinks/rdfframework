@@ -120,7 +120,7 @@ class RdflibConn(TriplestoreConnection):
                     reads the file path.
             container_dir: Not Required or relevant for rdflib
         """
-    key = 'rdflib'
+    vendor = 'rdflib'
     log_name = "%s-RdfLibConn" % MNAME
     log_level = logging.INFO
 

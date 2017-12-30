@@ -1,5 +1,11 @@
 {{ prefix }}
-
+{% if output == 'rdf'%}
+CONSTRUCT {
+    ?s ?p ?o
+}
+WHERE
+{
+{% endif %}
 SELECT DISTINCT ?s ?p ?o
 {
     BIND({{ item_uri }} as ?item) .
@@ -99,44 +105,9 @@ SELECT DISTINCT ?s ?p ?o
         Filter(?p1 != ?p0) .
         Filter(isblank(?s)) .
     }
-    FILTER (?p=rdf:type||
-        ?p=bf:summary||
-        ?p=rdfs:label||
-        ?p=bf:title||
-        ?p=bf:mainTitle||
-        ?p=bf:instanceOf||
-        ?p=bf:subject||
-        ?p=rdf:value||
-        ?p=bf:contribution||
-        ?p=bf:role||
-        ?p=bf:agent||
-        ?p=bf:provisionActivity||
-        ?p=bf:date||
-        ?p=bf:identifiedBy||
-        ?p=bf:provisionActivityStatement ||
-        ?p=bf:itemOf||
-        ?p=rdfs:seeAlso||
-        ?p=bf:shelfMark||
-        ?p=rdfs:label||
-        ?p=bf:heldBy||
-        ?p=schema:logo||
-        ?p=schema:parentOrganization||
-        ?p=schema:address||
-        ?p=schema:streetAddress||
-        ?p=schema:addressLocality||
-        ?p=schema:addressRegion||
-        ?p=schema:postalCode)
-    # hide all of the repository generated data
-    # BIND(IF(isblank(?o),"",STR(?o)) as ?o_)
-    # BIND(IF(isblank(?p),"",STR(?p)) as ?p_)
-    # FILTER(!(
-    #   STRSTARTS(?p_, "http://fedora.info/definitions/v4/")||
-    #   STRSTARTS(?o_, "http://fedora.info/definitions/v4/")||
-    #   STRSTARTS(?o_, "http://www.w3.org/ns/ldp#Container")||
-    #   STRSTARTS(?o_, "http://www.jcp.org/jcr/")||
-    #   STRSTARTS(?p_, "http://www.w3.org/ns/ldp#Container")||
-    #   STRSTARTS(?p_, "http://www.w3.org/ns/ldp#RDFSource")||
-    #   STRSTARTS(?o_, "http://www.w3.org/ns/ldp#RDFSource")||
-    #   STRSTARTS(?o_, "http://www.jcp.org/jcr/")
-    # ))
+    {{ special_union }}
+    {{ filters }}
 }
+{% if output == 'rdf'%}
+}
+{% endif %}

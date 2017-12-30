@@ -351,6 +351,14 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         except IndexError:
             print("Missing class label: ", self.__class__.__name__)
             rtn_obj['label'] = self.__class__.__name__.split("_")[-1]
+        except AttributeError:
+            # an attribute error is cause when the class is an only
+            # an instance of the BaseRdfClass. We will search the rdf_type
+            # property and construct a label from rdf_type value
+            if self.get('rdf_type'):
+                rtn_obj['label'] = self['rdf_type'][-1].value[1]
+            else:
+                rtn_obj['label'] = "no_label"
         try:
             rtn_obj['value'] = [rtn_obj.get(label) \
                                 for label in VALUE_FIELDS + LABEL_FIELDS \

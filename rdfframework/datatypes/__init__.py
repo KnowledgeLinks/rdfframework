@@ -1,8 +1,7 @@
 
 from .datatypeerrors import *
 from .namespaces import RdfNsManager, RdfNamespace, BaseRdfDataType, Uri
-from .xsdtypes import (DT_LOOKUP,
-                       BlankNode,
+from .xsdtypes import (BlankNode,
                        XsdBoolean,
                        XsdDate,
                        XsdDatetime,

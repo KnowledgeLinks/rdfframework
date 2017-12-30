@@ -159,7 +159,6 @@ def get_json_qry_item(dataset, param, no_key=False):
                 #         if filter_tup[1] in elem.get(filter_tup[0], []) \
                 #         and elem]
             return merge_list(search_dict)
-
     if param == "*":
         return dataset
     try:
@@ -185,8 +184,11 @@ def get_json_qry_item(dataset, param, no_key=False):
                                            key,
                                            ('rdf_type',
                                             param.ident, "="))
-            elif param.ident in dataset.get('rdf_type',[]):
+            elif param.ident in dataset.get('rdf_type', []):
                 rtn_obj = dataset
+            else:
+                rtn_obj = [value for value in dataset.values()
+                           if param.ident in value.get('rdf_type', [])]
             # pdb.set_trace()
         elif hasattr(param, 'attrib'):
             # if param.parsed_tree.attrib == 'bf_role':
@@ -202,7 +204,10 @@ def get_json_qry_item(dataset, param, no_key=False):
                     and rtn_obj:
                 rtn_obj = get_json_qry_item(rtn_obj, param.selector, True)
             return rtn_obj
-        return dataset[key]
+        if key:
+            return dataset[key]
+        else:
+            return dataset
     elif hasattr(param, 'element'):
         key = param.element
         return get_dataset_vals(dataset, key)
@@ -369,7 +374,7 @@ def override_ascii_lower(string):
 
 cssselect.parser.ascii_lower = override_ascii_lower
 
-def json_qry(dataset, qry_str, params):
+def json_qry(dataset, qry_str, params={}):
     """ Takes a json query string and returns the results
 
     args:
@@ -377,7 +382,9 @@ def json_qry(dataset, qry_str, params):
         qry_str: query string
         params: dictionary of params
     """
-    dallor_val = params.get("$")
+    if qry_str.startswith("$.bf_itemOf[rdf_type=bf_Print].='print',\n"):
+        pdb.set_trace()
+    dallor_val = params.get("$", dataset)
     if isinstance(dallor_val, rdflib.URIRef):
         dallor_val = Uri(dallor_val)
     parsed_qry = parse_json_qry(qry_str)

@@ -1,9 +1,9 @@
 import re
-from rdfframework.utilities import UniqueList, cbool, KeyRegistryMeta, DatatypeRegistryMeta
+from rdfframework.utilities import UniqueList, cbool, KeyRegistryMeta
 from rdfframework.datatypes import XsdString
 import pdb
 
-class JsonQryProcessor(metaclass=DatatypeRegistryMeta):
+class JsonQryProcessor(metaclass=KeyRegistryMeta):
     """ Base class for json query processors.  Provides a 'key' registry
     for all inherited classes.
 
@@ -21,7 +21,7 @@ class JsonQryProcessor(metaclass=DatatypeRegistryMeta):
         def __call__(self, action_list):
             # do something to item in the action list
     """
-    # __required_idx_attrs__ = {'key'}
+    __required_idx_attrs__ = ['key']
     pass
 
 class ListLimiter(JsonQryProcessor):

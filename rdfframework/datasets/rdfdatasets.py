@@ -39,14 +39,19 @@ class RdfDataset(dict):
                  'non_defined',
                  'base_uri',
                  'base_class',
-                 'relate_obj_types']
+                 'relate_obj_types',
+                 'smap',
+                 'pmap',
+                 'omap']
 
     def __init__(self, data=None, base_uri=None, **kwargs):
         start = datetime.datetime.now()
+        self.smap = 's'
+        self.pmap = 'p'
+        self.omap = 'o'
         if base_uri:
             base_uri = Uri(base_uri)
         self.base_uri = base_uri
-
         # realate_bnode_obj_types sets whether to relate the object of a class
         # back to itself
 
@@ -64,6 +69,18 @@ class RdfDataset(dict):
                (self.base_uri,
                 [key.sparql for key in self if key.type != 'bnode'])
 
+    def set_map(self, **kwargs):
+        """ sets the subject predicat object json mapping
+
+        kwargs:
+            map: dictionary mapping 's', 'p', 'o' keys
+        """
+        if kwargs.get('map'):
+            map = kwargs.pop('map',{})
+            self.smap = map.get('s','s')
+            self.pmap = map.get('p','p')
+            self.omap = map.get('o','o')
+
     def add_triple(self, sub, pred=None,  obj=None, **kwargs):
         """ Adds a triple to the dataset
 
@@ -80,13 +97,13 @@ class RdfDataset(dict):
                 obj_method: if "list" than the object will be returned in the
                             form of a list
         """
-        map = kwargs.get('map',{})
+        self.set_map(**kwargs)
         strip_orphans = kwargs.get("strip_orphans", False)
         obj_method = kwargs.get("obj_method")
         if isinstance(sub, DictClass) or isinstance(sub, dict):
-            pred = sub[map.get('p','p')]
-            obj = sub[map.get('o','o')]
-            sub = sub[map.get('s','s')]
+            pred = sub[self.pmap]
+            obj = sub[self.omap]
+            sub = sub[self.smap]
 
         pred = pyrdf(pred)
         obj = pyrdf(obj)
@@ -177,16 +194,17 @@ class RdfDataset(dict):
                 obj_method: "list", or None: if "list" the object of a method
                             will be in the form of a list.
         """
+        self.set_map(**kwargs)
         if isinstance(data, list):
             data = self._convert_results(data, **kwargs)
-        class_types = self._group_data(data)
+        class_types = self._group_data(data, **kwargs)
         # generate classes and add attributes to the data
         self._generate_classes(class_types, self.non_defined, **kwargs)
         # add triples to the dataset
         for triple in data:
             self.add_triple(sub=triple, **kwargs)
 
-    def _group_data(self, data):
+    def _group_data(self, data, **kwargs):
         """ processes the data in to groups prior to loading into the
             dataset
 
@@ -194,8 +212,9 @@ class RdfDataset(dict):
                 data: a list of triples
         """
         # strip all of the rdf_type triples and merge
+
         class_types = self._merge_classtypes(self._get_classtypes(data))
-        self.subj_list = list([item['s'] for item in class_types])
+        self.subj_list = list([item[self.smap] for item in class_types])
         # get non defined classes
         self.non_defined = self._get_non_defined(data, class_types)
         return class_types
@@ -261,8 +280,7 @@ class RdfDataset(dict):
         self.classes = rtn_obj
         #return rtn_obj
 
-    @staticmethod
-    def _get_classtypes(data):
+    def _get_classtypes(self, data):
         """ returns all of the triples where rdf:type is the predicate and
             removes them from the data list
 
@@ -272,7 +290,7 @@ class RdfDataset(dict):
         rtn_list = []
         remove_index = []
         for i, triple in enumerate(data):
-            if triple['p'] == "rdf:type":
+            if triple[self.pmap] == "rdf:type":
                 remove_index.append(i)
                 rtn_list.append(triple)
         for i in reversed(remove_index):
@@ -288,9 +306,9 @@ class RdfDataset(dict):
         """
         kwargs['dataset'] = self
         for class_type in class_types:
-            self[class_type['s']] = self._get_rdfclass(class_type, **kwargs)\
+            self[class_type[self.smap]] = self._get_rdfclass(class_type, **kwargs)\
                     (class_type, **kwargs)
-            #setattr(self, class_type['s'], RdfBaseClass(class_type))
+            #setattr(self, class_type[self.smap], RdfBaseClass(class_type))
         for class_type in non_defined:
             self[class_type] = RdfClassBase(class_type, **kwargs)
             #setattr(self, class_type, RdfBaseClass(class_type))
@@ -300,8 +318,7 @@ class RdfDataset(dict):
         except KeyError:
             self.base_class = None
 
-    @staticmethod
-    def _get_rdfclass(class_type, **kwargs):
+    def _get_rdfclass(self, class_type, **kwargs):
         """ returns the instanticated class from the class list
 
             args:
@@ -317,50 +334,48 @@ class RdfDataset(dict):
         if kwargs.get("def_load"):
             return RdfClassBase
 
-        if isinstance(class_type['o'], list):
-            bases = [select_class(class_name) for class_name in class_type['o']]
+        if isinstance(class_type[self.omap], list):
+            bases = [select_class(class_name) for class_name in class_type[self.omap]]
             bases = [base for base in bases if base != RdfClassBase]
             if len(bases) == 0:
                 return RdfClassBase
             elif len(bases) == 1:
                 return bases[0]
             else:
-                # return types.new_class("_".join(class_type['o']),
+                # return types.new_class("_".join(class_type[self.omap]),
                 #                        tuple(bases))
                 bases = remove_parents(bases)
                 if len(bases) == 1:
                     return bases[0]
                 else:
-                    new_class = type("_".join(class_type['o']),
+                    new_class = type("_".join(class_type[self.omap]),
                                      tuple(bases),
                                      {})
-                    # new_class = types.new_class("_".join(class_type['o']),
+                    # new_class = types.new_class("_".join(class_type[self.omap]),
                     #                             tuple(bases),
                     #                             {'multi_class': True})
-                    new_class.hierarchy = list_hierarchy(class_type['o'][0],
+                    new_class.hierarchy = list_hierarchy(class_type[self.omap][0],
                                                          bases)
                     new_class.class_names = [base.__name__ \
                             for base in bases \
                             if base not in [RdfClassBase, dict]]
                     return new_class
         else:
-            return select_class(class_type['o'])
+            return select_class(class_type[self.omap])
 
-    @staticmethod
-    def _merge_classtypes(data):
+    def _merge_classtypes(self, data):
         obj = {}
         for triple in data:
             try:
-                obj[triple['s']]['o'].append(triple['o'])
+                obj[triple[self.smap]][self.omap].append(triple[self.omap])
             except AttributeError:
-                obj[triple['s']]['o'] = [obj[triple['s']]['o']]
-                obj[triple['s']]['o'].append(triple['o'])
+                obj[triple[self.smap]][self.omap] = [obj[triple[self.smap]][self.omap]]
+                obj[triple[self.smap]][self.omap].append(triple[self.omap])
             except KeyError:
-                obj[triple['s']] = triple
+                obj[triple[self.smap]] = triple
         return list(obj.values())
 
-    @staticmethod
-    def _get_non_defined(data, class_types):
+    def _get_non_defined(self, data, class_types):
         """ returns a list of URIs and blanknodes that are not defined within
             the dataset. For example: schema:Person has an associated rdf:type
             then it is considered defined.
@@ -369,12 +384,11 @@ class RdfDataset(dict):
                 data: a list of triples
                 class_types: list of subjects that are defined in the dataset
         """
-        subj_set = set([item['s'] for item in class_types])
-        non_def_set = set([item['s'] for item in data])
+        subj_set = set([item[self.smap] for item in class_types])
+        non_def_set = set([item[self.smap] for item in data])
         return list(non_def_set - subj_set)
 
-    @staticmethod
-    def _convert_results(data, **kwargs):
+    def _convert_results(self, data, **kwargs):
         """ converts the results of a query to RdfDatatype instances
 
             args:
@@ -388,11 +402,12 @@ class RdfDataset(dict):
         return [{key:pyrdf(value) for key, value in row.items()}
                 for row in data]
 
-    def json_qry(self, qry_str, params):
+    # def json_qry(self, qry_str, params):
+    def json_qry(*args):
         """ Takes a json query string and returns the results
 
         args:
             qry_str: query string
         """
-        return json_qry(self, qry_str, params)
+        return json_qry(*args)
 

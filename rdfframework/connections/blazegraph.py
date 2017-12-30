@@ -36,7 +36,7 @@ class Blazegraph(TriplestoreConnection):
             container_dir: the path to the file data directory as the docker
                     container/Blazegraph see the file path.
         """
-    key="blazegraph"
+    vendor = "blazegraph"
     log_name = "%s-Blazegraph" % MNAME
     log_level = logging.INFO
 

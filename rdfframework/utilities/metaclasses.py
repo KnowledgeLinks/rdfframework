@@ -1,6 +1,6 @@
 import pdb
 
-class DatatypeRegistryMeta(type):
+class KeyRegistryMeta(type):
     """ Registry metaclass for a 'key' lookup specified as an attribute of a
     class inheriting from the base class using this metaclass
 
@@ -9,7 +9,8 @@ class DatatypeRegistryMeta(type):
 
     The base class needs to have defined a class attribute of
 
-    _registry
+
+    __registry__
 
     """
     def __new__(meta, name, bases, class_dict):
@@ -32,8 +33,13 @@ class DatatypeRegistryMeta(type):
                 return True
 
             try:
-                return getattr(reg_cls, name)
+                options = getattr(reg_cls, name)
+                if not isinstance(options, (set, list)):
+                    raise TypeError("'%s' must be a set or list" % name)
+                return set(getattr(reg_cls, name))
             except AttributeError:
+                # if the reg_cls does not have the set of attibutes listed
+                # attempt to create a list of keys if force is passed as true
                 if force:
                     # select all attribute namees that are non callable and
                     # that are not reserved attributes
@@ -46,16 +52,18 @@ class DatatypeRegistryMeta(type):
                     return set(options)
                 else:
                     return set()
-        # pdb.set_trace()
-        cls = super(DatatypeRegistryMeta, meta).__new__(meta,
+
+        cls = super(KeyRegistryMeta, meta).__new__(meta,
                                                         name,
                                                         bases,
                                                         class_dict)
-        reg_cls = [base for base in cls.__bases__ \
-                       if base not in [object, str, int]]
+        reg_cls = [base for base in cls.__bases__
+                   if base not in [object, str, int]]
         try:
             reg_cls = reg_cls[-1]
         except IndexError:
+            # if there are now classes use the current class as the
+            # class for registration
             cls.__reg_cls__ = cls
             reg_cls = cls
         if cls == reg_cls:
@@ -84,7 +92,9 @@ class DatatypeRegistryMeta(type):
                     % (cls, req_attrs - cls_attrs))
         attr_vals = set([getattr(cls, attr) \
                          for attr in req_attrs.union(opt_attrs) \
-                         if cls.__dict__.get(attr)])
+                         if hasattr(cls, attr)])
+                         #if cls.__dict__.get(attr)])
+
         registry = reg_cls.__registry__
         registered = [attr_val for attr_val in attr_vals \
                       if registry.get(attr_val)]
@@ -102,32 +112,28 @@ class DatatypeRegistryMeta(type):
             err_items = ["idx '%s' in class '%s'" % (item, registry[item]) \
                          for item in registered]
             raise LookupError(err_msg + "\n".join(err_items))
+        reg_vals = []
         for attr in req_attrs.union(opt_attrs):
             if hasattr(cls, attr):
                 attr_val = getattr(cls, attr)
                 registry[attr_val] = cls
+                reg_vals.append(attr_val)
         if hasattr(reg_cls, "__special_idx_attrs__"):
             for spec_attr in reg_cls.__special_idx_attrs__:
                 for key, value in spec_attr.items():
                     if hasattr(cls, key):
                         for item in value:
-                            registry[getattr(getattr(cls, key), item)] = cls
-
-        # for xsd_class in xsd_class_list:
-        #     attr_list = ["type", "py_type", "class_type"]
-        #     for attr in attr_list:
-        #         if hasattr(xsd_class, attr):
-        #             DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
-        #         elif hasattr(xsd_class, '__wrapped__') and \
-        #                 hasattr(xsd_class.__wrapped__, attr):
-        #             DT_LOOKUP[getattr(xsd_class.__wrapped__, attr)] = xsd_class
-        #     if hasattr(xsd_class, "datatype"):
-        #         DT_LOOKUP[xsd_class.datatype.sparql] = xsd_class
-        #         DT_LOOKUP[xsd_class.datatype.sparql_uri] = xsd_class
-        #         DT_LOOKUP[xsd_class.datatype.pyuri] = xsd_class
-        #         DT_LOOKUP[xsd_class.datatype.clean_uri] = xsd_class
-        #         DT_LOOKUP[xsd_class.datatype] = xsd_class
-        #     DT_LOOKUP[xsd_class] = xsd_class
+                            val = getattr(getattr(cls, key), item)
+                            registry[val] = cls
+                            reg_vals.append(val)
+        if hasattr(reg_cls, "__nested_idx_attrs__"):
+            for attr in reg_cls.__nested_idx_attrs__:
+                if hasattr(cls, attr):
+                    attr_val = getattr(cls, attr)
+                    if not registry.get(attr_val):
+                        registry[attr_val] = {}
+                    for val in reg_vals:
+                        registry[attr_val][val] = cls
         if not '__registry__' in cls.__dict__:
             cls.__registry__ = None
         return cls
@@ -139,19 +145,14 @@ class DatatypeRegistryMeta(type):
             return cls.__registry__[key]
         except KeyError:
             raise KeyError("key '%s' has no associated class" % key)
-        # except AttributeError:
-        #     try:
-        #         return cls.__registry__[key]
-        #     except KeyError:
-        #         raise LookupError("key '%s' has no associated class" % key)
 
     def keys(cls):
-        if cls.__bases__[0] == object:
+        if cls == cls.__reg_cls__:
             return cls.__registry__.keys()
         raise AttributeError("%s has not attribute 'keys'" % cls)
 
     def values(cls):
-        if cls.__bases__[0] == object:
+        if cls == cls.__reg_cls__:
             return cls.__registry__.values()
         raise AttributeError("%s has not attribute 'values'" % cls)
 
@@ -173,7 +174,7 @@ class InstanceCheckMeta(type):
         # pdb.set_trace()
         return super(InstanceCheckMeta, cls).__call__(*args, **kwargs)
 
-class PerformanceMeta(InstanceCheckMeta):
+class PerformanceMeta(type):
     """ metaclass to remove property attributes so that they can be set during
         class instanciation.
 
@@ -195,62 +196,62 @@ class PerformanceMeta(InstanceCheckMeta):
                 clsdict[attr] = None
         return super(PerformanceMeta, mcs).__new__(mcs, cls, bases, clsdict)
 
-class KeyRegistryMeta(type):
-    """ Registry metaclass for a 'key' lookup specified as an attribute of a
-    class inheriting from the base class using this metaclass
+# class KeyRegistryMeta(type):
+#     """ Registry metaclass for a 'key' lookup specified as an attribute of a
+#     class inheriting from the base class using this metaclass
 
-    Calling the base class by baseclase[key] will return the inherited class
-    that is specified by the 'key'
+#     Calling the base class by baseclase[key] will return the inherited class
+#     that is specified by the 'key'
 
-    The base class needs to have defined a class attribute of
+#     The base class needs to have defined a class attribute of
 
-    _registry
+#     _registry
 
-    """
-    def __new__(meta, name, bases, class_dict):
-        cls = super(KeyRegistryMeta, meta).__new__(meta, name, bases, class_dict)
+#     """
+#     def __new__(meta, name, bases, class_dict):
+#         cls = super(KeyRegistryMeta, meta).__new__(meta, name, bases, class_dict)
 
-        if not bases:
-            if not hasattr(cls, "__registry__"):
-                cls.__registry__ = {}
-                # raise AttributeError("base class '%s' requires a class attribute called '_registry' used to lookup registered keys" % \
-                #                      name)
-            return cls
-        if not hasattr(cls, "key"):
-            raise AttributeError("define 'key' at class level for your processor")
-        elif cls.__bases__[-1].__registry__.get(cls.key):
-            raise AttributeError("'key' has already been used with class %s" %
-                                 cls.__bases__[-1].__registry__.get(cls.key))
-        cls.__bases__[-1].__registry__[cls.key] = cls
-        if not '__registry__' in cls.__dict__:
-            cls.__registry__ = None
-        return cls
+#         if not bases:
+#             if not hasattr(cls, "__registry__"):
+#                 cls.__registry__ = {}
+#                 # raise AttributeError("base class '%s' requires a class attribute called '_registry' used to lookup registered keys" % \
+#                 #                      name)
+#             return cls
+#         if not hasattr(cls, "key"):
+#             raise AttributeError("define 'key' at class level for your processor")
+#         elif cls.__bases__[-1].__registry__.get(cls.key):
+#             raise AttributeError("'key' has already been used with class %s" %
+#                                  cls.__bases__[-1].__registry__.get(cls.key))
+#         cls.__bases__[-1].__registry__[cls.key] = cls
+#         if not '__registry__' in cls.__dict__:
+#             cls.__registry__ = None
+#         return cls
 
-    def __getitem__(cls, key):
-        if cls.__bases__[0] != object:
-            raise TypeError("'%s' object is not subscriptable" % cls)
-        try:
-            return cls.__bases__[-1].__registry__[key]
-        except KeyError:
-            raise LookupError("key '%s' has no associated class" % key)
-        except AttributeError:
-            try:
-                return cls.__registry__[key]
-            except KeyError:
-                raise LookupError("key '%s' has no associated class" % key)
+#     def __getitem__(cls, key):
+#         if cls.__bases__[0] != object:
+#             raise TypeError("'%s' object is not subscriptable" % cls)
+#         try:
+#             return cls.__bases__[-1].__registry__[key]
+#         except KeyError:
+#             raise LookupError("key '%s' has no associated class" % key)
+#         except AttributeError:
+#             try:
+#                 return cls.__registry__[key]
+#             except KeyError:
+#                 raise LookupError("key '%s' has no associated class" % key)
 
-    def keys(cls):
-        if cls.__bases__[0] == object:
-            return cls.__registry__.keys()
-        raise AttributeError("%s has not attribute 'keys'" % cls)
+#     def keys(cls):
+#         if cls.__bases__[0] == object:
+#             return cls.__registry__.keys()
+#         raise AttributeError("%s has not attribute 'keys'" % cls)
 
-    def values(cls):
-        if cls.__bases__[0] == object:
-            return cls.__registry__.values()
-        raise AttributeError("%s has not attribute 'values'" % cls)
+#     def values(cls):
+#         if cls.__bases__[0] == object:
+#             return cls.__registry__.values()
+#         raise AttributeError("%s has not attribute 'values'" % cls)
 
-class TestMeta(DatatypeRegistryMeta, InstanceCheckMeta):
+class RegInstanceMeta(KeyRegistryMeta, InstanceCheckMeta):
     pass
 
-class TestMeta2(PerformanceMeta, TestMeta):
+class RegPerformInstanceMeta(PerformanceMeta, RegInstanceMeta):
     pass

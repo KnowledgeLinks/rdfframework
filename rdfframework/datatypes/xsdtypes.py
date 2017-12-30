@@ -5,14 +5,15 @@ import rdflib
 import json
 
 from decimal import Decimal
-from rdfframework.utilities import cbool, new_id, PerformanceMeta, memorize, TestMeta2
+from rdfframework.utilities import cbool, new_id, memorize, \
+        RegPerformInstanceMeta
 from dateutil.parser import parse
 from datetime import date, datetime, time, timezone
 from .namespaces import Uri, BaseRdfDataType, PERFORMANCE_ATTRS
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-class BlankNode(BaseRdfDataType, metaclass=TestMeta2):
+class BlankNode(BaseRdfDataType, metaclass=RegPerformInstanceMeta):
     """ blankNode URI/IRI class for working with RDF data """
     class_type = "BlankNode"
     type = "bnode"
@@ -72,7 +73,9 @@ class XsdString(str, BaseRdfDataType):
             kwargs.update(args[0])
         else:
             new_args = args
-        if "lang" in kwargs.keys():
+        if "xml:lang" in kwargs:
+            lang = kwargs.pop("xml:lang")
+        elif "lang" in kwargs:
             lang = kwargs.pop("lang")
         else:
             lang = None
@@ -354,53 +357,36 @@ class XsdDecimal(Decimal, BaseRdfDataType):
         return self._internal_sub(other)
 
 
-xsd_class_list = [Uri,
-                  BlankNode,
-                  XsdBoolean,
-                  XsdDate,
-                  XsdDatetime,
-                  XsdString,
-                  XsdTime,
-                  XsdInteger]
 
-DT_LOOKUP = {}
-for xsd_class in xsd_class_list:
-    attr_list = ["type", "py_type", "class_type"]
-    for attr in attr_list:
-        if hasattr(xsd_class, attr):
-            DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
-        elif hasattr(xsd_class, '__wrapped__') and \
-                hasattr(xsd_class.__wrapped__, attr):
-            DT_LOOKUP[getattr(xsd_class.__wrapped__, attr)] = xsd_class
-    if hasattr(xsd_class, "datatype"):
-        DT_LOOKUP[xsd_class.datatype.sparql] = xsd_class
-        DT_LOOKUP[xsd_class.datatype.sparql_uri] = xsd_class
-        DT_LOOKUP[xsd_class.datatype.pyuri] = xsd_class
-        DT_LOOKUP[xsd_class.datatype.clean_uri] = xsd_class
-        DT_LOOKUP[xsd_class.datatype] = xsd_class
-    DT_LOOKUP[xsd_class] = xsd_class
 
-def hash_dict(func):
-    """Transform mutable dictionnary
-    Into immutable
-    Useful to be compatible with cache
-    """
-    class HDict(dict):
-        def __hash__(self):
-            return hash(str(self))
+__DT_LOOKUP__ = BaseRdfDataType.__registry__
+# DT_LOOKUP = {}
+# xsd_class_list = [Uri,
+#                   BlankNode,
+#                   XsdBoolean,
+#                   XsdDate,
+#                   XsdDatetime,
+#                   XsdString,
+#                   XsdTime,
+#                   XsdInteger]
+# for xsd_class in xsd_class_list:
+#     attr_list = ["type", "py_type", "class_type"]
+#     for attr in attr_list:
+#         if hasattr(xsd_class, attr):
+#             DT_LOOKUP[getattr(xsd_class, attr)] = xsd_class
+#         elif hasattr(xsd_class, '__wrapped__') and \
+#                 hasattr(xsd_class.__wrapped__, attr):
+#             DT_LOOKUP[getattr(xsd_class.__wrapped__, attr)] = xsd_class
+#     if hasattr(xsd_class, "datatype"):
+#         DT_LOOKUP[xsd_class.datatype.sparql] = xsd_class
+#         DT_LOOKUP[xsd_class.datatype.sparql_uri] = xsd_class
+#         DT_LOOKUP[xsd_class.datatype.pyuri] = xsd_class
+#         DT_LOOKUP[xsd_class.datatype.clean_uri] = xsd_class
+#         DT_LOOKUP[xsd_class.datatype] = xsd_class
+#     DT_LOOKUP[xsd_class] = xsd_class
 
-    @functools.wraps(func)
-    def wrapped(*args, **kwargs):
-        args = tuple([HDict(arg) if isinstance(arg, dict) else arg for arg in args])
-        kwargs = {k: HDict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
-        return func(*args, **kwargs)
-    return wrapped
-
-# @hashable_lru
-# @hash_dict
-# @functools.lru_cache(maxsize=None)
 @memorize
-def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
+def pyrdf2(value, class_type=None, datatype=None, lang=None, **kwargs):
     """ Coverts an input to one of the rdfdatatypes classes
 
         Args:
@@ -438,6 +424,47 @@ def pyrdf(value, class_type=None, datatype=None, lang=None, **kwargs):
     except:
         pdb.set_trace()
         pass
+# TYPE_MATCH is a reference dict that is used with 'pyrdf' to for matching
+# items in the the BaseRdfDataType registry for nested items. 'uri' and 'bnode'
+# are single item dictionaries that reguire a matching key to lookup
+__TYPE_MATCH__ = {"bnode": 'BlankNode',
+                  "uri": 'Uri',
+                  # if the literal value does not have a datatype use
+                  # 'xsd_string' as the default
+                  "literal": 'xsd_string'}
+
+@memorize
+def pyrdf(value, class_type=None, datatype=None, **kwargs):
+    """ Coverts an input to one of the rdfdatatypes classes
+
+        Args:
+            value: any rdfdatatype, json dict or vlaue
+            class_type: "literal", "uri" or "blanknode"
+            datatype: "xsd:string", "xsd:int" , etc
+        kwargs:
+            lang: language tag
+    """
+    if isinstance(value, BaseRdfDataType):
+        return value
+    if isinstance(value, dict):
+        class_type = value.pop('type')
+        try:
+            datatype = value.pop('datatype')
+        except KeyError:
+            datatype = __TYPE_MATCH__[class_type]
+        kwargs = value
+        value = kwargs.pop('value')
+    if not class_type:
+        class_type = 'literal'
+    if not datatype:
+        datatype = type(value)
+    try:
+        return __DT_LOOKUP__[class_type][datatype](value, **kwargs)
+    except KeyError:
+        rtn_val = BaseRdfDataType(value)
+        rtn_val.datatype = Uri(datatype)
+        return rtn_val
+
 """
 #! To be implemented
 

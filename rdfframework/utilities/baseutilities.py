@@ -42,9 +42,13 @@ class memorize():
 
     def pop_first_used(self):
         if self.full or self.__len > 10000:
-            self.full = True
-            key = self.lastused.pop(0)
-            del self.memorized[key]
+            self.full = False
+            counter = 1000
+            while counter:
+                key = self.lastused.pop(0)
+                del self.memorized[key]
+                counter -= 1
+                self.__len -= 1
             return
         self.__len += 1
 
