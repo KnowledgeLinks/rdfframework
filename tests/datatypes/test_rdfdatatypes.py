@@ -78,7 +78,6 @@ class Test_XsdBool(unittest.TestCase):
 
     def test_sparql_values(self):
         for tup in self.test_sparql_values:
-            pdb.set_trace()
             self.assertEqual(rdt.XsdBoolean(tup[0]).sparql, tup[1])
 
 
