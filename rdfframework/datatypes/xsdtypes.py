@@ -79,7 +79,7 @@ class XsdString(str, BaseRdfDataType):
             lang = kwargs.pop("lang")
         else:
             lang = None
-        newobj = str.__new__(cls, *new_args, **kwargs)
+        newobj = str.__new__(cls, *new_args)
         newobj.lang = lang
         newobj.value = str(new_args[0])
         return newobj
@@ -124,13 +124,15 @@ class XsdBoolean(BaseRdfDataType):
     es_type = "boolean"
 
     def __init__(self, value):
-        self.value = cbool(str(value))
+        new_val = cbool(value)
+        if new_val is None:
+            raise TypeError("'%s' is not a boolean value" % value)
+        self.value = new_val
 
     def __eq__(self, value):
         if value == self.value:
             return True
-        elif value != self.value:
-            return False
+        return False
 
     def __bool__(self):
         #pdb.set_trace()

@@ -66,10 +66,10 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
                     if dt_format == "uri":
                         dt = self.datatype.sparql_uri
                     if method == "sparql":
-                        if self.datatype == "xsd:string":
+                        if self.datatype in ["xsd_string"]:
                             rtn_val = json.dumps(rtn_val)
                         else:
-                            rtn_val = '"%s"' % rtn_val
+                            rtn_val = '"%s"' % json.dumps(rtn_val)
                         rtn_val = '%s^^%s' % (rtn_val, dt.sparql)
             elif method == "json":
                 pass

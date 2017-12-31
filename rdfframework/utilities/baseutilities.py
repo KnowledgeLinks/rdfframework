@@ -149,7 +149,8 @@ def cbool(value, strict=True):
     if is_not_null(value):
         if isinstance(value, bool):
             return_val = value
-        elif isinstance(value, str):
+        else:
+            value = str(value)
             if value.lower() in ['true', '1', 't', 'y', 'yes']:
                 return_val = True
             elif value.lower() in ['false', '0', 'n', 'no', 'f']:
