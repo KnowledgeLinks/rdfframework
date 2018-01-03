@@ -26,4 +26,4 @@ import rdfframework.rml
 import rdfframework.datasets
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.13'
+__version__ = '0.0.14'

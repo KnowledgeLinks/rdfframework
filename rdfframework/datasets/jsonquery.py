@@ -382,8 +382,8 @@ def json_qry(dataset, qry_str, params={}):
         qry_str: query string
         params: dictionary of params
     """
-    if qry_str.startswith("$.bf_itemOf[rdf_type=bf_Print].='print',\n"):
-        pdb.set_trace()
+    # if qry_str.startswith("$.bf_itemOf[rdf_type=bf_Print].='print',\n"):
+    #     pdb.set_trace()
     dallor_val = params.get("$", dataset)
     if isinstance(dallor_val, rdflib.URIRef):
         dallor_val = Uri(dallor_val)
