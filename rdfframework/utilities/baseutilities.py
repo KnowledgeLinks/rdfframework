@@ -139,6 +139,7 @@ def render_without_request(template_name, template_path=None, **template_vars):
     else:
         env = ENV
     template = env.get_template(template_name)
+    raise
     return template.render(**template_vars)
 
 
@@ -658,6 +659,21 @@ class EmptyDot():
 
     def __nonzero__(self):
         return False
+
+    def __call__(self, *args, **kwargs):
+        raise RuntimeWarning("class called before initialization by\n\t%s" %
+                inspect.getframeinfo(inspect.stack()[1][0]).__repr__())
+
+def initialized(func):
+    """ decorator for testing if a class has been initialized
+        prior to calling any attribute """
+
+    def wrapper(self, *args, **kwargs):
+        """ internal wrapper function """
+        if not self.is_initialized:
+            return EmptyDot()
+        return func(self, *args, **kwargs)
+    return wrapper
 
 class UniqueList(list):
     """ Extends python list preventing double elements from being added to the

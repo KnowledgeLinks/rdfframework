@@ -5,7 +5,7 @@ import logging
 import pdb
 
 from elasticsearch import Elasticsearch
-from rdfframework.utilities import DictClass, pp, EmptyDot, pyfile_path
+from rdfframework.utilities import DictClass, pp, initialized, pyfile_path
 
 
 __author__ = "Mike Stabile, Jeremy Nelson"
@@ -34,16 +34,6 @@ class ConfigSingleton(type):
     def clear(cls):
         cls._instances = {}
 
-def initialized(func):
-    """ decorator for testing if the configmanager has been initialized
-        prior to calling any attribute """
-
-    def wrapper(self, *args, **kwargs):
-        """ internal wrapper function """
-        if not self.is_initialized:
-            return EmptyDot()
-        return func(self, *args, **kwargs)
-    return wrapper
 
 class RdfConfigManager(metaclass=ConfigSingleton):
     """ Configuration Manager for the application.

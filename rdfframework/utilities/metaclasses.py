@@ -90,6 +90,13 @@ class KeyRegistryMeta(type):
         if (req_attrs - cls_attrs):
             raise AttributeError("'%s' is missing these required class attributes %s" \
                     % (cls, req_attrs - cls_attrs))
+        # nested attributes should be removed from required attrs so that
+        # they do not error out since we expect a mulitple classes using the
+        # same nested value
+        nested_attrs = set()
+        if hasattr(reg_cls, "__nested_idx_attrs__"):
+            nested_attrs = set(reg_cls.__nested_idx_attrs__)
+        req_attrs -= nested_attrs
         attr_vals = set([getattr(cls, attr) \
                          for attr in req_attrs.union(opt_attrs) \
                          if hasattr(cls, attr)])
@@ -126,14 +133,13 @@ class KeyRegistryMeta(type):
                             val = getattr(getattr(cls, key), item)
                             registry[val] = cls
                             reg_vals.append(val)
-        if hasattr(reg_cls, "__nested_idx_attrs__"):
-            for attr in reg_cls.__nested_idx_attrs__:
-                if hasattr(cls, attr):
-                    attr_val = getattr(cls, attr)
-                    if not registry.get(attr_val):
-                        registry[attr_val] = {}
-                    for val in reg_vals:
-                        registry[attr_val][val] = cls
+        for attr in nested_attrs:
+            if hasattr(cls, attr):
+                attr_val = getattr(cls, attr)
+                if not registry.get(attr_val):
+                    registry[attr_val] = {}
+                for val in reg_vals:
+                    registry[attr_val][val] = cls
         if not '__registry__' in cls.__dict__:
             cls.__registry__ = None
         return cls
@@ -146,6 +152,11 @@ class KeyRegistryMeta(type):
         except KeyError:
             raise KeyError("key '%s' has no associated class" % key)
 
+    def __iter__(cls):
+        if cls != cls.__reg_cls__:
+            raise TypeError("'%s' object is not iterable" % cls)
+        return iter(cls.__registry__)
+
     def keys(cls):
         if cls == cls.__reg_cls__:
             return cls.__registry__.keys()
@@ -156,6 +167,12 @@ class KeyRegistryMeta(type):
             return cls.__registry__.values()
         raise AttributeError("%s has not attribute 'values'" % cls)
 
+    @property
+    def nested(cls):
+        if cls == cls.__reg_cls__:
+            return {key: value for key, value in cls.__registry__.items()
+                    if isinstance(value, dict)}
+        raise AttributeError("%s has not attribute 'nested'" % cls)
 
 class InstanceCheckMeta(type):
     """ metaclass to check to see if the arg is an instance of the class.
@@ -195,60 +212,6 @@ class PerformanceMeta(type):
                     pass
                 clsdict[attr] = None
         return super(PerformanceMeta, mcs).__new__(mcs, cls, bases, clsdict)
-
-# class KeyRegistryMeta(type):
-#     """ Registry metaclass for a 'key' lookup specified as an attribute of a
-#     class inheriting from the base class using this metaclass
-
-#     Calling the base class by baseclase[key] will return the inherited class
-#     that is specified by the 'key'
-
-#     The base class needs to have defined a class attribute of
-
-#     _registry
-
-#     """
-#     def __new__(meta, name, bases, class_dict):
-#         cls = super(KeyRegistryMeta, meta).__new__(meta, name, bases, class_dict)
-
-#         if not bases:
-#             if not hasattr(cls, "__registry__"):
-#                 cls.__registry__ = {}
-#                 # raise AttributeError("base class '%s' requires a class attribute called '_registry' used to lookup registered keys" % \
-#                 #                      name)
-#             return cls
-#         if not hasattr(cls, "key"):
-#             raise AttributeError("define 'key' at class level for your processor")
-#         elif cls.__bases__[-1].__registry__.get(cls.key):
-#             raise AttributeError("'key' has already been used with class %s" %
-#                                  cls.__bases__[-1].__registry__.get(cls.key))
-#         cls.__bases__[-1].__registry__[cls.key] = cls
-#         if not '__registry__' in cls.__dict__:
-#             cls.__registry__ = None
-#         return cls
-
-#     def __getitem__(cls, key):
-#         if cls.__bases__[0] != object:
-#             raise TypeError("'%s' object is not subscriptable" % cls)
-#         try:
-#             return cls.__bases__[-1].__registry__[key]
-#         except KeyError:
-#             raise LookupError("key '%s' has no associated class" % key)
-#         except AttributeError:
-#             try:
-#                 return cls.__registry__[key]
-#             except KeyError:
-#                 raise LookupError("key '%s' has no associated class" % key)
-
-#     def keys(cls):
-#         if cls.__bases__[0] == object:
-#             return cls.__registry__.keys()
-#         raise AttributeError("%s has not attribute 'keys'" % cls)
-
-#     def values(cls):
-#         if cls.__bases__[0] == object:
-#             return cls.__registry__.values()
-#         raise AttributeError("%s has not attribute 'values'" % cls)
 
 class RegInstanceMeta(KeyRegistryMeta, InstanceCheckMeta):
     pass

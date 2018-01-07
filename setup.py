@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
-__version__ = "0.0.14"
+__version__ = "0.0.15"
 
 from setuptools import find_packages, setup
 
@@ -58,7 +58,8 @@ setup(
     ],
     package_data = {
         'rdfframework.sparql.queries': ["*.rq"],
-        'rdfframework.turtle': ["*.ttl"]
+        'rdfframework.turtle': ["*.ttl"],
+        'rdfframework.vocabularies': ["*"]
     },
     url='https://github.com/KnowledgeLinks/rdfframework/tree/development',
     # test_suite='nose.collector',

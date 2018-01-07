@@ -28,7 +28,7 @@ class RmlSingleton(type):
                     cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class RmlManager(types.SimpleNamespace, metaclass=RmlSingleton):
+class RmlManager(metaclass=RmlSingleton):
     """ Creates a Singleton Manger for loading Rml Maps"""
 
     ln = "%s-RmlManager" % MNAME
@@ -37,6 +37,7 @@ class RmlManager(types.SimpleNamespace, metaclass=RmlSingleton):
     def __init__(self, conn=None, cache_dir=None, **kwargs):
         args = []
         super(RmlManager, self).__init__(*args, **kwargs)
+        self.rml_maps = {}
         self.conn = pick(conn, CFG.rml_tstore)
         self.cache_dir = pick(cache_dir,
                               os.path.join(CFG.CACHE_DATA_PATH, 'rml_files'))
@@ -69,12 +70,20 @@ class RmlManager(types.SimpleNamespace, metaclass=RmlSingleton):
         """
 
         try:
-            return getattr(self, rml_name)
-        except AttributeError:
+            return self.rml_maps[rml_name]
+        except KeyError:
             return self.load_rml(rml_name)
+
+    def del_rml(self, rml_name):
+        """ deletes an rml mapping from memory"""
+        try:
+            del self.rml_maps[rml_name]
+        except KeyError:
+            pass
 
     def __getitem__(self, key):
         return self.get_rml(key)
 
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
+    def list_maps(self):
+        """ Returns a list of loaded rml mappings """
+        return list(self.rml_maps)

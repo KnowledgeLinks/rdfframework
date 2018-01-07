@@ -17,7 +17,7 @@ from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
 from rdflib import Namespace, Graph, URIRef, ConjunctiveGraph
-from .triplestoreconn import TriplestoreConnection
+from .connmanager import RdfwConnections
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 MNAME = pyfile_path(inspect.stack()[0][1])
@@ -109,7 +109,7 @@ class RdflibTriplestore(metaclass=RdflibTstoreSingleton):
 
 
 
-class RdflibConn(TriplestoreConnection):
+class RdflibConn(RdfwConnections):
     """ An API for interacting between rdflib python package and the
         rdfframework
 
@@ -121,6 +121,7 @@ class RdflibConn(TriplestoreConnection):
             container_dir: Not Required or relevant for rdflib
         """
     vendor = 'rdflib'
+    conn_type = 'triplestore'
     log_name = "%s-RdfLibConn" % MNAME
     log_level = logging.INFO
 
@@ -132,7 +133,7 @@ class RdflibConn(TriplestoreConnection):
                            'xml',
                            'application/sparql-results+json',
                            'application/sparql-results+xml']
-
+    check_status = True
     tstore = RdflibTriplestore()
 
     def __init__(self,
@@ -141,7 +142,8 @@ class RdflibConn(TriplestoreConnection):
                  namespace_params=None,
                  local_directory=None,
                  container_dir=None,
-                 graph=None):
+                 graph=None,
+                 **kwargs):
 
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
         self.url = "No Url for Rdflib tstore"

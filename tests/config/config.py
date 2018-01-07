@@ -4,13 +4,18 @@ import os
 
 SECRET_KEY = "enter_a_secret_key_here"
 
-# Enter the root file path for where the RDF defintioins are stored. The
-# application will search this path for all folders titled 'rdfw-definitions'
-# and load those files into the RDF_DEFINITIONS triplestore.
-#! If left blank the application will use the file path that originally called
-#! RdfConfigManager
-RDF_DEFINITION_FILE_PATH = os.path.join(os.path.expanduser("~"),
-                                        "git/rdfframework")
+# Organzation information for the hosting org.
+ORGANIZATION = {
+    "name": "knowledgeLinks.io",
+    "url": "http://knowledgelinks.io/",
+    "description": ""
+}
+
+# The name used for the site
+SITE_NAME = "DPLA-SERVICE-HUB"
+
+# URL used in generating IRIs
+BASE_URL = "http://bibcat.org/"
 
 # Path to where local data files are stored, as python sees the file path.
 # This variable is paired with the 'container_dir' in a TRIPLESTORE declaration.
@@ -22,42 +27,100 @@ RDF_DEFINITION_FILE_PATH = os.path.join(os.path.expanduser("~"),
 #!          -v /home/username/local_data:/local_data
 LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
 CACHE_DATA_PATH = os.path.join(os.path.expanduser("~"), 'cache_data')
-# URL used in generating IRIs
-BASE_URL = "http://bibcat.org/"
 
-# url to elasticsearch
-ES_URL = "http://localhost:9200"
 
-# Declaration for the triplestore that stores data for the application
-DATA_TRIPLESTORE = {
-    "vendor": "blazegraph",
-    "url": "http://localhost:9999/blazegraph",
-    # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
-    # This is how the triplestore sees the file path.
-    "container_dir": "local_data",
-    "namespace": "kean_all", # "kb",
-    "graph": "bf:nullGraph",
-    "namespace_params": {"quads": True}
-}
+# urls for use internal to the config file use
+__blazegraph_url__ = "http://adfa:9999/blazegraph"
+__blazegraph_local_url__ = "http://localhost:9999/blazegraph"
+__es_url__ = "http://localhost:9200"
+__es_local_url__ = "http://localhost:9200"
+__fedora_url__ = "http://localhost:8080/rest"
+__fedora_local_url__ = "http://localhost:8080/rest"
+
+CONNECTIONS = [
+    # Declaration for the triplestore that stores data for the application
+    {
+        "conn_type": "triplestore",
+        "name": "datastore",
+        "vendor": "blazegraph",
+        "url": __blazegraph_url__,
+        "local_url": __blazegraph_local_url__,
+        # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
+        # This is how the triplestore sees the file path.
+        "container_dir": "local_data",
+        "namespace": "kean_all", # "kb",
+        "graph": "bf:nullGraph",
+        "namespace_params": {"quads": True}
+    },
+    # Declaration for the triplestore storing the rdf vocab and rdfframework
+    # files that define the applications classes, forms, and API
+    {
+        "conn_type": "triplestore",
+        "name": "defs",
+        "vendor": "blazegraph",
+        "url": __blazegraph_url__,
+        "local_url": __blazegraph_local_url__,
+        "container_dir": "local_data",
+        "graph": "<http://knowledgelinks.io/ns/application-framework/>",
+        "namespace": "rdf_defs",
+        "namespace_params": {"quads": True}
+    },
+    # RML database for storing RML defintions
+    {
+        "conn_type": "triplestore",
+        "name": "rml",
+        "vendor": "blazegraph",
+        "url": __blazegraph_url__,
+        # "local_url": __blazegraph_local_url__,
+        "container_dir": "local_data",
+        "namespace": "rml_maps",
+        "namespace_params": {"quads": True}
+    },
+    # connection for indexing and search
+    {
+        "conn_type": "search",
+        "name": "search",
+        "active": False,
+        "vendor": "elastic",
+        "url": __es_url__,
+        "local_url": __es_local_url__
+    },
+    # digital repository connection
+    {
+        "conn_type": "repository",
+        "name": "repo",
+        "vendor": "fedora",
+        "url": __fedora_url__,
+        "local_url": __fedora_local_url__
+    }
+]
+
+
+# RML mappings locations to be used in the application.
+# This is a list of tuples:
+#    [("package" or "directory", "package name or directory path")]
+RML_MAPS = [
+    ("package", "bibcat.maps"),
+    ("directory", None)
+    ]
+RDF_DEFS = [
+    ("directory", None),
+    ("vocabularies", ["rdf", "owl", "rdfs", "schema", "skos", "bf"])
+    ]
 
 # Declaration for the triplestore storing the rdf vocab and rdfframework files
 # that define the applications classes, forms, and APIs
-DEFINITION_TRIPLESTORE = {
-    "vendor": "blazegraph",
-    "url": "http://localhost:9999/blazegraph",
-    "container_dir": "local_data",
-    "graph": "<http://knowledgelinks.io/ns/application-framework/>",
-    "namespace": "rdf_defs",
-    "namespace_params": {"quads": True}
-}
 
 REPOSITORY_URL = "http://localhost:8080/rest"
 
 # Dictionary of web accessibale datasets
 DATASET_URLS = {
-    "loc_subjects_skos.nt.gz": "http://id.loc.gov/static/data/authoritiessubjects.nt.skos.gz",
-    "marc_relators_nt": "http://id.loc.gov/static/data/vocabularyrelators.nt.zip",
-    "bibframe_vocab_rdf": "http://id.loc.gov/ontologies/bibframe.rdf"
+    "loc_subjects_skos.nt.gz":
+            "http://id.loc.gov/static/data/authoritiessubjects.nt.skos.gz",
+    "marc_relators_nt":
+            "http://id.loc.gov/static/data/vocabularyrelators.nt.zip",
+    "bibframe_vocab_rdf":
+            "http://id.loc.gov/ontologies/bibframe.rdf"
 }
 
 DEFAULT_RDF_NS = {
@@ -88,15 +151,7 @@ DEFAULT_RDF_NS = {
     "mads": "<http://www.loc.gov/mads/rdf/v1#>"
 }
 
-# The name used the site
-SITE_NAME = "DPLA-SERVICE-HUB"
 
-# Organzation information for the hosting org.
-ORGANIZATION = {
-    "name": "knowledgeLinks.io",
-    "url": "http://knowledgelinks.io/",
-    "description": ""
-}
 
 # Default data to load at initial application creation
 FRAMEWORK_DEFAULT = []

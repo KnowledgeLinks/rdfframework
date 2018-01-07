@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
-from .triplestoreconn import TriplestoreConnection
+from .connmanager import TriplestoreConnections, RdfwConnections
 try:
     from lxml import etree
 except ImportError:
@@ -24,7 +24,7 @@ MNAME = pyfile_path(inspect.stack()[0][1])
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
-class Blazegraph(TriplestoreConnection):
+class Blazegraph(RdfwConnections):
     """ An API for interacting between a Blazegraph triplestore and the
         rdfframework
 
@@ -37,6 +37,7 @@ class Blazegraph(TriplestoreConnection):
                     container/Blazegraph see the file path.
         """
     vendor = "blazegraph"
+    conn_type = "triplestore"
     log_name = "%s-Blazegraph" % MNAME
     log_level = logging.INFO
 
@@ -87,30 +88,67 @@ class Blazegraph(TriplestoreConnection):
                  namespace_params=None,
                  local_directory=None,
                  container_dir=None,
-                 graph=None):
+                 graph=None,
+                 **kwargs):
 
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
-        self.url = pick(url,
-                        CFG.DATA_TRIPLESTORE.url,
-                        CFG.DEFINITION_TRIPLESTORE.url,
-                        CFG.TRIPLESTORE_URL,
-                        self.default_url)
-        self.namespace = pick(namespace,
-                              CFG.DATA_TRIPLESTORE.namespace,
-                              CFG.DEFINITION_TRIPLESTORE.namespace,
-                              self.default_ns)
+        self.ext_url = pick(url, self.default_url)
+        self.local_url = pick(kwargs.get('local_url'), self.default_url)
+
+        self.namespace = pick(namespace, self.default_ns)
         self.namespace_params = namespace_params
-        self.container_dir = pick(container_dir,
-                                  CFG.DATA_TRIPLESTORE.container_dir,
-                                  CFG.DEFINITION_TRIPLESTORE.container_dir)
-        self.graph = pick(graph,
-                          CFG.DATA_TRIPLESTORE.graph,
-                          CFG.DEFINITION_TRIPLESTORE.graph,
-                          self.default_graph)
-        if self.url is None:
+        self.container_dir = container_dir
+        self.graph = pick(graph, self.default_graph)
+        self.url = None
+
+        if self.ext_url is None:
             msg = ["A Blazegraph url must be defined. Either pass 'url'",
                    "or initialize the 'RdfConfigManager'"]
             raise AttributeError(" ".join(msg))
+        if not kwargs.get('delay_check'):
+            self.check_status
+
+    @property
+    def check_status(self):
+        """ tests both the ext_url and local_url to see if the database is
+            running
+
+            returns:
+                True if a connection can be made
+                False if the connection cannot me made
+        """
+        log = logging.getLogger("%s.%s" % (self.log_name,
+                                           inspect.stack()[0][3]))
+        log.setLevel(self.log_level)
+
+        if self.url:
+            return True
+        try:
+            result = requests.get(self._make_url(self.namespace,
+                                                 self.ext_url,
+                                                 check_status_call=True))
+            self.url = self.ext_url
+            return True
+        except requests.exceptions.ConnectionError:
+            pass
+        try:
+            result = requests.get(self._make_url(self.namespace,
+                                                 self.local_url,
+                                                 check_status_call=True))
+            log.warn("Url '%s' not connecting. Using local_url '%s'" % \
+                     (self.ext_url, self.local_url))
+            self.url = self.local_url
+            if not self.has_namespace(self.namespace):
+                log.warn("\n\tnamespace '%s' does not exist. Creating namespace",
+                         self.namespace)
+                self.create_namespace(self.namespace)
+            return True
+        except requests.exceptions.ConnectionError:
+            self.url = None
+            log.warn("Unable to connect using urls: %s" % set([self.ext_url,
+                                                               self.local_url]))
+            return False
+
 
     def query(self,
               sparql,
@@ -152,7 +190,12 @@ class Blazegraph(TriplestoreConnection):
         headers = {'Accept': self.qry_formats[rtn_format]}
 
         start = datetime.datetime.now()
-        result = requests.post(url, data=data, headers=headers)
+        try:
+            result = requests.post(url, data=data, headers=headers)
+        except requests.exceptions.ConnectionError:
+            result = requests.post(self._make_url(namespace, self.local_url),
+                                   data=data,
+                                   headers=headers)
         log.debug("\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
                   mode,
                   namespace,
@@ -393,7 +436,6 @@ class Blazegraph(TriplestoreConnection):
         args:
             namespace: the name of the namespace
         """
-
         result = requests.get(self._make_url(namespace))
         if result.status_code == 200:
             return True
@@ -479,26 +521,39 @@ class Blazegraph(TriplestoreConnection):
             return result.text
         raise RuntimeError(result.text)
 
-    def _make_url(self, namespace=None):
+    def _make_url(self, namespace=None, url=None, **kwargs):
         """ Creates the REST Url based on the supplied namespace
 
         args:
             namespace: string of the namespace
+        kwargs:
+            check_status_call: True/False, whether the function is called from
+                    check_status. Used to avoid recurrsion error
         """
+        if not kwargs.get("check_status_call"):
+            if not self.url:
+                self.check_status
         rtn_url = self.url
+        if url:
+            rtn_url = url
+        if rtn_url is None:
+            rtn_url = self.ext_url
         namespace = pick(namespace, self.namespace)
         if namespace:
-            rtn_url = os.path.join(self.url.replace("sparql", ""),
+            rtn_url = os.path.join(rtn_url.replace("sparql", ""),
                                    "namespace",
                                    namespace,
                                    "sparql").replace("\\", "/")
         elif not rtn_url.endswith("sparql"):
-            rtn_url = os.path.join(self.url, "sparql").replace("\\", "/")
+            rtn_url = os.path.join(rtn_url, "sparql").replace("\\", "/")
         return rtn_url
 
     def __repr__(self):
+        url = self.ext_url
+        if self.url:
+            url = self.url
         return "<Blazegraph([{'host': '%s', 'namespace': '%s'}])>" % \
-               (self.url, self.namespace)
+               (url, self.namespace)
 
     def reset_namespace(self, namespace=None, params=None):
         """ Will delete and recreate specified namespace
