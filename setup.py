@@ -4,14 +4,14 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
-__version__ = "0.0.15"
+__version__ = "0.0.17"
 
 from setuptools import find_packages, setup
-
+import pdb
 def readme():
     with open('README.md') as rm_fo:
         return rm_fo.read()
-
+# pdb.set_trace()
 setup(
     name='rdfframework',
     version= __version__,
@@ -57,9 +57,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application'
     ],
     package_data = {
+        'rdfframework.definitions.vocabularies': ["*.*"],
         'rdfframework.sparql.queries': ["*.rq"],
-        'rdfframework.turtle': ["*.ttl"],
-        'rdfframework.vocabularies': ["*"]
+        'rdfframework.turtle': ["*.ttl"]
     },
     url='https://github.com/KnowledgeLinks/rdfframework/tree/development',
     # test_suite='nose.collector',

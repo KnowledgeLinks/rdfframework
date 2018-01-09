@@ -3,30 +3,9 @@ import time
 import logging
 import requests
 
-from rdfframework.utilities import KeyRegistryMeta, pyfile_path, initialized
-from elasticsearch import Elasticsearch
-import pdb, pprint
+from rdfframework.connections import ConnManager as conns
 
-__MNAME__ = pyfile_path(inspect.stack()[0][1])
-__LOG_LEVEL__ = logging.INFO
-
-class TriplestoreConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = ['vendor']
-    pass
-
-class RepositoryConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = ['vendor']
-    pass
-
-class SearchConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = ['vendor']
-    pass
-
-class RdfwConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = {'vendor', 'conn_type'}
-    __nested_idx_attrs__ = {"conn_type"}
-
-class ConnManagerMeta(type):
+class DefManagerMeta(type):
     """ Metaclass ensures that there is only one instance of the RdfConnManager
     """
 
@@ -36,37 +15,85 @@ class ConnManagerMeta(type):
             cls._instances[cls] = super(ConnManagerMeta,
                                         cls).__call__(*args, **kwargs)
         else:
-            conns = None
+            values = None
             if args:
-                conns = args[0]
-            elif 'connections' in kwargs:
-                conns = kwargs['connections']
+                values = args[0]
+            elif 'vocabularies' in kwargs:
+                values = kwargs['vocabularies']
             if conns:
-                cls._instances[cls].load(conns, **kwargs)
+                cls._instances[cls].load(values)
         return cls._instances[cls]
 
     def clear(cls):
         cls._instances = {}
 
-class ConnManager(metaclass=ConnManagerMeta):
+class DefintionManager(metaclass=DefManagerMeta):
     """ class for managing database connections """
     log = "%s:RdfConnManager" % __MNAME__
     log_level = logging.INFO
-    # conn_mapping = {
-    #     "triplestore": TriplestoreConnections,
-    #     "search": SearchConnections,
-    #     "repository": RepositoryConnections
-    # }
-    conn_mapping = RdfwConnections
     is_initialized = False
+    vocab_map = {
+        "rdf": {
+            "filename": rdf.ttl,
+            "download": "https://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "namespace": "https://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        },
+        "owl": {
+            "filename": owl.ttl,
+            "download": "http://www.w3.org/2002/07/owl#",
+            "namespace": "http://www.w3.org/2002/07/owl#"
+        },
+        "schema": {
+            "filename": "schema.nt",
+            "download": "http://schema.org/version/latest/schema.nt",
+            "namespace": "http://schema.org/"
+        },
+        "rdfs": {
+            "filename": "rdfs.ttl",
+            "download": "https://www.w3.org/2000/01/rdf-schema#",
+            "namespace": "https://www.w3.org/2000/01/rdf-schema#"
+        },
+        "skos": {
+            "filename": "skos.rdf",
+            "namespace": "http://www.w3.org/2004/02/skos/core#",
+            "download": "https://www.w3.org/2009/08/skos-reference/skos.rdf"
+        },
+        "dc": {
+            "filename": "dc.ttl",
+            "namespace": "http://purl.org/dc/elements/1.1/"
+            "download": ["http://purl.org/dc/elements/1.1/",
+                         "http://dublincore.org/2012/06/14/dcelements"]
+        },
+        "dcterm": {
+            "filename": "dcterm.ttl",
+            "download": ["http://purl.org/dc/terms/",
+                         "http://dublincore.org/2012/06/14/dcterms"],
+            "namespace": "http://purl.org/dc/terms/"
+        },
+        "void": {
+            "filename": "void.ttl",
+            "namespace": "http://rdfs.org/ns/void#",
+            "download": "http://vocab.deri.ie/void.ttl"
+        },
+        "adms": {
+            "filename": "adms.ttl",
+            "namespace": "https://www.w3.org/ns/adms#",
+            "download": "https://www.w3.org/ns/adms#"
+        },
+        "vcard": {
+            "filename": "vcard.ttl",
+            "namespace": "https://www.w3.org/2006/vcard/ns#",
+            "download": "https://www.w3.org/2006/vcard/ns#"
+        }
+    }
 
-    def __init__(self, connections=None, **kwargs):
-        self.conns = {}
+    def __init__(self, vocabularies=None, **kwargs):
+        self.__vocabs__ = {}
         self.log_level = kwargs.get('log_level', self.log_level)
-        if connections:
-            self.load(connections, **kwargs)
+        if vocabularies:
+            self.load(vocabularies, **kwargs)
 
-    def set_conn(self, **kwargs):
+    def set_vocab(self, **kwargs):
         """ takes a connection and creates the connection """
 
         log = logging.getLogger("%s.%s" % (self.log, inspect.stack()[0][3]))
@@ -94,19 +121,15 @@ class ConnManager(metaclass=ConnManagerMeta):
         self.is_initialized = True
 
     @initialized
-    def get(self, conn_name, default=None, **kwargs):
+    def get(self, conn_name, **kwargs):
         """ returns the specified connection
 
         args:
             conn_name: the name of the connection
         """
-        if isinstance(conn_name, RdfwConnections):
-            return conn_name
         try:
             return self.conns[conn_name]
         except KeyError:
-            if default:
-                return self.get(default, **kwargs)
             raise LookupError("'%s' connection has not been set" % conn_name)
 
     def load(self, conn_list, **kwargs):
@@ -193,72 +216,10 @@ class ConnManager(metaclass=ConnManagerMeta):
         return list(self.conns)
 
     def __getattr__(self, attr):
-        return self.get(attr)
+        return self.get_conn(attr)
 
     def __getitem__(self, item):
-        return self.get(item)
+        return self.get_conn(item)
 
     def __iter__(self):
-        return iter(self.conns.items())
-
-def make_tstore_conn(params):
-    """ Returns a triplestore connection
-
-        args:
-            attr_name: The name the connection will be assigned in the
-                config manager
-            params: The paramaters of the connection
-
-        kwargs:
-            log_level: logging level to use
-    """
-    log = logging.getLogger("%s-%s" % (__MNAME__,
-                                       inspect.stack()[0][3]))
-    log.setLevel(params.get('log_level', __LOG_LEVEL__))
-    try:
-        vendor = RdfwConnections['triplestore'][params.get('vendor')]
-    except KeyError:
-        vendor = RdfwConnections['triplestore']['blazegraph']
-    conn = vendor(**params)
-    return conn
-
-def setup_conn(**kwargs):
-    """ returns a triplestore conncection based on the kwargs.
-    Order of preceedence is as follows:
-        kwargs['conn']
-        kwargs['tstore_def']
-        kwargs['triplestore_url']
-        kwargs['rdflib']
-        RdfConfigManager.data_tstore
-        RdfConfigManager.TRIPLESTORE_URL
-
-    kwargs:
-        conn: established triplestore connection object
-        tstore_def: dictionary of paramaters specifying the connection as
-                outlined in the config file
-        triplestore_url: url to a triplestore. A blazegraph connection
-            will be used if specified
-        rdflib: defintion for an rdflib connection
-    """
-    from rdfframework.configuration import RdfConfigManager
-    if kwargs.get("conn"):
-        conn = kwargs['conn']
-    elif kwargs.get("tstore_def"):
-        conn = make_tstore_conn(kwargs['tstore_def'])
-    elif kwargs.get("triplestore_url"):
-        conn = RdfwConnections['triplestore']['blazegraph']( \
-                kwargs['triplestore_url'])
-    elif kwargs.get("rdflib"):
-        conn = RdfwConnections['triplestore']['rdflib'](kwargs.get('rdflib'))
-    elif RdfConfigManager().data_tstore and \
-            not isinstance(RdfConfigManager().data_tstore,
-                           rdfframework.utilities.EmptyDot):
-        conn = ConnManager().datastore
-    elif RdfConfigManager().TRIPLESTORE_URL and \
-            not isinstance(RdfConfigManager().TRIPLESTORE_URL,
-                           rdfframework.utilities.EmptyDot):
-        conn = RdfwConnections['triplestore']['blazegraph'](\
-                RdfConfigManager().TRIPLESTORE_URL)
-    else:
-        conn = RdfwConnections['triplestore']['blazegraph']()
-    return conn
+        return iter(cls._ns_instances)
