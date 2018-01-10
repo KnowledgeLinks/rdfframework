@@ -147,7 +147,7 @@ class EsMappings():
 
         # Delete if the index series if reset_idx was passed
         if reset_idx:
-            lg.warn("DELETING Elasticsearch INDEX => %s ******", alias)
+            lg.warning("DELETING Elasticsearch INDEX => %s ******", alias)
             self.es.indices.delete(index=alias + "_v*", ignore=[400, 404])
             idx_names['new'] = alias + "_v1"
 

@@ -461,7 +461,7 @@ class RdflibConn(RdfwConnections):
         log.setLevel(self.log_level)
         namespace = pick(namespace, self.namespace)
         params = pick(params, self.namespace_params)
-        log.warn(" Reseting namespace '%s' at host: %s",
+        log.warning(" Reseting namespace '%s' at host: %s",
                  namespace,
                  self.url)
         try:
@@ -550,7 +550,7 @@ class RdflibConn(RdfwConnections):
                  "\n\t".join([os.path.splitext(file[1])[0] \
                               for file in good_list]))
         if failed_list:
-            log.warn("The following files failed to load:\n\t%s",
+            log.warning("The following files failed to load:\n\t%s",
                      "\n\t".join([file[1] for file in failed_list]))
             log.info(" Attempting load via alt method ***")
             for file in failed_list:

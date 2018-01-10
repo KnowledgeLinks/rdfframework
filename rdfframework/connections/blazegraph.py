@@ -135,17 +135,17 @@ class Blazegraph(RdfwConnections):
             result = requests.get(self._make_url(self.namespace,
                                                  self.local_url,
                                                  check_status_call=True))
-            log.warn("Url '%s' not connecting. Using local_url '%s'" % \
+            log.warning("Url '%s' not connecting. Using local_url '%s'" % \
                      (self.ext_url, self.local_url))
             self.url = self.local_url
             if not self.has_namespace(self.namespace):
-                log.warn("\n\tnamespace '%s' does not exist. Creating namespace",
+                log.warning("\n\tnamespace '%s' does not exist. Creating namespace",
                          self.namespace)
                 self.create_namespace(self.namespace)
             return True
         except requests.exceptions.ConnectionError:
             self.url = None
-            log.warn("Unable to connect using urls: %s" % set([self.ext_url,
+            log.warning("Unable to connect using urls: %s" % set([self.ext_url,
                                                                self.local_url]))
             return False
 
@@ -495,7 +495,7 @@ class Blazegraph(RdfwConnections):
                                headers={"Content-Type": content_type},
                                data=data)
         if result.status_code == 201:
-            log.warning(result.text)
+            log.warninging(result.text)
             return result.text
         else:
             raise RuntimeError(result.text)
@@ -567,7 +567,7 @@ class Blazegraph(RdfwConnections):
         log.setLevel(self.log_level)
         namespace = pick(namespace, self.namespace)
         params = pick(params, self.namespace_params)
-        log.warn(" Reseting namespace '%s' at host: %s",
+        log.warning(" Reseting namespace '%s' at host: %s",
                  namespace,
                  self.url)
         try:
@@ -656,7 +656,7 @@ class Blazegraph(RdfwConnections):
                  "\n\t".join([os.path.splitext(file[1])[0] \
                               for file in good_list]))
         if failed_list:
-            log.warn("The following files failed to load:\n\t%s",
+            log.warning("The following files failed to load:\n\t%s",
                      "\n\t".join([file[1] for file in failed_list]))
             log.info(" Attempting load via alt method ***")
             for file in failed_list:

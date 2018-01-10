@@ -97,7 +97,7 @@ class Elastic(EsBase, RdfwConnections):
             pass
         try:
             result = requests.get(self.local_url)
-            log.warn("Url '%s' not connecting. Using local_url '%s'" % \
+            log.warning("Url '%s' not connecting. Using local_url '%s'" % \
                      (self.ext_url, self.local_url))
             self.url = self.local_url
             self.es_url = self.url
@@ -105,6 +105,6 @@ class Elastic(EsBase, RdfwConnections):
             return True
         except requests.exceptions.ConnectionError:
             self.url = None
-            log.warn("Unable to connect using urls: %s" % set([self.ext_url,
+            log.warning("Unable to connect using urls: %s" % set([self.ext_url,
                                                                self.local_url]))
             return False

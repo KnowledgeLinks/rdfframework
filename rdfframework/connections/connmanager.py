@@ -79,7 +79,7 @@ class ConnManager(metaclass=ConnManagerMeta):
             raise KeyError("connection '%s' has already been set" % conn_name)
 
         if not kwargs.get("active", True):
-            log.warn("Connection '%s' is set as inactive" % conn_name)
+            log.warning("Connection '%s' is set as inactive" % conn_name)
             return
         conn_type = kwargs.get("conn_type")
         if not conn_type or conn_type not in self.conn_mapping.nested:
