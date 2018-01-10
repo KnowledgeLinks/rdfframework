@@ -111,7 +111,6 @@ class DefintionManager(metaclass=DefManagerMeta):
             conns.defs.load_data()
             conn['delay_check'] = kwargs.get('delay_check', False)
             self.set_conn(**conn)
-OstwindOstwind
 
     def __iter__(self):
         return iter(cls._ns_instances)

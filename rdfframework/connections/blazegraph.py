@@ -202,7 +202,7 @@ class Blazegraph(RdfwConnections):
                   rtn_format,
                   sparql,
                   (datetime.datetime.now()-start))
-        # pdb.set_trace()
+
         if result.status_code == 200:
             try:
                 if rtn_format == "json":
@@ -495,7 +495,7 @@ class Blazegraph(RdfwConnections):
                                headers={"Content-Type": content_type},
                                data=data)
         if result.status_code == 201:
-            log.warninging(result.text)
+            log.warning(result.text)
             return result.text
         else:
             raise RuntimeError(result.text)
