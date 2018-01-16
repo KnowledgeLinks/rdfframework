@@ -66,7 +66,10 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
                     if dt_format == "uri":
                         dt = self.datatype.sparql_uri
                     if method == "sparql":
-                        if self.datatype in ["xsd_string"]:
+                        if self.datatype in ["xsd_string",
+                                             "xsd_dateTime",
+                                             "xsd_time",
+                                             "xsd_date"]:
                             rtn_val = json.dumps(rtn_val)
                         else:
                             rtn_val = '"%s"' % json.dumps(rtn_val)
@@ -76,7 +79,10 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
             else:
                 rtn_val = '"%s"^^xsd:string' % rtn_val
         elif method == "pyuri":
-            rtn_val = NSM.pyuri(self.value)
+            try:
+                rtn_val = NSM.pyuri(self.value)
+            except AttributeError:
+                pass
         return rtn_val
 
     def __repr__(self):
@@ -84,6 +90,7 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
 
     def __str__(self):
         return str(self.value)
+        #return self._format(method="sparql")
 
     @property
     def sparql(self):
@@ -181,8 +188,8 @@ class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
         """
         return http_formatter(*self.value)
 
-    # def __str__(self):
-    #     return self.sparql
+    def __str__(self):
+        return self.sparql
 
     def __repr__(self):
         return self.pyuri
@@ -366,7 +373,8 @@ class RdfNsManager(metaclass=NsmSingleton):
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "kds": "http://knowledgelinks.io/ns/data-structures/",
         "kdr": "http://knowledgelinks.io/ns/data-resources/",
-        "owl": "http://www.w3.org/2002/07/owl#"
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dcterm": "http://purl.org/dc/terms/"
     }
 
     def __init__(self, *args, **kwargs):

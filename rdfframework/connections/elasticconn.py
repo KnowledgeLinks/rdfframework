@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
-from .connmanager import SearchConnections, RdfwConnections
+from .connmanager import RdfwConnections
 from rdfframework.search import EsBase
 from elasticsearch import Elasticsearch
 
@@ -52,6 +52,8 @@ class Elastic(EsBase, RdfwConnections):
         self.ext_url = pick(url, self.default_url)
         self.local_url = pick(kwargs.get('local_url'), self.default_url)
         self.url = None
+        self.active = kwargs.get('active', True)
+
         if not kwargs.get('delay_check'):
             self.check_status
         if self.url:

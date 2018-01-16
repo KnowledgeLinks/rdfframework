@@ -10,6 +10,35 @@ MNAME = "%s.%s" % \
          os.path.basename(inspect.stack()[0][1]))
 LOG_LEVEL = logging.DEBUG
 
+def is_writeable_dir(directory, **kwargs):
+    """ tests to see if the directory is writable. If the directory does
+        it can attempt to create it. If unable returns False
+
+    args:
+        directory: filepath to the directory
+
+    kwargs:
+        mkdir[bool]: create the directory if it does not exist
+
+    returns
+    """
+    try:
+        testfile = tempfile.TemporaryFile(dir = directory)
+        testfile.close()
+    except OSError as e:
+        if e.errno == errno.EACCES:  # 13
+            return False
+        elif e.errno == errno.ENOENT: # 2
+            if kwargs.get('mkdir') == True:
+                try:
+                    os.makedirs(directory)
+                except OSError as e2:
+                    if e2.errno == errno.EACCES: # 13
+                        return False
+            else:
+                return False
+        e.filename = directory
+    return True
 
 def list_files(file_directory,
                file_extensions=None,

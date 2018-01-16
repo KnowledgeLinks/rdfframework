@@ -10,21 +10,22 @@ import pdb, pprint
 __MNAME__ = pyfile_path(inspect.stack()[0][1])
 __LOG_LEVEL__ = logging.INFO
 
-class TriplestoreConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = ['vendor']
-    pass
-
-class RepositoryConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = ['vendor']
-    pass
-
-class SearchConnections(metaclass=KeyRegistryMeta):
-    __required_idx_attrs__ = ['vendor']
-    pass
-
 class RdfwConnections(metaclass=KeyRegistryMeta):
     __required_idx_attrs__ = {'vendor', 'conn_type'}
     __nested_idx_attrs__ = {"conn_type"}
+
+    def __repr__(self):
+        if self.__class__ == RdfwConnections:
+            return "<RdfwConnections: %s" % pprint.pformat(self.__registry__)
+        attrs = ['namespace', 'active', 'check_status']
+        msg_attrs = ["'%s': '%s'" % (attr, getattr(self, attr))
+                     for attr in attrs
+                     if hasattr(self, attr)]
+        url = self.ext_url
+        if self.url:
+            url = self.url
+        msg_attrs = ["url: %s" % url] + msg_attrs
+        return "<%s([{%s}])>" % (self.vendor.capitalize(), ", ".join(msg_attrs))
 
 class ConnManagerMeta(type):
     """ Metaclass ensures that there is only one instance of the RdfConnManager
@@ -131,7 +132,7 @@ class ConnManager(metaclass=ConnManagerMeta):
                       if hasattr(conn, 'log_level')}
         for key in log_levels:
             self.conns[key].log_level = logging.CRITICAL
-        failing_conns = {key: conn for key, conn in self.conns.items()
+        failing_conns = {key: conn for key, conn in self.active.items()
                          if not conn.check_status}
         for key, level in log_levels.items():
             self.conns[key].log_level = level
@@ -170,7 +171,8 @@ class ConnManager(metaclass=ConnManagerMeta):
                        "\t** CONNECTION STATUS:"]
                 last_check = time.time()
                 failing = self.failing
-                new_up = (self.conns.keys() - failing.keys()) - up_conns.keys()
+                new_up = (self.active.keys() - failing.keys()) - \
+                          up_conns.keys()
                 msg += ["\t\t UP - %s: %s" % (key, self.conns[key])
                        for key in new_up]
                 up_conns.update({key: self.conns[key] for key in new_up})
@@ -187,7 +189,7 @@ class ConnManager(metaclass=ConnManagerMeta):
                                failing)
         return not failing
 
-
+    @property
     def list_conns(self):
         """ returns a list of established connections """
         return list(self.conns)
@@ -200,6 +202,13 @@ class ConnManager(metaclass=ConnManagerMeta):
 
     def __iter__(self):
         return iter(self.conns.items())
+
+    @property
+    def active(self):
+        """ returns a dictionary of connections set as active.
+        """
+        return {key: value for key, value in self.conns.items()
+                if value.active}
 
 def make_tstore_conn(params):
     """ Returns a triplestore connection

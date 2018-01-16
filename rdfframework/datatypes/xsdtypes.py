@@ -168,7 +168,7 @@ class XsdDatetime(datetime, BaseRdfDataType):
     """ Datetime Datetime instance of rdf xsd:datetime type value"""
 
     datatype = Uri("xsd:dateTime")
-    class_type = "XsdDateTime"
+    class_type = "XsdDatetime"
     py_type = datetime
     es_type = "date"
     es_format = "strict_date_optional_time||epoch_millis"
@@ -199,6 +199,10 @@ class XsdDatetime(datetime, BaseRdfDataType):
 
     def __init__(self, *args, **kwargs):
         self.value = self
+
+    def __str__(self):
+        # return str(self.value)
+        return self.sparql
 
 class XsdTime(time, BaseRdfDataType):
     """ Datetime Datetime instance of rdf xsd:datetime type value"""

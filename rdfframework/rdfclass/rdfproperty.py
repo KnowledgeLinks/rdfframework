@@ -427,9 +427,6 @@ def filter_prop_defs(prop_defs, hierarchy, cls_names):
             new_dict[def_name] = value
     return new_dict
 
-
-
-
 def prepare_prop_defs(prop_defs, prop_name, cls_names):
     """ Examines and adds any missing defs to the prop_defs dictionary for
         use with the RdfPropertyMeta.__prepare__ method
@@ -554,7 +551,13 @@ def unique_append(self, value):
     #! consider the possibility of item using this to a set
     """
     if value not in self:
-        super(self.__class__, self).append(Uri(value))
+        try:
+            super(self.__class__, self).append(Uri(value))
+        except AttributeError as err:
+            if isinstance(value, rdfclass.RdfClassBase):
+                super(self.__class__, self).append(value)
+            else:
+                raise err
 
 def get_processors(processor_cat, prop_defs):
     """ reads the prop defs and adds applicable processors for the property

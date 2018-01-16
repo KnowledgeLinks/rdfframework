@@ -1,11 +1,8 @@
 import logging
 import inspect
 
-from .connmanager import (TriplestoreConnections,
-                          RepositoryConnections,
-                          RdfwConnections,
+from .connmanager import (RdfwConnections,
                           ConnManager,
-                          SearchConnections,
                           make_tstore_conn,
                           setup_conn)
 from .blazegraph import Blazegraph

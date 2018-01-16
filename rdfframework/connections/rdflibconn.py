@@ -145,23 +145,18 @@ class RdflibConn(RdfwConnections):
                  graph=None,
                  **kwargs):
 
+        self.active = kwargs.get('active', True)
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
         self.url = "No Url for Rdflib tstore"
-        self.namespace = pick(url,
-                              namespace,
-                              CFG.DATA_TRIPLESTORE.namespace,
-                              CFG.DEFINITION_TRIPLESTORE.namespace,
-                              self.default_ns)
+        self.namespace = pick(namespace, self.default_ns)
         self.namespace_params = namespace_params
-        self.container_dir = pick(container_dir,
-                                  CFG.DATA_TRIPLESTORE.container_dir,
-                                  CFG.DEFINITION_TRIPLESTORE.container_dir)
-        self.graph = pick(graph,
-                          CFG.DATA_TRIPLESTORE.graph,
-                          CFG.DEFINITION_TRIPLESTORE.graph,
-                          self.default_graph)
-
-        self.conn = self.tstore.get_namespace(self.namespace)
+        self.container_dir = container_dir
+        self.graph = pick(graph, self.default_graph)
+        try:
+            self.conn = self.tstore.get_namespace(self.namespace)
+        except KeyError:
+            self.tstore.create_namespace(self.namespace)
+            self.conn = self.tstore.get_namespace(self.namespace)
 
     def query(self,
               sparql,
@@ -185,6 +180,8 @@ class RdflibConn(RdfwConnections):
         conn = self.conn
         if namespace and namespace != self.namespace:
             conn = self.tstore.get_namespace(namespace)
+        else:
+            namespace = self.namespace
         if rtn_format not in self.qry_results_formats:
             raise KeyError("rtn_format was '%s'. Allowed values are %s" % \
                            (rtn_format, self.qry_results_formats))
@@ -202,7 +199,7 @@ class RdflibConn(RdfwConnections):
                   mode,
                   namespace,
                   rtn_format,
-                  '',#sparql,
+                  sparql,
                   (datetime.datetime.now()-start))
         return result
 

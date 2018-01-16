@@ -1,7 +1,9 @@
 """OMNIBUS CONFIG file for KnowlegeLinks.io applications"""
 # enter a secret key for the flask application instance
 import os
+import inspect
 
+# SECRET KEY for flask application
 SECRET_KEY = "enter_a_secret_key_here"
 
 # Organzation information for the hosting org.
@@ -12,10 +14,10 @@ ORGANIZATION = {
 }
 
 # The name used for the site
-SITE_NAME = "DPLA-SERVICE-HUB"
+SITE_NAME = "TEST-RDFFRAMEWORK"
 
 # URL used in generating IRIs
-BASE_URL = "http://bibcat.org/"
+BASE_URL = "http://knowledgelinks.io/"
 
 # Path to where local data files are stored, as python sees the file path.
 # This variable is paired with the 'container_dir' in a TRIPLESTORE declaration.
@@ -27,10 +29,10 @@ BASE_URL = "http://bibcat.org/"
 #!          -v /home/username/local_data:/local_data
 LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
 CACHE_DATA_PATH = os.path.join(os.path.expanduser("~"), 'cache_data')
-
+CONFIG_FILE_PATH = os.path.split(inspect.stack()[0][1])[0]
 
 # urls for use internal to the config file use
-__blazegraph_url__ = "http://adfa:9999/blazegraph"
+__blazegraph_url__ = "http://localhost:9999/blazegraph"
 __blazegraph_local_url__ = "http://localhost:9999/blazegraph"
 __es_url__ = "http://localhost:9200"
 __es_local_url__ = "http://localhost:9200"
@@ -52,17 +54,30 @@ CONNECTIONS = [
         "graph": "bf:nullGraph",
         "namespace_params": {"quads": True}
     },
-    # Declaration for the triplestore storing the rdf vocab and rdfframework
-    # files that define the applications classes, forms, and API
+    # Declaration for the triplestore storing the active rdf vocab and
+    # rdfframework files that define the applications classes, forms, and API
     {
         "conn_type": "triplestore",
-        "name": "defs",
+        "name": "active_defs",
         "vendor": "blazegraph",
         "url": __blazegraph_url__,
         "local_url": __blazegraph_local_url__,
         "container_dir": "local_data",
         "graph": "<http://knowledgelinks.io/ns/application-framework/>",
-        "namespace": "rdf_defs",
+        "namespace": "active_defs",
+        "namespace_params": {"quads": True}
+    },
+    # Declaration for the triplestore storing the vocab definitions whether in
+    # use or not. This provides an easily queriable source for vocabularies.
+    {
+        "conn_type": "triplestore",
+        "name": "all_defs",
+        "vendor": "blazegraph",
+        "url": __blazegraph_url__,
+        "local_url": __blazegraph_local_url__,
+        "container_dir": "local_data",
+        "graph": "<http://knowledgelinks.io/ns/application-framework/>",
+        "namespace": "active_defs",
         "namespace_params": {"quads": True}
     },
     # RML database for storing RML defintions
@@ -100,11 +115,13 @@ CONNECTIONS = [
 # This is a list of tuples:
 #    [("package" or "directory", "package name or directory path")]
 RML_MAPS = [
-    ("package", "bibcat.maps"),
+    ("package_all", "bibcat.maps"),
     ("directory", None)
     ]
 RDF_DEFS = [
-    ("directory", None),
+    ("directory", os.path.join(os.path.realpath(".."),
+                               "data",
+                               "rdfw-definitions")),
     ("vocabularies", ["rdf", "owl", "rdfs", "schema", "skos", "bf"])
     ]
 
@@ -123,14 +140,14 @@ DATASET_URLS = {
             "http://id.loc.gov/ontologies/bibframe.rdf"
 }
 
-DEFAULT_RDF_NS = {
+RDF_NAMESPACES = {
     "kds": "http://knowledgelinks.io/ns/data-structures/",
     "kdr": "http://knowledgelinks.io/ns/data-resources/",
     "bf": "http://id.loc.gov/ontologies/bibframe/",
     "dpla": "http://dp.la/about/map/",
     "skos": "http://www.w3.org/2004/02/skos/core#",
     "loc": "http://id.loc.gov/authorities/",
-    "mods": "http://www.loc.gov/mods/v3",
+    "mods": "http://www.loc.gov/mods/v3#",
     "es": "http://knowledgelinks.io/ns/elasticsearch/",
     "edm": "http://www.europeana.eu/schemas/edm/",
     "schema": "http://schema.org/",

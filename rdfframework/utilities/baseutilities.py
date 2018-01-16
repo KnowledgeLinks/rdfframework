@@ -139,7 +139,6 @@ def render_without_request(template_name, template_path=None, **template_vars):
     else:
         env = ENV
     template = env.get_template(template_name)
-    raise
     return template.render(**template_vars)
 
 

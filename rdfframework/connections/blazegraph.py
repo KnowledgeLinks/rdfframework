@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
-from .connmanager import TriplestoreConnections, RdfwConnections
+from .connmanager import RdfwConnections
 try:
     from lxml import etree
 except ImportError:
@@ -94,12 +94,13 @@ class Blazegraph(RdfwConnections):
         self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
         self.ext_url = pick(url, self.default_url)
         self.local_url = pick(kwargs.get('local_url'), self.default_url)
-
+        self.log_level = kwargs.get("log_level", self.log_level)
         self.namespace = pick(namespace, self.default_ns)
         self.namespace_params = namespace_params
         self.container_dir = container_dir
         self.graph = pick(graph, self.default_graph)
         self.url = None
+        self.active = kwargs.get('active', True)
 
         if self.ext_url is None:
             msg = ["A Blazegraph url must be defined. Either pass 'url'",
@@ -169,7 +170,8 @@ class Blazegraph(RdfwConnections):
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        log.setLevel(kwargs.get("log_level", self.log_level))
+        namespace = pick(namespace, self.namespace)
         if kwargs.get("debug"):
             log.setLevel(logging.DEBUG)
         if rtn_format not in self.qry_formats:
@@ -196,7 +198,8 @@ class Blazegraph(RdfwConnections):
             result = requests.post(self._make_url(namespace, self.local_url),
                                    data=data,
                                    headers=headers)
-        log.debug("\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
+        log.debug("\nurl='%s'\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
+                  url,
                   mode,
                   namespace,
                   rtn_format,
@@ -220,21 +223,22 @@ class Blazegraph(RdfwConnections):
         else:
             raise SyntaxError(result.text)
 
-    def update_query(self, sparql, namespace=None):
+    def update_query(self, sparql, namespace=None, **kwargs):
         """ runs a sparql update query and returns the results
 
             args:
                 sparql: the sparql query to run
                 namespace: the namespace to run the sparql query against
         """
-        return self.query(sparql, "update", namespace)
+        return self.query(sparql, "update", namespace, **kwargs)
 
     def load_data(self,
                   data,
                   datatype="ttl",
                   namespace=None,
                   graph=None,
-                  is_file=False):
+                  is_file=False,
+                  **kwargs):
         """ loads data via file stream from python to triplestore
 
         Args:
@@ -248,7 +252,7 @@ class Blazegraph(RdfwConnections):
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        log.setLevel(kwargs.get("log_level", self.log_level))
         time_start = datetime.datetime.now()
         datatype_map = {
             'ttl': 'text/turtle',
@@ -262,7 +266,11 @@ class Blazegraph(RdfwConnections):
             log.debug('starting data load of %s', file_name)
             data = open(data, 'rb').read()
         else:
-            data = data.encode('utf-8')
+            try:
+                data = data.encode('utf-8')
+            except AttributeError:
+                # data already encoded
+                pass
         try:
             content_type = datatype_map[datatype]
         except KeyError:
@@ -317,7 +325,7 @@ class Blazegraph(RdfwConnections):
 
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        log.setLevel(kwargs.get("log_level", self.log_level))
         if kwargs.get('reset') == True:
             self.reset_namespace()
         namespace = kwargs.get('namespace', self.namespace)
@@ -408,7 +416,7 @@ class Blazegraph(RdfwConnections):
         """
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        log.setLevel(kwargs.get("log_level", self.log_level))
         time_start = datetime.datetime.now()
         url = self._make_url(namespace)
         params = {}
@@ -548,12 +556,12 @@ class Blazegraph(RdfwConnections):
             rtn_url = os.path.join(rtn_url, "sparql").replace("\\", "/")
         return rtn_url
 
-    def __repr__(self):
-        url = self.ext_url
-        if self.url:
-            url = self.url
-        return "<Blazegraph([{'host': '%s', 'namespace': '%s'}])>" % \
-               (url, self.namespace)
+    # def __repr__(self):
+    #     url = self.ext_url
+    #     if self.url:
+    #         url = self.url
+    #     return "<Blazegraph([{'host': '%s', 'namespace': '%s'}])>" % \
+    #            (url, self.namespace)
 
     def reset_namespace(self, namespace=None, params=None):
         """ Will delete and recreate specified namespace
@@ -593,7 +601,7 @@ class Blazegraph(RdfwConnections):
 
         log = logging.getLogger("%s.%s" % (self.log_name,
                                            inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        log.setLevel(kwargs.get("log_level", self.log_level))
         namespace = kwargs.get('namespace', self.namespace)
         graph = kwargs.get('graph', self.graph)
         if kwargs.get('reset') == True:

@@ -57,6 +57,7 @@ class FedoraCommons(RdfwConnections):
         self.local_url = pick(kwargs.get('local_url'), self.default_url)
         self.container_dir = container_dir
         self.url = None
+        self.active = kwargs.get('active', True)
 
         if self.ext_url is None:
             msg = ["A Blazegraph url must be defined. Either pass 'url'",
