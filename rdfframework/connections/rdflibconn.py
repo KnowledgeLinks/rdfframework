@@ -146,7 +146,7 @@ class RdflibConn(RdfwConnections):
                  **kwargs):
 
         self.active = kwargs.get('active', True)
-        self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
+        self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH, "")
         self.url = "No Url for Rdflib tstore"
         self.namespace = pick(namespace, self.default_ns)
         self.namespace_params = namespace_params
@@ -393,7 +393,7 @@ class RdflibConn(RdfwConnections):
             namespace: the name of the namespace
         """
 
-        return self.rdflib_tstore.has_namespace(namespace)
+        return self.tstore.has_namespace(namespace)
 
     def create_namespace(self, namespace=None, params=None):
         """ Creates a namespace in the triplestore
