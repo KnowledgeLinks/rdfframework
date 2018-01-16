@@ -380,28 +380,11 @@ class RdflibConn(RdfwConnections):
                 namespace: the Blazegraph namespace to load the data
                 graph: uri of the graph to load the data. Default is None
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
-        time_start = datetime.datetime.now()
-        url = self._make_url(namespace)
-        params = {}
-        if graph:
-            params['context-uri'] = graph
-        new_path = []
-        if self.container_dir:
-            new_path.append(self.container_dir)
-        new_path.append(file_path)
-        params['uri'] = "file:///%s" % os.path.join(*new_path)
-        log.debug(" loading %s into blazegraph", file_path)
-        result = requests.post(url=url, params=params)
-        if result.status_code > 300:
-            raise SyntaxError(result.text)
-        log.info("loaded '%s' in time: %s blazegraph response: %s",
-                 file_path,
-                 datetime.datetime.now() - time_start,
-                 self.format_response(result.text))
-        return result
+        return self.load_data(file_path,
+                              namespace=namespace,
+                              graph=graph,
+                              is_file=True,
+                              **kwargs)
 
     def has_namespace(self, namespace):
         """ tests to see if the namespace exists
