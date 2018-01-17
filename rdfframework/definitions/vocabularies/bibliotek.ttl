@@ -1,0 +1,2686 @@
+@prefix : <http://bibliotek-o.org/1.1/ontology/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+@prefix voaf: <http://purl.org/vocommons/voaf#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:AbbreviatedTitle a owl:Class ;
+    rdfs:label "Abbreviated title"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Title> ;
+    skos:definition "Title as abbreviated for citation, indexing, and/or identification."@en .
+
+:AbridgerActivity a owl:Class ;
+    rdfs:label "Abridger"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of abridging a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/abr."@en .
+
+:AcquisitionActivity a owl:Class ;
+    rdfs:label "Acquisition"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of acquiring a resource."@en ;
+    skos:scopeNote "This class is not derived from a MARC relator."@en .
+
+:ActorActivity a owl:Class ;
+    rdfs:label "Actor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of acting as a cast member or player in a musical or dramatic presentation, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/act."@en .
+
+:AdapterActivity a owl:Class ;
+    rdfs:label "Adapter"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of adapting a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/adp."@en .
+
+:AddresseeActivity a owl:Class ;
+    rdfs:label "Addressee"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of receiving an addressed resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/rcp."@en .
+
+:AlternativeText a owl:Class ;
+    rdfs:label "Alternative text"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Alternative text is provided for visual content (e.g., via the HTML alt attribute)."@en .
+
+:AnalystActivity a owl:Class ;
+    rdfs:label "Analyst"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of analyzing data or information."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/rcp."@en .
+
+:AnimatorActivity a owl:Class ;
+    rdfs:label "Animator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of animating a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/anm."@en .
+
+:Annotations a owl:Class ;
+    rdfs:label "Annotations"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The resource includes annotations from the author, instructor and/or others."@en .
+
+:ApertureCard a owl:Class ;
+    rdfs:label "Aperture card"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Card ;
+    skos:definition "An instance type consisting of a card with one or more rectangular openings or apertures holding frames of microfilm."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1021."@en .
+
+:AppellantActivity a owl:Class ;
+    rdfs:label "Appellant"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of appealing a court decision."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/apl."@en .
+
+:AppelleeActivity a owl:Class ;
+    rdfs:label "Appellee"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of defending against an appeal."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/apl."@en .
+
+:ApplicantActivity a owl:Class ;
+    rdfs:label "Applicant"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of going through an application process."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/app."@en .
+
+:ArchitectActivity a owl:Class ;
+    rdfs:label "Architect"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating an architectural design."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/arc."@en .
+
+:ArrangerActivity a owl:Class ;
+    rdfs:label "Arranger"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of arranging a musical resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/arr."@en .
+
+:ArtCopyistActivity a owl:Class ;
+    rdfs:label "Art copyist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making copies of works of visual art."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/acp."@en .
+
+:ArtDirectorActivity a owl:Class ;
+    rdfs:label "Art director"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a motion picture or television production by overseeing the artists and craftspeople who build the sets."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/adi."@en .
+
+:ArtistActivity a owl:Class ;
+    rdfs:label "Artist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a work by conceiving, and implementing, an original graphic design, drawing, painting, etc. For book illustrators, prefer IllustratorActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/art."@en .
+
+:ArtisticDirectorActivity a owl:Class ;
+    rdfs:label "Artistic director"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of controlling the development of the artistic style of an entire production, including the choice of works to be presented and selection of senior production staff."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ard."@en .
+
+:AssigneeActivity a owl:Class ;
+    rdfs:label "Assignee"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of receiving a transferred license for printing or publishing."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/asg."@en .
+
+:AttributionActivity a owl:Class ;
+    rdfs:label "Attribution"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of which there is or once was substantial authority for designating that person as author, creator, etc. of the work indicative of provenance."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/att."@en .
+
+:AudioBelt a owl:Class ;
+    rdfs:label "Audio belt"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Belt ;
+    skos:definition "An instance type consisting of a loop of flexible plastic or magnetic film on which audio signals are mechanically recorded, commonly known under the trade name Dictabelt."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1070."@en .
+
+:AudioCartridge a owl:Class ;
+    rdfs:label "Audio cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge ;
+    skos:definition "An instance type consisting of a cartridge containing an audiotape."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1002."@en .
+
+:AudioCassette a owl:Class ;
+    rdfs:label "Audio cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cassette,
+        :Tape ;
+    skos:definition "An instance type consisting of a cassette containing an audio tape."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1002."@en .
+
+:AudioCylinder a owl:Class ;
+    rdfs:label "Audio cylinder"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cylinder ;
+    skos:definition "An instance type consisting of a roller-shaped object on which sound waves are incised or indented in a continuous circular groove."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1003."@en .
+
+:AudioDescription a owl:Class ;
+    rdfs:label "Audio description"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Audio descriptions are available (e.g., via the HTML5 track element)."@en .
+
+:AudioDisc a owl:Class ;
+    rdfs:label "Audio disc"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Disc ;
+    skos:definition "An instance type consisting of a disc on which sound waves, recorded as modulations, pulses, etc., are incised or indented in a continuous spiral groove."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1004."@en .
+
+:AudioRoll a owl:Class ;
+    rdfs:label "Audio roll"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Roll ;
+    skos:definition "An instance type consisting of a roll of paper on which musical notes are represented by perforations, designed to mechanically reproduce the music when used in a player piano, player organ, etc."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1006."@en .
+
+:AudioWireReel a owl:Class ;
+    rdfs:label "Audio wire reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Reel ;
+    skos:definition "An instance type consisting of a reel or spool of steel or stainless steel wire upon which audio signals are magnetically recorded."@en ;
+    skos:editorialNote "Future work: If more than audio sounds are found to be capture on wire, consider minting http://bibliotek-o.org/1.1/ontology/Wire and making bib:AudioWireReel a subclass."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1008."@en .
+
+:AudiotapeReel a owl:Class ;
+    rdfs:label "Audiotape reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Reel,
+        :Tape ;
+    skos:definition "An instance type consisting of a roller-shaped object on which sound waves are incised or indented in a continuous circular groove."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1008."@en .
+
+:AuthorActivity a owl:Class ;
+    rdfs:label "Author"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of authoring a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/aut."@en .
+
+:BinderActivity a owl:Class ;
+    rdfs:label "Binder"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-05-05T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:changeNote "Fixed rdfs:label (v1.0.1)"@en ;
+    skos:definition "The activity of binding an item."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/bnd."@en .
+
+:BindingDesignerActivity a owl:Class ;
+    rdfs:label "Binding designer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of designing a binding of a book, including the type of binding, the type of materials used, and any decorative aspects of the binding."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/bdd."@en .
+
+:Bookmarks a owl:Class ;
+    rdfs:label "Bookmarks"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The resource includes bookmarks to facilitate navigation to key points."@en .
+
+:Braille a owl:Class ;
+    rdfs:label "Braille"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature,
+        <http://id.loc.gov/ontologies/bibframe/TactileNotation> ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Content of a resource in braille format."@en ;
+    skos:scopeNote "The feature of being in braille is both a notation and an accessibility feature."@en .
+
+:BrailleAlternative a owl:Class ;
+    rdfs:label "Braille alternative"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Alternative content for a resource in braille."@en ;
+    skos:scopeNote "Differs from http://bibliotek-o.org/1.1/ontology/Braille, which types the notation of the resource itself, rather than the existence of alternative content."@en .
+
+:BroadcasterActivity a owl:Class ;
+    rdfs:label "Broadcaster"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-05-05T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:changeNote "Fixed rdfs:label (v1.0.1)"@en ;
+    skos:definition "The activity of broadcasting a resource via radio, television, webcast, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider the relationship, if any to the bib:Publisher"@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/brd."@en .
+
+:Captions a owl:Class ;
+    rdfs:label "Captions"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Synchronized captions are available for audio and video content"@en .
+
+:CaptureActivity a owl:Class ;
+    rdfs:label "Capture"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of recording, filming, etc. of a resource."@en ;
+    skos:scopeNote "This class is not derived from the MARC relator."@en .
+
+:CartographerActivity a owl:Class ;
+    rdfs:label "Cartographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a map, atlas, globe, or other cartographic work."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider the relationship, if any to the bib:Publisher"@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ctg."@en .
+
+:ChemMl a owl:Class ;
+    rdfs:label "ChemML"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Chemical information is encoded using the ChemML markup language"@en .
+
+:ChoreographerActivity a owl:Class ;
+    rdfs:label "Choreographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating or contributing to a work of movement."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/chr."@en .
+
+:CinematographerActivity a owl:Class ;
+    rdfs:label "Cinematographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of photographing a motion picture, who plans the technical aspets of lighting and photographing of scenes, and often assists the director in the choice of angles, camera setups, and lighting moods. He or she may also supervise the further processing of filmed material up to the completion of the work print. Cinematographer is also referred to as director of photography. Do not confuse with bib:VideographerActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cng."@en .
+
+:CollectionRegistrarActivity a owl:Class ;
+    rdfs:label "Collection registrar"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of listing or inventorying the items in an aggregate work such as a collection of items or works."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cor."@en .
+
+:CollectorActivity a owl:Class ;
+    rdfs:label "Collector"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of bringing together items from various sources that are then arranged, described, and cataloged as a collection. A collector is neither the creator of the material nor a person to whom manuscripts in the collection may have been addressed."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/col."@en .
+
+:CollotyperActivity a owl:Class ;
+    rdfs:label "Collotyper"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of manufacturing a manifestation of photographic prints from film or other colloid that has ink-receptive and ink-repellent surfaces."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/clt."@en .
+
+:ColoristActivity a owl:Class ;
+    rdfs:label "Colorist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of applying color to drawings, prints, photographs, maps, moving images, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/clr."@en .
+
+:CommentatorActivity a owl:Class ;
+    rdfs:label "Commentator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of providing interpretation, analysis, or a discussion of the subject matter on a recording, film, or other audiovisual medium."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with Annotation pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cmm."@en .
+
+:CompilerActivity a owl:Class ;
+    rdfs:label "Compiler"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a new work (e.g., a bibliography, a directory) through the act of compilation, e.g., selecting, arranging, aggregating, and editing data, information, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/com."@en .
+
+:ComposerActivity a owl:Class ;
+    rdfs:label "Composer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating or contributing to a musical resource by adding music to a work that originally lacked it or supplements it."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cmp."@en .
+
+:ComputerCard a owl:Class ;
+    rdfs:label "Computer card"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of a card containing digitally encoded data designed for use with a computer."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1011."@en .
+
+:ComputerChipCartridge a owl:Class ;
+    rdfs:label "Computer chip cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :ComputerChip ;
+    skos:definition "An instance type consisting of a cartridge containing a miniaturized electronic circuit on a small wafer of semiconductor silicon, designed to provide additional processing, memory, or storage capacity."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1012."@en .
+
+:ComputerDiscCartridge a owl:Class ;
+    rdfs:label "Computer disc cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :ComputerDisc ;
+    skos:definition "An instance type consisting of a cartridge containing one or more computer discs."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1014."@en .
+
+:ComputerTapeCartridge a owl:Class ;
+    rdfs:label "Computer tape cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :Tape,
+        <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of a cartridge containing a computer tape."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1015."@en .
+
+:ComputerTapeCassette a owl:Class ;
+    rdfs:label "Computer tape cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cassette,
+        :Tape,
+        <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of a cassette containing a computer tape."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1016."@en .
+
+:ComputerTapeReel a owl:Class ;
+    rdfs:label "Computer tape reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Reel,
+        :Tape,
+        <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of an open reel holding a length of computer tape to be used with a computer tape drive."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1017."@en .
+
+:ConciseTitle a owl:Class ;
+    rdfs:label "Concise title"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Title> ;
+    skos:definition "The concise version of a title."@en ;
+    skos:example "'Modern Writing' could serve as the concise title for 'The Berkley Book of Modern Writing'."@en .
+
+:ConductorActivity a owl:Class ;
+    rdfs:label "Conductor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of conducting a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cnd."@en .
+
+:ConservatorActivity a owl:Class ;
+    rdfs:label "Conservator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:changeNote "Modified skos:definition (Version 1.1.0)"@en ;
+    skos:definition "The activity of preserving or treating printed or manuscript material, works of art, artifacts, or other objects."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/con."@en .
+
+:ConsultantActivity a owl:Class ;
+    rdfs:label "Consultant"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of providing professional advice or services in a specialized field of knowledge or training."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/csl."@en .
+
+:ContributorActivity a owl:Class ;
+    rdfs:label "Contributor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making contributions to the resource. This includes those whose work has been contributed to a larger work, such as an anthology, serial publication, or other compilation of individual works. If a more specific role is available, prefer that activity type, e.g. bib:EditorActivity, bib:CompilerActivity, bib:IllustratorActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ctb."@en .
+
+:CopyrightHolderActivity a owl:Class ;
+    rdfs:label "Copyright holder"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of receiving copy and legal rights have been granted or transferred for the intellectual content of a work. The copyright holder, although not necessarily the creator of the work, usually has the exclusive right to benefit financially from the sale and use of the work to which the associated copyright protection applies."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cph."@en .
+
+:CorrespondentActivity a owl:Class ;
+    rdfs:label "Correspondent"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of either the writer or recipient of a letter or other communication."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider separate activities for the writer and recipient."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/crp."@en .
+
+:CoverDesignerActivity a owl:Class ;
+    rdfs:label "Cover designer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of graphic design for a book cover, album cover, slipcase, box, container, etc. For a person or organization responsible for the graphic design of an entire book, use bib:DesignerActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cov."@en .
+
+:CreatorActivity a owl:Class ;
+    rdfs:label "Creator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cre."@en .
+
+:CuratorActivity a owl:Class ;
+    rdfs:label "Curator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of conceiving, aggregating, and/or organizing an exhibition, collection, or other item."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/cur."@en .
+
+:DancerActivity a owl:Class ;
+    rdfs:label "Dancer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of dancing in a musical, dramatic, etc., presentation."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dnc."@en .
+
+:DedicateeActivity a owl:Class ;
+    rdfs:label "Dedicatee"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of receiving a dedication."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with award/degree pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dte."@en .
+
+:DedicatorActivity a owl:Class ;
+    rdfs:label "Dedicator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making a dedication."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with award/degree pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dto."@en .
+
+:DepositorActivity a owl:Class ;
+    rdfs:label "Depositor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of depositing an item into the custody of another person, family, or organization, while still retaining ownership."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dpt."@en .
+
+:DescribedMath a owl:Class ;
+    rdfs:label "Described math"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Textual descriptions of math equations are included."@en .
+
+:DesignerActivity a owl:Class ;
+    rdfs:label "Designer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a design for an object."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dsr."@en .
+
+:DirectorActivity a owl:Class ;
+    rdfs:label "Director"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of general management and supervision of a filmed performance, a radio or television program, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/drt."@en .
+
+:DisplayTransformability a owl:Class ;
+    rdfs:label "Display transformability"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Display properties are controllable by the user."@en .
+
+:DistinctiveTitle a owl:Class ;
+    rdfs:label "Distinctive title"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Title> ;
+    skos:definition "Special title that appears in addition to the regular title on individual issues of an item and by which the issue may be known."@en .
+
+:DistributorActivity a owl:Class ;
+    rdfs:label "Distributor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of distributing a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dst."@en .
+
+:DonorActivity a owl:Class ;
+    rdfs:label "Donor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of donating an item to another owner."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/dst."@en .
+
+:DraftsmanActivity a owl:Class ;
+    rdfs:label "Draftsman"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making detailed plans or drawings for buildings, ships, aircraft, machines, objects, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/drm."@en .
+
+:EditorActivity a owl:Class ;
+    rdfs:label "Editor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of editing a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/edt."@en .
+
+:EngraverActivity a owl:Class ;
+    rdfs:label "Engraver"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of cutting into a surface, such as a wooden or metal plate used for printing."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/egr."@en .
+
+:EtcherActivity a owl:Class ;
+    rdfs:label "Etcher"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of producing text or images for printing by subjecting metal, glass, or some other surface to acid or the corrosive action of some other substance."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/etr."@en .
+
+:FacsimilistActivity a owl:Class ;
+    rdfs:label "Facsimilist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of executing a facsimile."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider whether this activity subclass can be prunned; instead use an appropriate Activity subclass and state that resource is a facsimile."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/fac."@en .
+
+:FieldDirectorActivity a owl:Class ;
+    rdfs:label "Field director"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of managing or supervising the work done to collect raw data or do research in an actual setting or environment (typically applies to the natural and social sciences)."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/fld."@en .
+
+:FilmCartridge a owl:Class ;
+    rdfs:label "Film cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :Film ;
+    skos:definition "An instance type consisting of a cartridge containing a motion picture film."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1032."@en .
+
+:FilmCassette a owl:Class ;
+    rdfs:label "Film cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cassette,
+        :Film ;
+    skos:definition "An instance type consisting of a cassette containing a motion picture film."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1033."@en .
+
+:FilmDistributorActivity a owl:Class ;
+    rdfs:label "Film distributor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of distributing a moving image resource to theatres or other distribution channels."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/fds."@en .
+
+:FilmEditor a owl:Class ;
+    rdfs:label "Film editor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of following the script and in creative cooperation with the Director, selects, arranges, and assembles the filmed material, controls the synchronization of picture and sound, and participates in other post-production tasks such as sound mixing and visual effects processing. Today, picture editing is often performed digitally.."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/flm."@en .
+
+:FilmReel a owl:Class ;
+    rdfs:label "Film reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Film,
+        :Reel ;
+    skos:definition "An instance type consisting of an open reel holding a motion picture film to be used with a motion picture film projector."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1034."@en .
+
+:FilmRoll a owl:Class ;
+    rdfs:label "Film roll"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Film,
+        :Roll ;
+    skos:definition "An instance type consisting of a wound length of film."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1069."@en .
+
+:FilmSlip a owl:Class ;
+    rdfs:label "Film slip"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Film ;
+    skos:definition "An instance type consisting of a short strip of film, usually in rigid format rather than rolled."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1035."@en .
+
+:FilmStrip a owl:Class ;
+    rdfs:label "Film strip"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Film ;
+    skos:definition "An instance type consisting of a roll of film, with or without recorded sound, containing a succession of images intended for projection one at a time."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1036."@en .
+
+:FilmStripCartridge a owl:Class ;
+    rdfs:label "Film strip cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :Film ;
+    skos:definition "An instance type consisting of a cartridge containing a filmstrip."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1037."@en .
+
+:FlashingHazard a owl:Class ;
+    rdfs:label "Flashing hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityHazard ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en .
+
+:FlipChart a owl:Class ;
+    rdfs:label "Flip chart"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a hinging device holding two or more sheets designed for use on an easel."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1046."@en .
+
+:ForgerActivity a owl:Class ;
+    rdfs:label "Forger"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making or imitating something of value or importance, especially with the intent to defraud."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider whether this activity subclass can be prunned; instead use an appropriate Activity subclass and state that resource is a forgery."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/fac."@en .
+
+:HighContrastAudio a owl:Class ;
+    rdfs:label "High contrast audio"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Audio content with speech in the foreground meets the contrast thresholds set out in WCAG Success Criteria 1.4.7."@en .
+
+:HighContrastDisplay a owl:Class ;
+    rdfs:label "High contrast display"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Content meets the visual contrast threshold set out in WCAG Success Criteria 1.4.6."@en .
+
+:HonoreeActivity a owl:Class ;
+    rdfs:label "Honoree"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of receiving an honor (e.g., the honoree of a festschrift, a person to whom a copy is presented)."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with award/degree pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/etr."@en .
+
+:HostActivity a owl:Class ;
+    rdfs:label "Host"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of leading a program (often broadcast) that includes other guests, performers, etc. (e.g., talk show host)."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/hst."@en .
+
+:IlluminatorActivity a owl:Class ;
+    rdfs:label "Illuminator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of decorating a specific item using precious metals or color, often with elaborate designs and motifs."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ilu."@en .
+
+:IllustratorActivity a owl:Class ;
+    rdfs:label "Illustrator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of illustrating a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ill."@en .
+
+:IndexAccessibilityFeature a owl:Class ;
+    rdfs:label "Index accessibility feature"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The accessibility feature of having an index."@en ;
+    skos:scopeNote "Refers to the feature of having an index, not to the index itself."@en .
+
+:InscriberActivity a owl:Class ;
+    rdfs:label "Inscriber"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of writing a statement of dedication or gift."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship to annotation pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ins."@en .
+
+:InstrumentalistActivity a owl:Class ;
+    rdfs:label "Instrumentalist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by playing a musical instrument."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Compare with Performed Music modeling work."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/itr."@en .
+
+:IntervieweeActivity a owl:Class ;
+    rdfs:label "Interviewee"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of responding to an interviewer, usually a reporter, pollster, or some other information gathering agent."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ive."@en .
+
+:InterviewerActivity a owl:Class ;
+    rdfs:label "Interviewer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of gathering information as an interviewer, reporter, pollster, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ivr."@en .
+
+:InventorActivity a owl:Class ;
+    rdfs:label "Inventor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a new device or process."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/inv."@en .
+
+:KeyTitle a owl:Class ;
+    rdfs:label "Key title"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Title> ;
+    skos:definition "Unique title for a continuing resource that is assigned by the ISSN International Center in conjunction with an ISSN."@en .
+
+:LargePrint a owl:Class ;
+    rdfs:label "Large print"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The content has been formatted to meet large print guidelines."@en .
+
+:LatexMathMl a owl:Class ;
+    rdfs:label "LaTeXMathML"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Mathematical equations and formulas are encoded using the LaTeXMathML markup language."@en .
+
+:LenderActivity a owl:Class ;
+    rdfs:label "Lender"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of permitting the temporary use of a book, manuscript, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/len."@en .
+
+:LibrettistActivity a owl:Class ;
+    rdfs:label "Librettist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of authoring a libretto of an opera or other stage work, or an oratorio."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/lbt."@en .
+
+:LicenseeActivity a owl:Class ;
+    rdfs:label "Licensee"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of receiving the right to print or publish."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with award/degree pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/lse."@en .
+
+:LicensorActivity a owl:Class ;
+    rdfs:label "Licensor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of signing of the license, imprimatur, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with award/degree pattern."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/lso."@en .
+
+:LightingDesignerActivity a owl:Class ;
+    rdfs:label "Lighting designer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of designing the lighting scheme for a theatrical presentation, entertainment, motion picture, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/lgd."@en .
+
+:LithographerActivity a owl:Class ;
+    rdfs:label "Lithographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of preparing the stone or plate for lithographic printing, including a graphic artist creating a design directly on the surface from which printing will be done."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ltg."@en .
+
+:LongDescription a owl:Class ;
+    rdfs:label "Long description"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Descriptions are provided for image-based visual content and/or complex structures such as tables, mathematics, diagrams and charts."@en .
+
+:LyricistActivity a owl:Class ;
+    rdfs:label "Lyricist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of authoring the words of a non-dramatic musical work (e.g. the text of a song), except for oratorios."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/lyr."@en .
+
+:MainTitleElement a owl:Class ;
+    rdfs:label "Main title element"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :TitleElement ;
+    skos:definition "The main part of a title."@en .
+
+:ManufacturerActivity a owl:Class ;
+    rdfs:label "Manufacturer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of printing, duplicating, casting, etc. a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mfr."@en .
+
+:MarblerActivity a owl:Class ;
+    rdfs:label "Marbler"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of marbling paper, cloth, leather, etc. used in construction of a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mrb."@en .
+
+:MathMl a owl:Class ;
+    rdfs:label "MathML"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Mathematical equations and formulas are encoded using the MathML markup language."@en .
+
+:Meeting a owl:Class ;
+    rdfs:label "Meeting"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2016-04-21 (New)" ;
+    rdfs:subClassOf <http://schema.org/Event>,
+        <http://xmlns.com/foaf/0.1/Agent> ;
+    skos:definition "Gathering of individuals or representatives of various bodies for the purpose of discussing and/or acting on topics of common interest."@en .
+
+:MetalEngraverActivity a owl:Class ;
+    rdfs:label "Metal engraver"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of cutting on a metal surface in order to print decorations, illustrations, letters, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider whether this class is needed, or if bib:EngraverActivity is enough. If we need both, possibly make bib:MetalEngraverActivity a subclass of bib:Engraver."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mte."@en .
+
+:Microfiche a owl:Class ;
+    rdfs:label "Microfiche"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Microform ;
+    skos:definition "An instance type consisting of a sheet of film bearing a number of microimages in a two-dimensional array."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1022."@en .
+
+:MicroficheCassette a owl:Class ;
+    rdfs:label "Microfiche cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cassette,
+        :Microform ;
+    skos:definition "An instance type consisting of a cassette containing uncut microfiches."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1023."@en .
+
+:MicrofilmCartridge a owl:Class ;
+    rdfs:label "Microfilm cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :Microfilm ;
+    skos:definition "An instance type consisting of a cartridge containing a microfilm."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1024."@en .
+
+:MicrofilmCassette a owl:Class ;
+    rdfs:label "Microfilm cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cassette,
+        :Microfilm ;
+    skos:definition "An instance type consisting of a cassette containing a microfilm."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1025."@en .
+
+:MicrofilmReel a owl:Class ;
+    rdfs:label "Microfilm reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Microfilm,
+        :Reel ;
+    skos:definition "An instance type consisting of an open reel holding a microfilm, to be threaded into a microfilm reader."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1026."@en .
+
+:MicrofilmRoll a owl:Class ;
+    rdfs:label "Microfilm roll"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Microform,
+        :Roll ;
+    skos:definition "An instance type consisting of a wound length of microfilm."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1056."@en .
+
+:MicrofilmSlip a owl:Class ;
+    rdfs:label "Microfilm slip"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Microfilm ;
+    skos:definition "An instance type consisting of a short strip of microfilm cut from a roll."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1027."@en .
+
+:Microopaque a owl:Class ;
+    rdfs:label "Microopaque"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Microform ;
+    skos:definition "An instance type consisting of a card or sheet of opaque material bearing a number of microimages in a two-dimensional array."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1028."@en .
+
+:Microscopic a owl:Class ;
+    rdfs:label "Microscopic"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Slide ;
+    skos:definition "An instance type consisting of a small sheet of transparent material, with or without a protective mount, bearing a minute object designed for use with a device such as a microscope."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1030."@en .
+
+:MinuteTakerActivity a owl:Class ;
+    rdfs:label "Minute taker"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of recording the minutes of a meeting."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mtk."@en .
+
+:ModeratorActivity a owl:Class ;
+    rdfs:label "Moderator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of leading a program (often broadcast) where topics are discussed, usually with participation of experts in fields related to the discussion."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider the relationship between this class and bib:HostActivity"@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mod."@en .
+
+:MonitorActivity a owl:Class ;
+    rdfs:label "Monitor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of supervising compliance with the contract and is responsible for the report and controls its distribution. Sometimes referred to as the grantee, or controlling agency."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mon."@en .
+
+:MotionSimulationHazard a owl:Class ;
+    rdfs:label "Motion simulation hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityHazard ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en .
+
+:MusicCopyistActivity a owl:Class ;
+    rdfs:label "Music copyist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of transcribing or copying musical notation."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mcp."@en .
+
+:MusicalDirectorActivity a owl:Class ;
+    rdfs:label "Musical director"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of coordinating the activities of the composer, the sound editor, and sound mixers for a moving image production or for a musical or dramatic presentation or entertainment."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with bib:DirectorActivity."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/msd."@en .
+
+:MusicianActivity a owl:Class ;
+    rdfs:label "Musician"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of performing music or contributes to the musical content of a work when it is not possible or desirable to identify the function more precisely."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with bib:InstrumentalistActivity."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/mus."@en .
+
+:NarratorActivity a owl:Class ;
+    rdfs:label "Narrator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of narrating a  resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/nrt."@en .
+
+:NoFlashingHazard a owl:Class ;
+    rdfs:label "No flashing hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityHazard ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en .
+
+:NoMotionSimulationHazard a owl:Class ;
+    rdfs:label "No motion simulation hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityHazard ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en .
+
+:NoSoundHazard a owl:Class ;
+    rdfs:label "No sound hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityHazard ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en .
+
+:NonSortElement a owl:Class ;
+    rdfs:label "Non-sort element"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :TitleElement ;
+    skos:definition "The initial segment of a title that is removed for sorting."@en .
+
+:OclcIdentifier a owl:Class ;
+    rdfs:label "OCLC identifier"@en-us ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Identifier> ;
+    skos:definition "OCLC Worldcat identifier"@en-us .
+
+:OfferActivity a owl:Class ;
+    rdfs:label "Offer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of offering a resource for purchase or other form of acquisition. Use for Booksellers and sellers of other resources."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/bsl and http://id.loc.gov/vocabulary/relators/sll."@en .
+
+:OnlineResource a owl:Class ;
+    rdfs:label "Online resource"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of a digital resource accessed by means of hardware and software connections to a communications network."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1018."@en .
+
+:OpponentActivity a owl:Class ;
+    rdfs:label "Opponent"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of opposing a thesis or dissertation."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/opn."@en .
+
+:OrganizerActivity a owl:Class ;
+    rdfs:label "Organizer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-05-05T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:changeNote "Fixed rdfs:label (v1.0.1)"@en ;
+    skos:definition "The activity of organizing the exhibit, event, conference, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/orm."@en .
+
+:OriginatorActivity a owl:Class ;
+    rdfs:label "Originator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of performing the work, i.e., the name of a person or organization associated with the intellectual content of the work. This category does not include the publisher or personal affiliation, or sponsor except where it is also the corporate author."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider the relationship to other Activity subclasses, e.g. bib:CreatorActivity."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/org."@en .
+
+:OverheadTransparency a owl:Class ;
+    rdfs:label "Overhead transparency"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a sheet of transparent material, with or without a protective mount, bearing an image designed for use with an overhead projector."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1039."@en .
+
+:OwnerActivity a owl:Class ;
+    rdfs:label "Owner"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of owning an item or collection, i.e.has legal possession of a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship to bib:AcquisitionActivity."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/own."@en .
+
+:PanelistActivity a owl:Class ;
+    rdfs:label "Panelist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by participating in a program (often broadcast) where topics are discussed, usually with participation of experts in fields related to the discussion."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pan."@en .
+
+:PapermakerActivity a owl:Class ;
+    rdfs:label "Papermaker"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of producing paper, usually from wood, cloth, or other fibrous material."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ppm."@en .
+
+:ParallelTitle a owl:Class ;
+    rdfs:label "Parallel title"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Title> ;
+    skos:definition "A title in another language."@en .
+
+:PartNameElement a owl:Class ;
+    rdfs:label "Part name element"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :TitleElement ;
+    skos:definition "The part of a title that specifies the name of a part of the resource."@en .
+
+:PartNumberElement a owl:Class ;
+    rdfs:label "Part number element"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :TitleElement ;
+    skos:definition "The part of a title that specifies the number of a part of the resource."@en .
+
+:PatentApplicantActivity a owl:Class ;
+    rdfs:label "Patent applicant"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of appling for a patent."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pta."@en .
+
+:PatentHolderActivity a owl:Class ;
+    rdfs:label "Patent holder"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of being granted a patent."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pth."@en .
+
+:PatronActivity a owl:Class ;
+    rdfs:label "Patron"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of commissioning a work. Usually a patron uses his or her means or influence to support the work of artists, writers, etc. This includes those who commission and pay for individual works."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pat."@en .
+
+:PerformedMusic a owl:Class ;
+    rdfs:label "Performed music"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Audio> ;
+    skos:definition "A work consisting of content expressed through music in an audible form."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA content type."@en ;
+    skos:scopeNote "This class is derived from the RDA content type http://rdaregistry.info/termList/RDAContentType/1011."@en .
+
+:PerformerActivity a owl:Class ;
+    rdfs:label "Performer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by performing music, acting, dancing, speaking, etc., often in a musical or dramatic presentation, etc. If specific Activities are used, bib:PerformerActivity is used for a person whose principal skill is not known or specified."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with other \"performance-based\" activities. E.g. is every bib:ActorActivity a bib:PerformerActivity."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/prf."@en .
+
+:PhotographerActivity a owl:Class ;
+    rdfs:label "Photographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a photographic work."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pht."@en .
+
+:PlatemakerActivity a owl:Class ;
+    rdfs:label "Platemaker"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of manufacturing a manifestation by preparing plates used in the production of printed images and/or text."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/plt."@en .
+
+:PresenterActivity a owl:Class ;
+    rdfs:label "Presenter"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of presenting a moving image, as in being mentioned in an “X presents” credit for moving image materials and who is associated with production, finance, or distribution in some way. A vanity credit; in early years, normally the head of a studio."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Not be be confused with a presenter of a presentation, for which we don't have a subclass."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pre."@en .
+
+:PrintPageNumbers a owl:Class ;
+    rdfs:label "Print page numbers"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The resource includes equivalent print page numbers. Most commonly used with ebooks for which there is a print equivalent."@en .
+
+:PrinterActivity a owl:Class ;
+    rdfs:label "Printer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of manufacturing a manifestation of printed text, notated music, etc., from type or plates, such as a book, newspaper, magazine, broadside, score, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/prt."@en .
+
+:PrintmakerActivity a owl:Class ;
+    rdfs:label "Printmaker"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making a relief, intaglio, or planographic printing surface."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with bib:PrinterActivity and bib:Platemaker"@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/prm."@en .
+
+:ProducerActivity a owl:Class ;
+    rdfs:label "Producer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of addressing the most of the business aspects of a production for screen, audio recording, television, webcast, etc. The producer is generally responsible for fund raising, managing the production, hiring key personnel, arranging for distributors, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pro."@en .
+
+:ProductionActivity a owl:Class ;
+    rdfs:label "Production personnel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to the production aspects (props, lighting, special effects, etc.) of a musical or dramatic presentation or entertainment. When more specific activities are know use them, e.g. bib:Lighting Designer."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/prd."@en .
+
+:ProgrammerActivity a owl:Class ;
+    rdfs:label "Programmer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a computer program."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/prm."@en .
+
+:Projected a owl:Class ;
+    rdfs:label "Projected"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type used to store moving or still images, designed for use with a projection device such as a motion picture film projector, slide projector, or overhead projector."@en ;
+    skos:editorialNote "Future work: Move appropriate Carrier types made into bf:Instance subclasses that intend use by projection to be subclasses of bf:Projected ; review with AV folks to get clarification."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDAMediaType/1005."@en .
+
+:ProofreaderActivity a owl:Class ;
+    rdfs:label "Proofreader"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of proofreading a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pfr."@en .
+
+:ProviderActivity a owl:Class ;
+    rdfs:label "Provider"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of producing, publishing, manufacturing, or distributing a resource if specific Activities are not desired (e.g. ProducerActivity, PublisherActivity, ManufacturerActivity)."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with bib:OfferActivity."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/prv."@en .
+
+:PublisherActivity a owl:Class ;
+    rdfs:label "Publishing"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of publishing a resource."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/pbl."@en .
+
+:PuppeteerActivity a owl:Class ;
+    rdfs:label "Puppeteer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of manipulating, controlling, or directing puppets or marionettes in a moving image production or a musical or dramatic presentation or entertainment."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ppt."@en .
+
+:ReadingOrder a owl:Class ;
+    rdfs:label "Reading order"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The reading order of the content is clearly defined (e.g., figures, sidebars and other secondary content have been marked up to allow it to be skipped automatically and/or manually escaped from."@en .
+
+:RecordistActivity a owl:Class ;
+    rdfs:label "Recordist"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of using a recording device to capture sounds and/or video during a recording session, including field recordings of natural sounds, folkloric events, music, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/rcd."@en .
+
+:RendererActivity a owl:Class ;
+    rdfs:label "Renderer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of preparing drawings of architectural designs (i.e., renderings) in accurate, representational perspective to show what the project will look like when completed."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ren."@en .
+
+:ReporterActivity a owl:Class ;
+    rdfs:label "Reporter"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of writes or presents reports of news or current events on air or in print."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/rpt."@en .
+
+:RepositoryActivity a owl:Class ;
+    rdfs:label "Repository"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of hosting data or material culture objects and provides services to promote long term, consistent and shared use of those data or objects."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with bib:AcquisitionActivity and bib:heldBy."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/rps."@en .
+
+:ResearcherActivity a owl:Class ;
+    rdfs:label "Researcher"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of performing research."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/res."@en .
+
+:ReviewerActivity a owl:Class ;
+    rdfs:label "Reviewer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of reviewing of a book, motion picture, performance, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship to Annotations model."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/rev."@en .
+
+:RubyAnnotations a owl:Class ;
+    rdfs:label "Ruby annotations"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Ruby annotations are provided in the content. Ruby annotations are used as pronunciation guides for the logographic characters for languages like Chinese or Japanese."@en .
+
+:ScientificAdvisorActivity a owl:Class ;
+    rdfs:label "Scientific advisor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of bringing scientific, pedagogical, or historical competence to the conception and realization on a work, particularly in the case of audio-visual items."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sad."@en .
+
+:ScreenwriterActivity a owl:Class ;
+    rdfs:label "Screenwriter"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of authoring a screenplay, script, or scene."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/aus."@en .
+
+:ScribeActivity a owl:Class ;
+    rdfs:label "Scribe"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of serving as an amanuensis and for a writer of manuscripts proper. For a person who makes pen-facsimiles, use FacsimilistActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/scr."@en .
+
+:SculptorActivity a owl:Class ;
+    rdfs:label "Sculptor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a three-dimensional work by modeling, carving, or similar technique."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/scl."@en .
+
+:SecretaryActivity a owl:Class ;
+    rdfs:label "Secretary"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of recording, redacting, etc. in order to express the views of a organization. See also bib:MinutetakerActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sec."@en .
+
+:SellerActivity a owl:Class ;
+    rdfs:label "Seller"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of selling something to another owner."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sll."@en .
+
+:SetDesignerActivity a owl:Class ;
+    rdfs:label "Set designer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of translating the rough sketches of the art director into actual architectural structures for a theatrical presentation, entertainment, motion picture, etc. Set designers draw the detailed guides and specifications for building the set."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/std."@en .
+
+:Sheet a owl:Class ;
+    rdfs:label "Sheet"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a flat, thin piece of paper, plastic, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1048."@en .
+
+:SignLanguage a owl:Class ;
+    rdfs:label "Sign language"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Synchronized sign language intepretation is available for audio and video content."@en .
+
+:SignerActivity a owl:Class ;
+    rdfs:label "Signer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of signing a resource without a presentation or other statement indicative of provenance. When there is a presentation statement, use InscriberActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sgn."@en .
+
+:SingerActivity a owl:Class ;
+    rdfs:label "Singer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by using his/her/their voice, with or without instrumental accompaniment, to produce music. A singer's performance may or may not include actual words."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sng."@en .
+
+:Software a owl:Class ;
+    rdfs:label "Software"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Work> ;
+    skos:definition "A compiled executable binary file."@en .
+
+:SoundDesignerActivity a owl:Class ;
+    rdfs:label "Sound designer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of producing and reproducing the sound score (both live and recorded), the installation of microphones, the setting of sound levels, and the coordination of sources of sound for a production."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sds."@en .
+
+:SoundHazard a owl:Class ;
+    rdfs:label "Sound hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityHazard ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en .
+
+:SoundTrackReel a owl:Class ;
+    rdfs:label "Sound track reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Reel ;
+    skos:definition "An instance type consisting of an open reel holding a length of film on which sound is recorded."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1005."@en .
+
+:Sounds a owl:Class ;
+    rdfs:label "Sounds"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Audio> ;
+    skos:definition "A work consisting of content other than language or music, expressed in an audible form."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA content type."@en ;
+    skos:scopeNote "This class is derived from the RDA content type http://rdaregistry.info/termList/RDAContentType/1012."@en .
+
+:SourceCode a owl:Class ;
+    rdfs:label "Source code"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Text> ;
+    skos:definition "A text listing of commands to be compiled or assembled into an executable computer program."@en .
+
+:SpeakerActivity a owl:Class ;
+    rdfs:label "Speaker"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by speaking words, such as a lecture, speech, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/spk."@en .
+
+:SpokenWord a owl:Class ;
+    rdfs:label "Spoken word"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Audio> ;
+    skos:definition "A work consisting of content expressed through language in an audible form."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA content type."@en ;
+    skos:scopeNote "This class is derived from the RDA content type http://rdaregistry.info/termList/RDAContentType/1013."@en .
+
+:SponsorActivity a owl:Class ;
+    rdfs:label "Sponsor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of sponsoring some aspect of a resource, e.g., funding research, sponsoring an event."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/spn."@en .
+
+:StageDirectorActivity a owl:Class ;
+    rdfs:label "Stage director"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a stage resource through the overall management and supervision of a performance."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/sgd."@en .
+
+:StageManagerActivity a owl:Class ;
+    rdfs:label "Stage manager"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of managing everything that occurs on a performance stage, and who acts as chief of all crews and assistant to a director during rehearsals."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/stm."@en .
+
+:StereographCard a owl:Class ;
+    rdfs:label "Stereograph card"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Card ;
+    skos:definition "An instance type consisting of a card bearing stereographic images."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1042."@en .
+
+:StereographDisc a owl:Class ;
+    rdfs:label "Stereograph disc"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Disc ;
+    skos:definition "An instance type consisting of a card bearing stereographic images."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1043."@en .
+
+:Stereographic a owl:Class ;
+    rdfs:label "Stereograph"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Work> ;
+    skos:definition "A work made of pairs of still images, designed for use with a device such as a stereoscope or stereograph viewer to give the effect of three dimensions."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Media. Ask AV folks if this should be at bf:Instance level instead."@en ;
+    skos:scopeNote "This class is derived from the RDA Media Type: http://rdaregistry.info/termList/RDAMediaType/1006."@en .
+
+:StereotyperActivity a owl:Class ;
+    rdfs:label "Stereotyper"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of creating a new plate for printing by molding or copying another printing surface."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/str."@en .
+
+:StorytellerActivity a owl:Class ;
+    rdfs:label "Storyteller"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by relaying a creator's original story with dramatic or theatrical interpretation."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/stl."@en .
+
+:StructuralNavigation a owl:Class ;
+    rdfs:label "Structural navigation"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The use of headings in the resource fully and accurately reflects the document hierarchy, allowing navigation by assistive technologies."@en .
+
+:SubtitleElement a owl:Class ;
+    rdfs:label "Subtitle element"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :TitleElement ;
+    skos:definition "The subtitle of a title."@en .
+
+:SurveyorActivity a owl:Class ;
+    rdfs:label "Surveyor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a cartographic resource by providing measurements or dimensional relationships for the geographic area represented."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/srv."@en .
+
+:SynchronizedAudioText a owl:Class ;
+    rdfs:label "Synchronized audio text"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The resource offers both audio and text, with information that allows them to be rendered simultaneously."@en .
+
+:TableOfContentsAccessibilityFeature a owl:Class ;
+    rdfs:label "Table of contents accessibility feature"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Represents the feature of having a table of contents, rather than the table of contents itself."@en ;
+    skos:scopeNote ""@en .
+
+:Tactile a owl:Class ;
+    rdfs:label "Tactile"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Work> ;
+    skos:definition "A work intended to be at least partially perceived with the sense of touch."@en ;
+    skos:example "The children's book Pat the Bunny."@en ;
+    skos:scopeNote "Contrasts with http://id.loc.gov/ontologies/bibframe/TactileNotation, a notation used for transcribing a resource, such as braille."@en .
+
+:TactileGraphic a owl:Class ;
+    rdfs:label "Tactile graphic"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Tactile graphics are provided; for example, as described in the BANA Guidelines and Standards for Tactile Graphics."@en .
+
+:TactileObject a owl:Class ;
+    rdfs:label "Tactile object"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature,
+        <http://id.loc.gov/ontologies/bibframe/TactileNotation> ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The content is a tactile 3D object, or the model to generate one is included."@en .
+
+:TaggedPdf a owl:Class ;
+    rdfs:label "Tagged PDF"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "The structures in a PDF have been tagged to improve the navigation of the content."@en .
+
+:TeacherActivity a owl:Class ;
+    rdfs:label "Teacher"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by giving instruction or providing a demonstration."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/tch."@en .
+
+:ThesisAdvisorActivity a owl:Class ;
+    rdfs:label "Thesis advisor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of supervising a degree candidate as they develop and present a thesis, mémoire, or text of a dissertation."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ths."@en .
+
+:TimingControl a owl:Class ;
+    rdfs:label "Timing control"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "For content with timed interaction, the user has the ability to control the timing to meet his or her needs (e.g., pause and reset)."@en .
+
+:TranscriberActivity a owl:Class ;
+    rdfs:label "Transcriber"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by changing it from one system of notation to another. For a work transcribed for a different instrument or performing group, see bib:ArrangerActivity. For makers of pen-facsimiles, use bib:FacsimilistActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/ths."@en .
+
+:Transcript a owl:Class ;
+    rdfs:label "Transcript"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "A transcript of the audio content is available."@en .
+
+:TranslatorActivity a owl:Class ;
+    rdfs:label "Translator"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of rending a text from one language into another, or from an older form of a language into the modern form."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/trl."@en .
+
+:TtsMarkup a owl:Class ;
+    rdfs:label "TTS markup"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "Markup has been used to enhance text-to-speech playback quality."@en .
+
+:TypographerActivity a owl:Class ;
+    rdfs:label "Typographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of choosing and arranging the type used in an item. If the typographer is also responsible for other aspects of the graphic design of a book (e.g., bib:DesignerActivity), activities for both functions may be needed."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/tyg."@en .
+
+:Unlocked a owl:Class ;
+    rdfs:label "Unlocked"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:subClassOf :AccessibilityFeature ;
+    skos:changeNote "Fixed superclass (v1.1.0)"@en ;
+    skos:definition "No digital rights management or other content restriction protocols have been applied to the resource."@en .
+
+:VideoCartridge a owl:Class ;
+    rdfs:label "Video cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cartridge,
+        :Tape,
+        :Video ;
+    skos:definition "An instance type consisting of a cartridge containing a video tape."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1051."@en .
+
+:VideoCassette a owl:Class ;
+    rdfs:label "Video cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Cassette,
+        :Tape,
+        :Video ;
+    skos:definition "An instance type consisting of a cartridge containing a video tape."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1052."@en .
+
+:VideoDisc a owl:Class ;
+    rdfs:label "Video disc"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Disc,
+        :Video ;
+    skos:definition "An instance type consisting of a disc on which video signals, with or without sound, are recorded."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1060."@en .
+
+:VideographerActivity a owl:Class ;
+    rdfs:label "Videographer"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of producing the video production, e.g. the video recording of a stage production as opposed to a commercial motion picture. The videographer may be the camera operator or may supervise one or more camera operators. Do not confuse with bib:CinematographerActivity."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/vdg."@en .
+
+:VideotapeReel a owl:Class ;
+    rdfs:label "Videotape reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Reel,
+        :Tape,
+        :Video ;
+    skos:definition "An instance type consisting of an open reel holding a video tape for use with reel-to-reel video equipment."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1053."@en .
+
+:VoiceActorActivity a owl:Class ;
+    rdfs:label "Voice actor"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of contributing to a resource by providing the voice for characters in radio and audio productions and for animated characters in moving image works, as well as by providing voice overs in radio and television commercials, dubbed resources, etc."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/vac."@en .
+
+:Volume a owl:Class ;
+    rdfs:label "Volume"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of one or more sheets bound or fastened together to form a single unit."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1049."@en .
+
+:WitnessActivity a owl:Class ;
+    rdfs:label "Witness"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of verifying the truthfulness of an event or action."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator."@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/wit."@en .
+
+:WoodEngraverActivity a owl:Class ;
+    rdfs:label "Wood engraver"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Activity ;
+    skos:definition "The activity of making prints by cutting the image in relief on the end-grain of a wood block."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding MARC relator. Consider relationship with bib:PrintmakerActivity"@en ;
+    skos:scopeNote "This class is derived from the MARC relator: http://id.loc.gov/vocabulary/relators/wit."@en .
+
+:addedTitlePage a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "added title page"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a title appearing on a title page that has not been chosen as the chief source."@en .
+
+:binder a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "binder"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a resource (e.g., a title) derived from a binding that is not that of the publisher."@en .
+
+:cancelled a <http://id.loc.gov/ontologies/bibframe/Status>,
+        owl:NamedIndividual ;
+    rdfs:label "status"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to an identifier or other resource that has been cancelled."@en .
+
+:caption a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "caption"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a resource (e.g., a title) given at the beginning of the first page of the text."@en .
+
+:cataloging a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "cataloging"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#describing> ;
+    skos:definition "The motivation that represents cataloging or recording metadata."@en .
+
+:container a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "container"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a resource (e.g., a title) on the resource's container."@en .
+
+:cover a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "cover"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a resource (e.g., a title) printed on the cover of a resource as issued."@en .
+
+:current a <http://id.loc.gov/ontologies/bibframe/Status>,
+        owl:NamedIndividual ;
+    rdfs:label "current"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to an identifier or other resource that is currently valid."@en .
+
+:deprecated a <http://id.loc.gov/ontologies/bibframe/Status>,
+        owl:NamedIndividual ;
+    rdfs:label "deprecated"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to an identifier or other resource that has been deprecated."@en .
+
+:describingSupplementaryContent a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "describing supplementary content"@en ;
+    dcterms:issued "2017-07-06T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#describing> ;
+    skos:definition "The motivation that represents indicating the existence of supplementary content such as bibliographies, discographies, filmographies, and/or other bibliographic references in the described resource or in accompanying material."@en .
+
+:hasCoverArt a owl:ObjectProperty ;
+    rdfs:label "has cover art"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Specifies the cover art of the resource."@en .
+
+:hasOrigin a owl:ObjectProperty ;
+    rdfs:label "has origin"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Specifies the physical location from which this resource (e.g., a title) originates, such as spine, cover, container, etc."@en ;
+    skos:scopeNote "Distinct from http://bibliotek-o.org/1.1/ontology/hasSource, which specifies an external organization or scheme from which the resource was obtained."@en .
+
+:invalid a <http://id.loc.gov/ontologies/bibframe/Status>,
+        owl:NamedIndividual ;
+    rdfs:label "invalid"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to an identifier or other resource that is invalid."@en .
+
+:isSubjectOf a owl:ObjectProperty ;
+    rdfs:label "is subject of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    owl:inverseOf dcterms:subject ;
+    skos:definition "Specifies a subject of this resource."@en .
+
+:isTargetOf a owl:ObjectProperty ;
+    rdfs:label "is target of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:range <http://www.w3.org/ns/oa#Annotation> ;
+    owl:inverseOf <http://www.w3.org/ns/oa#hasTarget> ;
+    skos:definition "Relates a resource to its Annotation."@en .
+
+:linkingTableOfContents a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "linking table of contents"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#linking> ;
+    skos:definition "The motivation for when the user intends to link to a table of contents related to the Target."@en .
+
+:listingCredits a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "listing credits"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader :listing ;
+    skos:definition "The motivation for when the user intends to provide a list of credits related to the Target."@en .
+
+:margin a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "margin"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a resource printed on the top or bottom margin of each page of a publication (e.g., a running title)."@en .
+
+:providingPurpose a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "providing purpose"@en ;
+    dcterms:issued "2017-07-06T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#describing> ;
+    skos:definition "The motivation for when the user intends to describe the purpose or use of the target resource."@en .
+
+:reviewing a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "reviewing"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#assessing> ;
+    skos:definition "The motivation for when the user intends to provide a review of the Target."@en .
+
+:specifyingContents a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying contents"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader :specifying ;
+    skos:definition "The motivation for when the user intends to specify the main contents of the resource rather than linking to an external table of contents."@en .
+
+:specifyingCustodialHistory a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying custodial history"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader :specifying ;
+    skos:definition "The motivation for when the user intends to describe the custodial history of the Target."@en .
+
+:specifyingHistoryOfWork a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying history of work"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader :specifying ;
+    skos:definition "The motivation for when the user intends to describe the history of the Target Work."@en .
+
+:specifyingNatureOfContent a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying nature of content"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader :specifying ;
+    skos:definition "The motivation for when the user intends to describe the nature of the Target's content."@en .
+
+:specifyingPreferredCitation a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying preferred citation"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader :specifying ;
+    skos:definition "The motivation for when the user intends to specify the preferred form of citation for the Target."@en .
+
+:specifyingSystemRequirements a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying system requirements"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    owl:deprecated true ;
+    skos:broader :specifying ;
+    skos:changeNote "Deprecated (v1.1.0)"@en ;
+    skos:definition "The motivation for when the user intends to specify system requirements for using the Target (deprecated)."@en ;
+    skos:editorialNote "This motivation has been deprecated in favor of object property bf:systemRequirement, with range bf:SystemRequirement." .
+
+:spine a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "spine"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Applies to a resource found on the spine of a publication (e.g., a publisher's title)."@en .
+
+:summarizing a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "summarizing"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#describing> ;
+    skos:definition "The motivation for when the user intends to describe the Target by providing a summary of its contents."@en .
+
+:supplied a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "supplied"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Supplied value, not directly transcribed from the resource itself."@en .
+
+:threeDimensionalProjectionCharacteristic a <http://id.loc.gov/ontologies/bibframe/ProjectionCharacteristic>,
+        owl:NamedIndividual ;
+    rdfs:label "three dimensional projection characteric"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Projected images intended to be perceived to be moving, and in three dimensions."@en .
+
+:transcribed a :Origin,
+        owl:NamedIndividual ;
+    rdfs:label "transcribed"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Value transcribed directly from the resource."@en .
+
+:twoDimensionalProjectionCharacteristic a <http://id.loc.gov/ontologies/bibframe/ProjectionCharacteristic>,
+        owl:NamedIndividual ;
+    rdfs:label "two dimensional projection characteristic"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "Projected images intended to be perceived to be moving, and in two dimensions."@en .
+
+:Belt a owl:Class ;
+    rdfs:label "Belt"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a loop on which signals are recorded."@en .
+
+:ComputerChip a owl:Class ;
+    rdfs:label "Computer chip"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of a miniaturized electronic circuit on a small wafer of semiconductor silicon, designed to provide additional processing, memory, or storage capacity."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1012."@en .
+
+:ComputerDisc a owl:Class ;
+    rdfs:label "Computer disc"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Disc,
+        <http://id.loc.gov/ontologies/bibframe/Electronic> ;
+    skos:definition "An instance type consisting of a miniaturized electronic circuit on a small wafer of semiconductor silicon, designed to provide additional processing, memory, or storage capacity."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1013."@en .
+
+:Cylinder a owl:Class ;
+    rdfs:label "Cylinder"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a roller-shaped object."@en .
+
+:Slide a owl:Class ;
+    rdfs:label "Slide"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a small sheet of transparent material, usually in a protective mount, bearing an image designed for use with a slide projector or viewer."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Carrier."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1040."@en .
+
+:atLocation a owl:ObjectProperty ;
+    rdfs:label "at location"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:range <http://www.w3.org/ns/prov#Location> ;
+    owl:inverseOf :isLocationOf ;
+    skos:definition "The resource being described is at the specified location."@en .
+
+:coveredIn a owl:ObjectProperty ;
+    rdfs:label "covered in"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    owl:inverseOf :covers ;
+    skos:definition "Specifies a resource the content of which covers this time period or location."@en ;
+    skos:scopeNote "Contrasts with http://bibliotek-o.org/1.1/ontology/isSubjectOf: e.g., a book written by a French author may be set in France without France being the subject of the work. Not all cases are expected to be unambiguous."@en .
+
+:covers a owl:ObjectProperty ;
+    rdfs:label "covers"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    owl:inverseOf :coveredIn ;
+    skos:definition "Specifies a time period or location covered in the content of this resource."@en ;
+    skos:scopeNote "Contrasts with http://purl.org/dc/terms/subject: e.g., a book written by a French author may be set in France without France being the subject of the work. Not all cases are expected to be unambiguous."@en .
+
+:grantedBy a owl:ObjectProperty ;
+    rdfs:label "granted by"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:range <http://xmlns.com/foaf/0.1/Agent> ;
+    owl:inverseOf :grants ;
+    skos:definition "Specifies an agent granting a degree, award, or similar resource."@en .
+
+:grants a owl:ObjectProperty ;
+    rdfs:label "grants"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:domain <http://xmlns.com/foaf/0.1/Agent> ;
+    owl:inverseOf :grantedBy ;
+    skos:definition "Specifies a degree, award, or similar resource granted by this agent."@en .
+
+:hasActivity a owl:ObjectProperty ;
+    rdfs:label "has activity"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:range :Activity ;
+    owl:inverseOf :isActivityOf ;
+    skos:definition "Relates this resource to an activity or contribution by a single agent that affects or alters its existence or state."@en .
+
+:hasAgent a owl:ObjectProperty ;
+    rdfs:label "has agent"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:range <http://xmlns.com/foaf/0.1/Agent> ;
+    owl:inverseOf :isAgentOf ;
+    skos:changeNote "Removed domain specification (v1.1.0)"@en ;
+    skos:definition "Relates an activity to its agent."@en .
+
+:hasPreferredTitle a owl:ObjectProperty ;
+    rdfs:label "has preferred title"@en ;
+    rdfs:range <http://id.loc.gov/ontologies/bibframe/Title> ;
+    rdfs:subPropertyOf <http://id.loc.gov/ontologies/bibframe/title> ;
+    owl:inverseOf :isPreferredTitleOf ;
+    skos:definition "Specifies the preferred title of this resource."@en ;
+    skos:scopeNote "A resource may have multiple directly linked titles, among which this is the preferred title."@en .
+
+:hasSource a owl:ObjectProperty ;
+    rdfs:label "has source"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    owl:inverseOf :isSourceOf ;
+    skos:definition "Relates this resource to the source from which it was derived."@en ;
+    skos:scopeNote "Has general applicability to many types of sources and resources."@en .
+
+:heldBy a owl:ObjectProperty ;
+    rdfs:label "held by"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:domain <http://id.loc.gov/ontologies/bibframe/Item> ;
+    rdfs:range <http://xmlns.com/foaf/0.1/Agent> ;
+    owl:inverseOf :holds ;
+    skos:definition "Specifies the agent holding this item or from which it is available."@en .
+
+:holds a owl:ObjectProperty ;
+    rdfs:label "holds"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:domain <http://xmlns.com/foaf/0.1/Agent> ;
+    rdfs:range <http://id.loc.gov/ontologies/bibframe/Item> ;
+    owl:inverseOf :heldBy ;
+    skos:definition "Specifies an item held by this agent."@en .
+
+:isActivityOf a owl:ObjectProperty ;
+    rdfs:label "is activity of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:domain :Activity ;
+    owl:inverseOf :hasActivity ;
+    skos:definition "Relates an activity to the affected resource."@en .
+
+:isAgentOf a owl:ObjectProperty ;
+    rdfs:label "is agent of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    rdfs:domain <http://xmlns.com/foaf/0.1/Agent> ;
+    owl:inverseOf :hasAgent ;
+    skos:changeNote "Removed range specification (v1.1.0)"@en ;
+    skos:definition "Relates an agent to the activity it participated in."@en .
+
+:isLocationOf a owl:ObjectProperty ;
+    rdfs:label "is location of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:domain <http://www.w3.org/ns/prov#Location> ;
+    owl:inverseOf :atLocation ;
+    skos:definition "The specified resource is at the location being described."@en .
+
+:isPreferredTitleOf a owl:ObjectProperty ;
+    rdfs:label "is preferred title of"@en ;
+    rdfs:domain <http://id.loc.gov/ontologies/bibframe/Title> ;
+    rdfs:subPropertyOf :isTitleOf ;
+    owl:inverseOf :hasPreferredTitle ;
+    skos:definition "Specifies the resource for which this is the preferred title."@en ;
+    skos:scopeNote "A resource may have multiple directly linked titles, among which this is the preferred title."@en .
+
+:isSourceOf a owl:ObjectProperty ;
+    rdfs:label "is source of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    owl:inverseOf :hasSource ;
+    skos:definition "Relates this resource to a resource of which it is the source."@en ;
+    skos:scopeNote "Has general applicability to many types of sources and resources."@en .
+
+:isTitleOf a owl:ObjectProperty ;
+    rdfs:label "is title of"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:domain <http://id.loc.gov/ontologies/bibframe/Title> ;
+    owl:inverseOf <http://id.loc.gov/ontologies/bibframe/title> ;
+    skos:definition "Resource of which this title is the title."@en ;
+    skos:scopeNote "Expected value Work, Instance or Item"@en .
+
+:listing a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "listing"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#describing> ;
+    skos:definition "The motivation for when the user intends to provide a list to describe the Target."@en .
+
+<http://bibliotek-o.org/ontology/> a owl:Ontology ;
+    rdfs:label "bibliotek-o: a BIBFRAME Ontology Extension"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-07-06T00:00:00-04:00" ;
+    dcterms:title "bibliotek-o: a BIBFRAME Ontology Extension"@en ;
+    vann:preferredNamespacePrefix "bib" ;
+    voaf:extends <http://id.loc.gov/ontologies/bibframe/> ;
+    voaf:specializes <http://id.loc.gov/ontologies/bibframe/> ;
+    rdfs:comment "The bibliotek-o ontology extension defines additions and modifications to BIBFRAME and is intended to be used as a supplement to the core BIBFRAME ontology. In addition to the extension specification, bibliotek-o provides a set of recommended fragments from external ontologies and an application profile based on its recommended models and patterns. It is a joint product of the Mellon Foundation-funded Linked Data for Libraries Labs and Linked Data for Production projects. See http://ld4l.org for more information on these projects."@en ;
+    owl:ontologyIRI <http://bibliotek-o.org/ontology/> ;
+    owl:priorVersion <http://bibliotek-o.org/1.0/ontology/> ;
+    owl:versionIRI : ;
+    owl:versionInfo "Version 1.1.0"^^xsd:string .
+
+:Card a owl:Class ;
+    rdfs:label "Card"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a small sheet of opaque material."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1045."@en .
+
+:Roll a owl:Class ;
+    rdfs:label "Roll"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a wound length of paper, film, tape, etc."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDACarrierType/1047."@en .
+
+:Disc a owl:Class ;
+    rdfs:label "Disc"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a one or more discs."@en .
+
+:Microfilm a owl:Class ;
+    rdfs:label "Microfilm"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Microform ;
+    skos:definition "An instance type containing a microfilm."@en .
+
+:Video a owl:Class ;
+    rdfs:label "Video"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type used to store moving or still images, designed for use with a playback device such as a videocassette player or DVD player."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Media."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDAMediaType/1008."@en .
+
+:Microform a owl:Class ;
+    rdfs:label "Microform"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type designed to store reduced-size images not readable to the human eye, designed for use with a device such as a microfilm or microfiche reader."@en ;
+    skos:editorialNote "Future work: consider more formal alignment between the class and corresponding RDA Media."@en ;
+    skos:scopeNote "This class is derived from the RDA Carrier Type: http://rdaregistry.info/termList/RDAMediaType/1002."@en .
+
+:TitleElement a owl:Class ;
+    rdfs:label "Title element"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "A part of a title, such as a subtitle, part number, or part name."@en .
+
+:AccessibilityHazard a owl:Class ;
+    rdfs:label "Accessibility hazard"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/ContentAccessibility> ;
+    skos:definition "A characteristic of the resource that is physiologically dangerous to some users, such as flashing, motion simulation, or sound. May have both positive and negative subclasses. For example, FlashingHazard means the resource has a flashing hazard, while NoFlashingHazard means the resource is known not to have a flashing hazard. See https://www.w3.org/wiki/WebSchemas/Accessibility."@en .
+
+:Cassette a owl:Class ;
+    rdfs:label "Cassette"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf :Tape ;
+    skos:definition "An instance type consisting of a cassette."@en .
+
+:specifying a owl:NamedIndividual,
+        <http://www.w3.org/ns/oa#Motivation> ;
+    rdfs:label "specifying"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:broader <http://www.w3.org/ns/oa#describing> ;
+    skos:definition "The motivation for when the user intends to specify details about an aspect of the Target."@en .
+
+:Film a owl:Class ;
+    rdfs:label "Film"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type containing a motion picture film."@en .
+
+:Reel a owl:Class ;
+    rdfs:label "Reel"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a one or more reels."@en .
+
+:Cartridge a owl:Class ;
+    rdfs:label "Cartridge"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of a cartridge."@en .
+
+:Origin a owl:Class ;
+    rdfs:label "Origin"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "The place from which a resource (e.g., a title) originates, such as spine, cover, container, etc."@en .
+
+:Tape a owl:Class ;
+    rdfs:label "Tape"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/Instance> ;
+    skos:definition "An instance type consisting of magnetic tape."@en .
+
+:AccessibilityFeature a owl:Class ;
+    rdfs:label "Accessibility feature"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    rdfs:subClassOf <http://id.loc.gov/ontologies/bibframe/ContentAccessibility> ;
+    skos:definition "Accessibility feature of the resource, such as accessible media,supported enhancements for accessibility, and alternatives. See https://www.w3.org/wiki/WebSchemas/Accessibility."@en .
+
+:Activity a owl:Class ;
+    rdfs:label "Activity"@en ;
+    dcterms:issued "2017-04-22T00:00:00-04:00" ;
+    dcterms:modified "2017-04-22T00:00:00-04:00" ;
+    skos:definition "An activity or contribution by a single agent that affects or alters the existence or state of a resource."@en .
+
