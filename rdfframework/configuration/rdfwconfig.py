@@ -123,7 +123,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         for attr in dir(self):
             if attr.endswith("_PATH"):
                 path = getattr(self, attr)
-                if not os.path.isdir(path):
+                if path and not os.path.isdir(path):
                     log.warning("The '%s' --> '%s' directory does not exist. %s",
                              attr,
                              path,
