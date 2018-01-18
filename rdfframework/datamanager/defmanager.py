@@ -148,7 +148,6 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
             custom: list of custom definitions to load
         """
         super(DefinitionManager, self).load(file_locations, **kwargs)
-        pdb.set_trace()
         if not file_locations:
             file_locations = self.__file_locations__
         for item in file_locations:
@@ -172,9 +171,12 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
                     permissions is selected.
         """
         # add a path for a subfolder 'vocabularies'
-        test_dirs = [self.vocab_dir] + \
-                    cache_dirs + \
-                    [os.path.join(__CFG__.CACHE_DATA_PATH, "vocabularies")]
+        test_dirs = [self.vocab_dir] + cache_dirs
+        try:
+            test_dirs += [os.path.join(__CFG__.CACHE_DATA_PATH,
+                                       "vocabularies")]
+        except RuntimeWarning:
+            pass
         super(DefinitionManager, self).__set_cache_dir__(test_dirs, **kwargs)
 
     def load_vocab(self, vocab_name, **kwargs):
@@ -195,7 +197,7 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
                 self.drop_file(vocab['filename'], **kwargs)
             else:
                 return
-        conn = kwargs.get("conn", __CONNS__.active_defs)
+        conn = kwargs.get("conn", self.conn)
         conn.load_data(graph=getattr(__NSM__.kdr, vocab['filename']).clean_uri,
                        data=vocab['data'],
                        datatype=vocab['filename'].split(".")[-1],

@@ -53,6 +53,7 @@ CONNECTIONS = [
         "namespace": "kean_all", # "kb",
         "graph": "bd:nullGraph",
         "namespace_params": {"quads": True},
+        "debug": True,
         "data_upload": [
                 ("directory", os.path.join(os.path.realpath(".."),
                                            "data",

@@ -26,7 +26,7 @@ __MNAME__ = pyfile_path(inspect.stack()[0][1])
 
 class DataFileManager():
     """ class for managing database connections """
-    log_name = "%s:FileManager" % __MNAME__
+    log_name = "%s:DataFileManager" % __MNAME__
     log_level = logging.INFO
     is_initialized = False
 
@@ -138,8 +138,11 @@ class DataFileManager():
                     permissions is selected.
         """
         # add a path for a subfolder 'vocabularies'
-        test_dirs = cache_dirs + \
-                    [os.path.join(__CFG__.CACHE_DATA_PATH, "data")]
+        test_dirs = cache_dirs
+        try:
+            test_dirs += [os.path.join(__CFG__.CACHE_DATA_PATH, "data")]
+        except RuntimeWarning:
+            pass
         cache_dir = None
         for directory in test_dirs:
             if is_writeable_dir(directory, mkdir=True):
