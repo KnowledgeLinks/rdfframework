@@ -22,8 +22,8 @@ import rdfframework.configuration
 import rdfframework.search
 import rdfframework.sparql
 import rdfframework.rml
-
+import rdfframework.datamanager
 import rdfframework.datasets
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.18'
+__version__ = '0.0.20'

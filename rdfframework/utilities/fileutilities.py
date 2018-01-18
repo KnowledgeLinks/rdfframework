@@ -2,13 +2,15 @@
 import os
 import inspect
 import logging
+import tempfile
+import errno
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-MNAME = "%s.%s" % \
+__MNAME__ = "%s.%s" % \
         (os.path.basename(os.path.split(inspect.stack()[0][1])[0]),
          os.path.basename(inspect.stack()[0][1]))
-LOG_LEVEL = logging.DEBUG
+__LOG_LEVEL__ = logging.DEBUG
 
 def is_writeable_dir(directory, **kwargs):
     """ tests to see if the directory is writable. If the directory does
@@ -60,7 +62,7 @@ def list_files(file_directory,
     '''
 
     log = logging.getLogger("%s" % (inspect.stack()[0][3]))
-    log.setLevel(LOG_LEVEL)
+    log.setLevel(__LOG_LEVEL__)
 
     rtn_list = []
     if not root_dir:

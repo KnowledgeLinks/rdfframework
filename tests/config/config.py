@@ -44,28 +44,36 @@ CONNECTIONS = [
     {
         "conn_type": "triplestore",
         "name": "datastore",
-        "vendor": "blazegraph",
+        "vendor": "rdflib",
         "url": __blazegraph_url__,
         "local_url": __blazegraph_local_url__,
         # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
         # This is how the triplestore sees the file path.
         "container_dir": "local_data",
         "namespace": "kean_all", # "kb",
-        "graph": "bf:nullGraph",
-        "namespace_params": {"quads": True}
+        "graph": "bd:nullGraph",
+        "namespace_params": {"quads": True},
+        "data_upload": [
+                ("directory", os.path.join(os.path.realpath(".."),
+                                           "data",
+                                           "rdfw-definitions")),
+                ("data_file", ""),
+                ("package_all", "bibcat.maps")
+        ]
     },
     # Declaration for the triplestore storing the active rdf vocab and
     # rdfframework files that define the applications classes, forms, and API
     {
         "conn_type": "triplestore",
         "name": "active_defs",
-        "vendor": "blazegraph",
+        "vendor": "rdflib",
         "url": __blazegraph_url__,
         "local_url": __blazegraph_local_url__,
         "container_dir": "local_data",
         "graph": "<http://knowledgelinks.io/ns/application-framework/>",
         "namespace": "active_defs",
-        "namespace_params": {"quads": True}
+        "namespace_params": {"quads": True},
+        "data_upload": [("vocabularies", "all")]
     },
     # Declaration for the triplestore storing the vocab definitions whether in
     # use or not. This provides an easily queriable source for vocabularies.
@@ -122,7 +130,8 @@ RDF_DEFS = [
     ("directory", os.path.join(os.path.realpath(".."),
                                "data",
                                "rdfw-definitions")),
-    ("vocabularies", ["rdf", "owl", "rdfs", "schema", "skos", "bf"])
+    ("vocabularies", ["rdf", "owl", "rdfs", "schema", "skos", "bf"]),
+    ("package_all", "bibcat.maps")
     ]
 
 # Declaration for the triplestore storing the rdf vocab and rdfframework files

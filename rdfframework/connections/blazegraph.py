@@ -108,6 +108,7 @@ class Blazegraph(RdfwConnections):
             raise AttributeError(" ".join(msg))
         if not kwargs.get('delay_check'):
             self.check_status
+        self.__set_mgr__(**kwargs)
 
     @property
     def check_status(self):

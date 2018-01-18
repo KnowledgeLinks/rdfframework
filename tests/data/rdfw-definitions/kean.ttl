@@ -12,7 +12,8 @@
 @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
 @prefix dcterm: <http://purl.org/dc/terms/> .
 @prefix mads: <http://www.loc.gov/mads/rdf/v1#> .
-
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 # Adding an overaching class to Bibframe to allow for class wide
 # property inheritance
 bf:Resource a owl:Class;

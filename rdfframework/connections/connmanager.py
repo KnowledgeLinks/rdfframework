@@ -13,6 +13,7 @@ __LOG_LEVEL__ = logging.INFO
 class RdfwConnections(metaclass=KeyRegistryMeta):
     __required_idx_attrs__ = {'vendor', 'conn_type'}
     __nested_idx_attrs__ = {"conn_type"}
+    delay_check = None
 
     def __repr__(self):
         if self.__class__ == RdfwConnections:
@@ -26,6 +27,39 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
             url = self.url
         msg_attrs = ["url: %s" % url] + msg_attrs
         return "<%s([{%s}])>" % (self.vendor.capitalize(), ", ".join(msg_attrs))
+
+    def __set_mgr__(self, **kwargs):
+        """ set the data file management for the connection
+
+        kwargs:
+            data_file_manager: instance of DataFileManager
+            data_upload: list of tuples describing the files to upload
+        """
+        self.mgr = None
+        if kwargs.get("data_upload"):
+            import rdfframework.datamanager as dm
+            mgr = kwargs.get('data_file_manager', kwargs.get("name", True))
+            if isinstance(mgr, dm.DataFileManager):
+                self.mgr = mgr
+            elif mgr == 'active_defs':
+                self.mgr = dm.DefinitionManager(conn=self, **kwargs)
+            else:
+                self.mgr = dm.DataFileManager(conn=self, **kwargs)
+        if self.mgr and kwargs.get('data_upload'):
+            self.mgr.__file_locations__ += kwargs['data_upload']
+            if kwargs.get("delay_check"):
+                self.delay_check = kwargs
+            else:
+                if self.check_status:
+                    self.mgr.load(**kwargs)
+
+    def delay_check_pass(self):
+        if self.delay_check:
+            try:
+                self.mgr.load(**self.delay_check)
+            except AttributeError:
+                pass
+            self.delay_check = None
 
 class ConnManagerMeta(type):
     """ Metaclass ensures that there is only one instance of the RdfConnManager
@@ -53,11 +87,6 @@ class ConnManager(metaclass=ConnManagerMeta):
     """ class for managing database connections """
     log = "%s:RdfConnManager" % __MNAME__
     log_level = logging.INFO
-    # conn_mapping = {
-    #     "triplestore": TriplestoreConnections,
-    #     "search": SearchConnections,
-    #     "repository": RepositoryConnections
-    # }
     conn_mapping = RdfwConnections
     is_initialized = False
 
@@ -187,6 +216,8 @@ class ConnManager(metaclass=ConnManagerMeta):
         if failing:
             raise RuntimeError("Unable to establish connection(s): ",
                                failing)
+        for conn in up_conns.values():
+            conn.delay_check_pass()
         return not failing
 
     @property
@@ -210,7 +241,7 @@ class ConnManager(metaclass=ConnManagerMeta):
         return {key: value for key, value in self.conns.items()
                 if value.active}
 
-def make_tstore_conn(params):
+def make_tstore_conn(params, **kwargs):
     """ Returns a triplestore connection
 
         args:
@@ -224,6 +255,9 @@ def make_tstore_conn(params):
     log = logging.getLogger("%s-%s" % (__MNAME__,
                                        inspect.stack()[0][3]))
     log.setLevel(params.get('log_level', __LOG_LEVEL__))
+    log.debug("\n%s", params)
+    # pdb.set_trace()
+    params.update(kwargs)
     try:
         vendor = RdfwConnections['triplestore'][params.get('vendor')]
     except KeyError:
@@ -253,6 +287,7 @@ def setup_conn(**kwargs):
     if kwargs.get("conn"):
         conn = kwargs['conn']
     elif kwargs.get("tstore_def"):
+        pdb.set_trace()
         conn = make_tstore_conn(kwargs['tstore_def'])
     elif kwargs.get("triplestore_url"):
         conn = RdfwConnections['triplestore']['blazegraph']( \

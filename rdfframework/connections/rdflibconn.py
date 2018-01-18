@@ -126,7 +126,7 @@ class RdflibConn(RdfwConnections):
     log_level = logging.INFO
 
     # file externsions that contain rdf data
-    default_exts = ['xml', 'rdf', 'ttl', 'gz', 'nt']
+    rdf_formats = ['xml', 'rdf', 'ttl', 'gz', 'nt']
     default_ns = 'kb'
     default_graph = None
     qry_results_formats = ['json',
@@ -157,6 +157,7 @@ class RdflibConn(RdfwConnections):
         except KeyError:
             self.tstore.create_namespace(self.namespace)
             self.conn = self.tstore.get_namespace(self.namespace)
+        self.__set_mgr__(**kwargs)
 
     def query(self,
               sparql,
@@ -203,14 +204,14 @@ class RdflibConn(RdfwConnections):
                   (datetime.datetime.now()-start))
         return result
 
-    def update_query(self, sparql, namespace=None):
+    def update_query(self, sparql, namespace=None, **kwargs):
         """ runs a sparql update query and returns the results
 
             args:
                 sparql: the sparql query to run
                 namespace: the namespace to run the sparql query against
         """
-        return self.query(sparql, "update", namespace)
+        return self.query(sparql, "update", namespace, **kwargs)
 
     def load_data(self,
                   data,
@@ -262,7 +263,12 @@ class RdflibConn(RdfwConnections):
             namespace = self.namespace
         graph = pick(graph, self.graph)
         start = datetime.datetime.now()
-        result = conn.parse(data=data, publicID=graph, format=content_type)
+        try:
+            result = conn.parse(data=data, publicID=graph, format=content_type)
+        except:
+            if is_file:
+                print("Datafile ", file_name)
+            raise
         if is_file:
             log.info (" loaded %s into rdflib namespace '%s'",
                       file_name,
@@ -317,7 +323,7 @@ class RdflibConn(RdfwConnections):
         if method == 'data_stream':
             include_root = True
         file_directory = kwargs.get('file_directory', self.local_directory)
-        file_extensions = kwargs.get('file_extensions', self.default_exts)
+        file_extensions = kwargs.get('file_extensions', self.rdf_formats)
         file_list = list_files(file_directory,
                                file_extensions,
                                kwargs.get('include_subfolders', True),
@@ -473,7 +479,7 @@ class RdflibConn(RdfwConnections):
         if kwargs.get('reset') == True:
             self.reset_namespace()
         file_directory = kwargs.get('file_directory', self.local_directory)
-        file_extensions = kwargs.get('file_extensions', self.default_exts)
+        file_extensions = kwargs.get('file_extensions', self.rdf_formats)
         root_dir = kwargs.get('root_dir', self.local_directory)
         file_list = list_files(file_directory,
                                file_extensions,
