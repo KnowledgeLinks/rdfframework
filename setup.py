@@ -57,7 +57,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application'
     ],
     package_data = {
-        'rdfframework.definitions.vocabularies': ["*.*"],
+        'rdfframework.datamanager.vocabularies': ["*.*"],
         'rdfframework.sparql.queries': ["*.rq"],
         'rdfframework.turtle': ["*.ttl"]
     },
