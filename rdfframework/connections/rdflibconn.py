@@ -190,12 +190,20 @@ class RdflibConn(RdfwConnections):
             sparql = "%s\n%s" % (NSM.prefix(), sparql)
         start = datetime.datetime.now()
         if mode == "get":
-            result = json.loads( \
-                     conn.query(sparql).serialize(\
-                     format=rtn_format).decode()).get('results',
-                                                      {}).get('bindings', [])
+            try:
+                result = json.loads( \
+                         conn.query(sparql).serialize(\
+                         format=rtn_format).decode()).get('results',
+                                                          {}).get('bindings', [])
+            except:
+                print(sparql)
+                raise
         if mode == "update":
-            result = conn.update(sparql)
+            try:
+                result = conn.update(sparql)
+            except:
+                print(sparql)
+                raise
         log.debug("\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
                   mode,
                   namespace,
