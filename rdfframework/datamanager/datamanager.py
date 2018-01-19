@@ -141,7 +141,7 @@ class DataFileManager():
         test_dirs = cache_dirs
         try:
             test_dirs += [os.path.join(__CFG__.CACHE_DATA_PATH, "data")]
-        except RuntimeWarning:
+        except (RuntimeWarning, TypeError):
             pass
         cache_dir = None
         for directory in test_dirs:

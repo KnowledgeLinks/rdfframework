@@ -175,7 +175,7 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
         try:
             test_dirs += [os.path.join(__CFG__.CACHE_DATA_PATH,
                                        "vocabularies")]
-        except RuntimeWarning:
+        except (RuntimeWarning, TypeError):
             pass
         super(DefinitionManager, self).__set_cache_dir__(test_dirs, **kwargs)
 
