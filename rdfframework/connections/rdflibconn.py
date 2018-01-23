@@ -258,7 +258,7 @@ class RdflibConn(RdfwConnections):
             datatype = data.split(os.path.extsep)[-1]
             file_name = data
             log.debug('starting data load of %s', file_name)
-            data = open(data).read()
+            data = open(data, 'rb').read()
         try:
             content_type = datatype_map[datatype]
         except KeyError:
