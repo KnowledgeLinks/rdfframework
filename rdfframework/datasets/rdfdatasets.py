@@ -9,14 +9,14 @@ import datetime
 import functools
 import pprint, pdb
 
-from rdfframework import rdfclass
+# from rdfframework import rdfclass
 from rdfframework.utilities import DictClass, make_list
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import pyrdf, BaseRdfDataType, Uri
 from rdfframework.rdfclass import RdfClassBase, remove_parents, list_hierarchy
 from .jsonquery import json_qry
 
-
+MODULE = __import__(__name__)
 # import rdfframework.rdfclass as rdfclass
 CFG = RdfConfigManager()
 
@@ -327,7 +327,7 @@ class RdfDataset(dict):
         def select_class(class_name):
             """ finds the class in the rdfclass Module"""
             try:
-                return getattr(rdfclass, class_name.pyuri)
+                return getattr(MODULE.rdfclass, class_name.pyuri)
             except AttributeError:
                 return RdfClassBase
 

@@ -15,11 +15,11 @@ from rdfframework.utilities import render_without_request, make_list, \
 from rdfframework.datatypes import BaseRdfDataType, pyrdf, Uri, RdfNsManager
 from rdfframework.datasets import RdfDataset
 from rdfframework.rdfclass import RdfClassBase, make_property, link_property
-from rdfframework import rdfclass
+# from rdfframework import rdfclass
 from rdfframework.configuration import RdfConfigManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-
+MODULE = __import__(__name__)
 # Setup Module logger
 
 MNAME = pyfile_path(inspect.stack()[0][1])
@@ -155,7 +155,7 @@ class RdfClassFactory(RdfBaseFactory):
         for name, cls_defs in self.class_dict.items():
             if not self.class_dict[name].get('rdfs_subClassOf'):
                 created.append(name)
-                setattr(rdfclass,
+                setattr(MODULE.rdfclass,
                         name,
                         types.new_class(name,
                                         (RdfClassBase,),
@@ -178,11 +178,11 @@ class RdfClassFactory(RdfBaseFactory):
                         if parent in classes:
                             bases += (RdfClassBase, )
                         else:
-                            base = getattr(rdfclass, parent)
+                            base = getattr(MODULE.rdfclass, parent)
                             bases += (base,) + base.__bases__
                 if len(bases) > 0:
                     created.append(name)
-                    setattr(rdfclass,
+                    setattr(MODULE.rdfclass,
                             name,
                             types.new_class(name,
                                             bases,
@@ -234,7 +234,7 @@ class RdfClassFactory(RdfBaseFactory):
         start = datetime.datetime.now()
         log.info(" Tieing properties to the class")
         for cls_name in class_list:
-            cls_obj = getattr(rdfclass, cls_name)
+            cls_obj = getattr(MODULE.rdfclass, cls_name)
             prop_dict = dict(cls_obj.properties)
             for prop_name, prop_obj in cls_obj.properties.items():
                 setattr(cls_obj, prop_name, link_property(prop_obj, cls_obj))
