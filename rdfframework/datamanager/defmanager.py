@@ -1,22 +1,15 @@
 import os
-import inspect
-import time
 import logging
 import requests
-# import tempfile
-import errno
-import pdb
 import urllib
 import datetime
-import importlib
 
 from dateutil.parser import parse as date_parse
 
 from rdfframework.connections import ConnManager
-from rdfframework.datatypes import RdfNsManager, XsdDatetime, pyrdf
+from rdfframework.datatypes import RdfNsManager
 from rdfframework.configuration import RdfConfigManager
-from rdfframework.utilities import pyfile_path, make_list, list_files, \
-        is_writeable_dir
+from rdfframework.utilities import make_list
 from .datamanager import DataFileManager
 
 __CONNS__ = ConnManager()
@@ -108,7 +101,7 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
         },
         "vcard": {
             "filename": "vcard.ttl",
-            "namespace": "https://www.w3.org/2006/vcard/ns#",
+            "namespace": "http://www.w3.org/2006/vcard/ns#",
             "download": "https://www.w3.org/2006/vcard/ns#"
         },
         "foaf": {

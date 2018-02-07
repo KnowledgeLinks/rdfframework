@@ -353,6 +353,15 @@ class NsmSingleton(type):
             if 'config' in kwargs and hasattr(kwargs['config'],
                                               "DEFAULT_RDF_NS"):
                 cls._instances[cls].dict_load(kwargs['config'].DEFAULT_RDF_NS)
+            if 'config' in kwargs and hasattr(kwargs['config'],
+                                              "NAMESPACES"):
+                cls._instances[cls].dict_load(kwargs['config'].NAMESPACES)
+            try:
+                ns_arg = args[0]
+                if isinstance(ns_arg, dict):
+                    cls._instances[cls].dict_load(ns_arg)
+            except IndexError:
+                pass
         return cls._instances[cls]
 
 class RdfNsManager(metaclass=NsmSingleton):
@@ -387,6 +396,7 @@ class RdfNsManager(metaclass=NsmSingleton):
         # load default ns's from config info
         if config and hasattr(config, "DEFAULT_RDF_NS"):
             self.dict_load(config.DEFAULT_RDF_NS)
+
 
     @property
     def __make_dicts__(self):

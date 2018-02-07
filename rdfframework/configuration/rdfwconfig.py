@@ -280,7 +280,15 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         self.__is_initialized__ = True
         self.__initialize_directories__(**kwargs)
         self.__initialize_conns__(**kwargs)
+        self.__load_namespaces__(**kwargs)
         self.__run_defs__(**kwargs)
+
+    def __load_namespaces__(self, **kwargs):
+        pdb.set_trace()
+        if not self.namespaces:
+            return
+        ns_mgr = get_obj_frm_str("rdfframework.datatypes.RdfNsManager")
+        self.__config__['nsm'] = ns_mgr(self.namespaces)
 
     def __run_defs__(self, **kwargs):
         """

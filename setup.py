@@ -38,7 +38,8 @@ setup(
         'requests',
         'dateutils',
         'beautifulsoup4',
-        'cssselect'
+        'cssselect',
+        'colorama'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
