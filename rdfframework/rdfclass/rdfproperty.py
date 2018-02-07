@@ -1,8 +1,8 @@
 """ rdfframework module for generating rdfproperties. """
 import pdb
 import types
-
-from rdfframework import rdfclass
+# pdb.set_trace()
+# import rdfframework.rdfclass as rdfclass
 from rdfframework.utilities import find_values, make_doc_string, LABEL_FIELDS, \
         RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS, pick
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, \
@@ -202,7 +202,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
             def _sub_convert(val):
                 if isinstance(val, BaseRdfDataType):
                     return val.to_json
-                elif isinstance(value, rdfclass.RdfClassBase):
+                elif isinstance(value, MODULE.rdfclass.RdfClassBase):
                     return val.subject.sparql_uri
                 return val
 
@@ -248,10 +248,10 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 if hasattr(MODULE.rdfclass, rng) and \
                         rng != 'rdfs_Literal' and \
                         isinstance(getattr(MODULE.rdfclass, rng),
-                                   rdfclass.RdfClassMeta):
+                                   MODULE.rdfclass.RdfClassMeta):
                     nested = True
             for value in self:
-                if isinstance(value, rdfclass.RdfClassBase):
+                if isinstance(value, MODULE.rdfclass.RdfClassBase):
                     nested = True
             if nested:
                 idx_types.append('es_Nested')
@@ -376,10 +376,10 @@ def get_idx_types(prop_name, prop_def):
     if idx_types:
         nested = False
         for rng in ranges:
-            if hasattr(rdfclass, rng) and \
+            if hasattr(MODULE.rdfclass, rng) and \
                     rng != 'rdfs_Literal' and \
                     isinstance(getattr(MODULE.rdfclass, rng),
-                               rdfclass.RdfClassMeta)\
+                               MODULE.rdfclass.RdfClassMeta)\
                     and cls._prop_name != 'rdf_type': # pylint: disable=no-member
                 nested = True
         if nested:
@@ -463,7 +463,7 @@ def prepare_prop_defs(prop_defs, prop_name, cls_names):
                 # pdb.set_trace()
                 new_rtn = []
                 for item in rtn_list:
-                    if isinstance(item, rdfclass.RdfClassBase):
+                    if isinstance(item, MODULE.rdfclass.RdfClassBase):
                         new_rtn.append(\
                                 "|".join(merge_rdf_list(item['owl_unionOf'])))
                     elif isinstance(item, list):
@@ -554,7 +554,7 @@ def unique_append(self, value):
         try:
             super(self.__class__, self).append(Uri(value))
         except AttributeError as err:
-            if isinstance(value, rdfclass.RdfClassBase):
+            if isinstance(value, MODULE.rdfclass.RdfClassBase):
                 super(self.__class__, self).append(value)
             else:
                 raise err

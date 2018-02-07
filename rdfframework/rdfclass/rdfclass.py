@@ -3,7 +3,7 @@ dealing with RDF data, conversion, validation and CRUD operations """
 import pdb
 from hashlib import sha1
 
-from rdfframework import rdfclass
+# from rdfframework import rdfclass
 from rdfframework.utilities import LABEL_FIELDS, VALUE_FIELDS, make_doc_string
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, RdfNsManager
 from rdfframework.configuration import RdfConfigManager
@@ -81,12 +81,12 @@ class RdfClassMeta(Registry):
             new_def['es_defs'] = es_defs
             new_def['uri'] = Uri(name).sparql_uri
             for prop, value in props.items():
-                new_def[prop] = rdfclass.make_property(value,
+                new_def[prop] = MODULE.rdfclass.make_property(value,
                                                        prop,
                                                        new_def['class_names'])
                 # new_def[prop] = value
             if 'rdf_type' not in new_def.keys():
-                new_def[Uri('rdf_type')] = rdfclass.properties.get('rdf_type')
+                new_def[Uri('rdf_type')] = MODULE.rdfclass.properties.get('rdf_type')
             new_def['cls_defs'] = cls_defs #cls_defs.pop(name)
             return new_def
         except KeyError:
@@ -145,9 +145,9 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             self[pred] = new_list
         except KeyError:
             try:
-                new_prop = rdfclass.properties[pred]
+                new_prop = MODULE.rdfclass.properties[pred]
             except KeyError:
-                new_prop = rdfclass.make_property({},
+                new_prop = MODULE.rdfclass.make_property({},
                                                   pred, self.class_names)
             setattr(self,
                     pred,
@@ -422,7 +422,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                     try:
                         self['rdf_type'].append(base_name)
                     except KeyError:
-                        self[Uri('rdf_type')] = rdfclass.make_property({},
+                        self[Uri('rdf_type')] = MODULE.rdfclass.make_property({},
                                 'rdf_type',
                                 self.__class__.__name__)(self, self.dataset)
                         self['rdf_type'].append(base_name)
@@ -482,7 +482,7 @@ def list_properties(cls):
         if attr not in ["properties", "__doc__", "doc"]:
             attr_val = getattr(cls, attr)
 
-            if isinstance(attr_val, rdfclass.RdfPropertyMeta):
+            if isinstance(attr_val, MODULE.rdfclass.RdfPropertyMeta):
                 rtn_dict[attr] = attr_val
     return rtn_dict
 
@@ -496,7 +496,7 @@ def get_properties(cls_name):
 
     # prop_list = {prop._prop_name: prop
     #              for prop in rdfclass.domain_props.get(cls_name, {})}
-    prop_list = rdfclass.domain_props.get(cls_name, {})
+    prop_list = MODULE.rdfclass.domain_props.get(cls_name, {})
     return prop_list
 
 def remove_parents(bases):

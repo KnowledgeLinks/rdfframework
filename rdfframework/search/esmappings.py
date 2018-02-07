@@ -11,13 +11,13 @@ import elasticsearch.exceptions as es_except
 
 from rdfframework.utilities import pp
 from rdfframework.configuration import RdfConfigManager
-from rdfframework.rdfclass import rdfclass
+# from rdfframework.rdfclass import rdfclass
 from elasticsearch import Elasticsearch
 
 MODULE_NAME = "%s.%s" % \
         (os.path.basename(os.path.split(inspect.stack()[0][1])[0]),
          os.path.basename(inspect.stack()[0][1]))
-
+MODULE = __import__(__name__)
 CFG = RdfConfigManager()
 
 class EsMappings():
@@ -47,7 +47,7 @@ class EsMappings():
                 None
 
         """
-        return {key: value for key, value in rdfclass.__dict__.items() \
+        return {key: value for key, value in MODULE.rdfclass.__dict__.items() \
                 if not isinstance(value, RdfConfigManager) \
                 and hasattr(value, 'es_defs') \
                 and value.es_defs.get('kds_esIndex')}
