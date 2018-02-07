@@ -11,6 +11,13 @@ LOGGING = {
         },
     },
     'handlers': {
+        # 'file': {
+        #     'level': 'DEBUG',
+        #     'class': 'logging.FileHandler',
+        #     'formatter': 'verbose',
+        #     'filename': "/home/stabiledev/git/logging_test/testlog.txt",
+        #     'mode': "w",
+        # },
         'null': {
             'level':'DEBUG',
             'class':'logging.StreamHandler',
@@ -19,14 +26,8 @@ LOGGING = {
             # 'level':'WARNING',
             'class':'logging.StreamHandler',
             'formatter': 'verbose'
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'verbose',
-            'filename': "/home/stabiledev/git/logging_test/testlog.txt",
-            'mode': "w",
         }
+
     },
     'loggers': {
         '': {
