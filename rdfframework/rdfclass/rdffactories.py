@@ -161,7 +161,7 @@ class RdfPropertyFactory(RdfBaseFactory):
 
 class RdfClassFactory(RdfBaseFactory):
     """ Extends RdfBaseFactory to property creation specific querying """
-    log_level = logging.DEBUG #MLOG_LVL #
+    log_level = logging.INFO #MLOG_LVL #
     cache_file = "classes.json"
     classes_key = set([Uri(item) for item in RDF_CLASSES])
     inferred_key = set([Uri(item) for item in INFERRED_CLASS_PROPS])

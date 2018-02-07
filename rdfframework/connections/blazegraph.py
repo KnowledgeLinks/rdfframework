@@ -23,7 +23,6 @@ except ImportError:
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-MNAME = pyfile_path(inspect.stack()[0][1])
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
@@ -647,8 +646,7 @@ class Blazegraph(RdfwConnections):
                            for key, value in _params.items() \
                            if isinstance(value, str)})
         data = BULK_LOADER_XML.format(**new_params)
-        print(data)
-        pdb.set_trace()
+        log.debug(data)
         url = os.path.join(self.url, 'dataloader')
         result = requests.post(url=url,
                                headers={"Content-Type": 'application/xml'},

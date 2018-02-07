@@ -61,7 +61,7 @@ class RdfDataset(dict):
 
         if data:
             self.load_data(data, **kwargs)
-            print("loaded %s triples in %s" % (len(data),
+            log.debug("loaded %s triples in %s" % (len(data),
                                                (datetime.datetime.now()-start)))
 
     def __repr__(self):

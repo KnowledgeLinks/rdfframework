@@ -4,7 +4,7 @@ LOGGING = {
     'level': 'INFO',
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s [%(filename)s:%(lineno)s - %(funcName)s()]\n\t%(message)10s'
+            'format': '%(levelname)s %(asctime)s [%(filename)s:%(lineno)s - %(funcName)s()] %(message)10s'
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
