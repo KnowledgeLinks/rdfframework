@@ -284,7 +284,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         self.__run_defs__(**kwargs)
 
     def __load_namespaces__(self, **kwargs):
-        pdb.set_trace()
         if not self.namespaces:
             return
         ns_mgr = get_obj_frm_str("rdfframework.datatypes.RdfNsManager")
