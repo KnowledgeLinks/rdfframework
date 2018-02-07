@@ -88,7 +88,7 @@ class ConnManager(metaclass=ConnManagerMeta):
     log = "%s:RdfConnManager" % __MNAME__
     log_level = logging.INFO
     conn_mapping = RdfwConnections
-    is_initialized = False
+    __is_initialized__ = False
 
     def __init__(self, connections=None, **kwargs):
         self.conns = {}
@@ -121,7 +121,7 @@ class ConnManager(metaclass=ConnManagerMeta):
         else:
             conn = RdfwConnections[conn_type][kwargs['vendor']](**kwargs)
         self.conns[conn_name] = conn
-        self.is_initialized = True
+        self.__is_initialized__ = True
 
     @initialized
     def get(self, conn_name, default=None, **kwargs):
@@ -130,6 +130,7 @@ class ConnManager(metaclass=ConnManagerMeta):
         args:
             conn_name: the name of the connection
         """
+
         if isinstance(conn_name, RdfwConnections):
             return conn_name
         try:
@@ -233,6 +234,14 @@ class ConnManager(metaclass=ConnManagerMeta):
 
     def __iter__(self):
         return iter(self.conns.items())
+
+    def __repr__(self):
+        rtn_val = super().__repr__()
+        conns = "\n\t".join(sorted(["%s: %s" % (key.ljust(16,' '),
+                                                value.__repr__()[:60])
+                                    for key, value in self.conns.items()]))
+        return "{standard}\n\t{conns}".format(standard=rtn_val,
+                                              conns=conns)
 
     @property
     def active(self):

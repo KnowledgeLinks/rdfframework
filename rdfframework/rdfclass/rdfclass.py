@@ -114,9 +114,11 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
 
     def __init__(self, subject=None, **kwargs):
         super().__init__(self)
-        self.dataset = kwargs.get('dataset')
-        self._initilize_props()
         self._set_subject(subject)
+        self.dataset = kwargs.get('dataset')
+        if self.__class__ != RdfClassBase:
+            self._initilize_props()
+
 
     def __hash__(self):
         return hash(self.subject)
@@ -407,11 +409,13 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
     def _initilize_props(self):
         """ Adds an intialized property to the class dictionary """
         try:
+            # pdb.set_trace()
             for prop, prop_class in self.properties.items():
                 # passing in the current dataset tie
                 self[prop] = prop_class(self, self.dataset)
                 setattr(self, prop, self[prop])
-            bases = remove_parents(self.__class__.__bases__)
+            bases = remove_parents((self.__class__,) +
+                                    self.__class__.__bases__)
             for base in bases:
                 if base.__name__ not in IGNORE_CLASSES:
                     base_name = Uri(base.__name__)

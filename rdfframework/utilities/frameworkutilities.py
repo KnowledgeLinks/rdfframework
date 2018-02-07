@@ -13,7 +13,7 @@ import json
 
 from uuid import uuid1, uuid4, uuid5
 from hashlib import sha1
-from rdfframework.configuration import RdfConfigManager
+
 
 #import rdfframework.rdfdatatypes as dt
 
@@ -22,7 +22,7 @@ xsd_to_python = "depricated"
 MNAME = inspect.stack()[0][1]
 
 DEBUG = True
-CONFIG = RdfConfigManager()
+
 
 class RdfJsonEncoder(json.JSONEncoder):
     # def __init__(self, *args, **kwargs):
@@ -43,9 +43,9 @@ class RdfJsonEncoder(json.JSONEncoder):
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
-def uid_to_repo_uri(id_value):
+def uid_to_repo_uri(id_value, url):
     if id_value:
-        _uri = "{}/{}/{}/{}/{}/{}".format(CONFIG.get('REPOSITORY_URL'),
+        _uri = "{}/{}/{}/{}/{}/{}".format(url,
                                           id_value[:2],
                                           id_value[2:4],
                                           id_value[4:6],
@@ -125,3 +125,5 @@ def new_id(method="uuid"):
     """
     if method == "uuid":
         return str(uuid5(uuid1(),str(uuid4())).hex)
+
+

@@ -24,6 +24,44 @@ import rdfframework.sparql
 import rdfframework.rml
 import rdfframework.datamanager
 import rdfframework.datasets
+import pdb
+import types
+import logging
+
+
+
+def package_modules(parent_module, registered=[]):
+    parent_name = parent_module.__name__
+    modules = [getattr(parent_module, module)
+            for module in dir(parent_module)
+            if isinstance(getattr(parent_module, module), types.ModuleType)
+            and getattr(parent_module, module) not in registered
+            and getattr(parent_module, module).__name__.startswith(parent_name)]
+    registered += modules
+    for module in modules:
+        package_modules(module, registered)
+    return registered
+
+def set_module_loggers(modules, method="dummy"):
+    for module in modules:
+        if method == "dummy":
+            logger = rdfframework.utilities.DummyLogger
+        else:
+            logger = logging.getLogger(module.__name__)
+        setattr(module, "log", logger)
+
+__modules__ = package_modules(rdfframework)
+
+def configure_logging(modules, method="dummy"):
+    # try:
+    from .loggingsetup import LOGGING
+    import logging.config
+    logging.config.dictConfig(LOGGING)
+    # except:
+    #     pass
+    set_module_loggers(modules, method)
+
+configure_logging(__modules__, "active")
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 __version__ = '0.0.20'

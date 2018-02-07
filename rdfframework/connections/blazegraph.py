@@ -9,7 +9,10 @@ import threading
 import pdb
 
 from bs4 import BeautifulSoup
-from rdfframework.utilities import list_files, pick, pyfile_path
+from rdfframework.utilities import (list_files,
+                                    pick,
+                                    pyfile_path,
+                                    format_multiline)
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
 from .connmanager import RdfwConnections
@@ -25,22 +28,37 @@ CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
 class Blazegraph(RdfwConnections):
-    """ An API for interacting between a Blazegraph triplestore and the
-        rdfframework
+    """
+    An API for interacting between a Blazegraph triplestore and the
+    rdfframework
 
-        args:
-            url: The url to the triplestore
-            namespace: The namespace to use
-            local_directory: the path to the file data directory as python
-                    reads the file path.
-            container_dir: the path to the file data directory as the docker
-                    container/Blazegraph see the file path.
-        """
+    args:
+        url: The url to the triplestore
+        namespace: The namespace to use. Different namespaces function as
+              different triplestores
+        local_directory: the path to the file data directory as python
+                reads the file path.
+        container_dir: the path to the file data directory as the docker
+                container/Blazegraph see the file path.
+
+    kwargs:
+         namespace_params: Dictionary of Blazegraph paramaters.
+                defaults are:
+                    {'axioms': 'com.bigdata.rdf.axioms.NoAxioms',
+                     'geoSpatial': False,
+                     'isolatableIndices': False,
+                     'justify': False,
+                     'quads': False,
+                     'rdr': False,
+                     'textIndex': False,
+                     'truthMaintenance': False}
+         graph: the RDF graph URI for the connection. Defaults to all graphs
+         debug: sets the logging level to DEBUG
+         log_level: sets the logging level for the module
+         delay_check[bool]: do not check server status on initilization
+    """
     vendor = "blazegraph"
     conn_type = "triplestore"
-    log_name = "%s-Blazegraph" % MNAME
-    log_level = logging.INFO
-
     # maps the blazegraph paramater to the userfriendly short name
     ns_property_map = {
         "axioms": "com.bigdata.rdf.store.AbstractTripleStore.axiomsClass",
@@ -53,7 +71,6 @@ class Blazegraph(RdfwConnections):
         "textIndex": "com.bigdata.rdf.store.AbstractTripleStore.textIndex",
         "truthMaintenance": "com.bigdata.rdf.sail.truthMaintenance"
     }
-
     default_ns = 'kb'
     default_graph = "bd:nullGraph"
     default_url = 'http://localhost:9999/blazegraph/sparql'
@@ -91,10 +108,10 @@ class Blazegraph(RdfwConnections):
                  graph=None,
                  **kwargs):
 
-        self.local_directory = pick(local_directory, CFG.LOCAL_DATA_PATH)
+        self.local_directory = pick(local_directory, CFG.dirs.data)
         self.ext_url = pick(url, self.default_url)
         self.local_url = pick(kwargs.get('local_url'), self.default_url)
-        self.log_level = kwargs.get("log_level", self.log_level)
+        log.setLevel(kwargs.get("log_level", log.level))
         self.namespace = pick(namespace, self.default_ns)
         self.namespace_params = namespace_params
         self.container_dir = container_dir
@@ -119,9 +136,17 @@ class Blazegraph(RdfwConnections):
                 True if a connection can be made
                 False if the connection cannot me made
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        # log = logging.getLogger("%s.%s" % (self.log_name,
+        #                                    inspect.stack()[0][3]))
+        # log.setLevel(self.log_level)
+
+        def validate_namespace(self):
+            if not self.has_namespace(self.namespace):
+                log.warning(format_multiline(["",
+                                              """\tnamespace '{}' does not
+                                              exist. Creating namespace"""],
+                                              self.namespace))
+                self.create_namespace(self.namespace)
 
         if self.url:
             return True
@@ -130,6 +155,7 @@ class Blazegraph(RdfwConnections):
                                                  self.ext_url,
                                                  check_status_call=True))
             self.url = self.ext_url
+            validate_namespace(self)
             return True
         except requests.exceptions.ConnectionError:
             pass
@@ -140,10 +166,13 @@ class Blazegraph(RdfwConnections):
             log.warning("Url '%s' not connecting. Using local_url '%s'" % \
                      (self.ext_url, self.local_url))
             self.url = self.local_url
-            if not self.has_namespace(self.namespace):
-                log.warning("\n\tnamespace '%s' does not exist. Creating namespace",
-                         self.namespace)
-                self.create_namespace(self.namespace)
+            # if not self.has_namespace(self.namespace):
+            #     log.warning(format_multiline(["",
+            #                                   """\tnamespace '{}' does not
+            #                                   exist. Creating namespace"""],
+            #                                   self.namespace))
+            #     self.create_namespace(self.namespace)
+            validate_namespace(self)
             return True
         except requests.exceptions.ConnectionError:
             self.url = None
@@ -169,10 +198,9 @@ class Blazegraph(RdfwConnections):
             kwargs:
                 debug(bool): If True sets logging level to debug
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(kwargs.get("log_level", self.log_level))
         namespace = pick(namespace, self.namespace)
+        if kwargs.get("log_level"):
+            log.setLevel(kwargs['log_level'])
         if kwargs.get("debug"):
             log.setLevel(logging.DEBUG)
         if rtn_format not in self.qry_formats:
@@ -191,7 +219,6 @@ class Blazegraph(RdfwConnections):
             raise NotImplementedError("'mode' != to ['get', 'update']")
 
         headers = {'Accept': self.qry_formats[rtn_format]}
-
         start = datetime.datetime.now()
         try:
             result = requests.post(url, data=data, headers=headers)
@@ -199,13 +226,20 @@ class Blazegraph(RdfwConnections):
             result = requests.post(self._make_url(namespace, self.local_url),
                                    data=data,
                                    headers=headers)
-        log.debug("\nurl='%s'\nmode='%s', namespace='%s', rtn_format='%s'\n**** SPAQRL QUERY \n%s\nQuery Time: %s",
-                  url,
-                  mode,
-                  namespace,
-                  rtn_format,
-                  sparql,
-                  (datetime.datetime.now()-start))
+        log.debug(format_multiline(["",
+                                    "url='{url}'",
+                                    """mode='{mode}', namespace='{namespace}',
+                                    rtn_format='{rtn_format}'""",
+                                    "**** SPAQRL QUERY ****",
+                                    "{sparql}",
+                                    "Query Time: {q_time}"],
+                                   url=url,
+                                   mode=mode,
+                                   namespace=namespace,
+                                   rtn_format=rtn_format,
+                                   sparql=sparql,
+                                   q_time=(datetime.datetime.now()-start),
+                                   **kwargs))
 
         if result.status_code == 200:
             try:
@@ -251,9 +285,6 @@ class Blazegraph(RdfwConnections):
               filepath, determine the datatype from the file extension,
               read the file and send it to blazegraph as a datastream
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(kwargs.get("log_level", self.log_level))
         time_start = datetime.datetime.now()
         datatype_map = {
             'ttl': 'text/turtle',
@@ -297,36 +328,32 @@ class Blazegraph(RdfwConnections):
         """ Uploads data to the Blazegraph Triplestore that is stored in files
             that are in a local directory
 
-            kwargs:
-                method['local', 'data_stream']: 'local' uses the container dir
-                        'data_stream': reads the file and sends it as part of
-                        http request
-                file_directory: a string path to the file directory to start
-                        the search
-                container_dir: the path that the triplestore container sees
-                root_dir: root directory to be removed from the file paths
-                        for example:
-                              file_directory: this is as seen from python app
-                                  /example/python/data/dir/to/search
-                              container_dir: this is the path as seen from the
-                                  triplestore
-                                  /data
-                              root_dir: the portion of the path to remove so
-                                  both directories match
-                                  /example/python/data
-                file_extensions: a list of file extensions to filter
-                        example ['xml', 'rdf']. If none include all files
-                include_subfolders: as implied
-                namespace: the Blazegraph namespace to load the data
-                graph: uri of the graph to load the data. Default is None
-                create_namespace: False(default) or True will create the
-                        namespace if it does not exist
-                use_threading(bool): Whether to use threading or not
+        kwargs:
+            method['local', 'data_stream']: 'local' uses the container dir
+                    'data_stream': reads the file and sends it as part of
+                    http request
+            file_directory: a string path to the file directory to start
+                    the search
+            container_dir: the path that the triplestore container sees
+            root_dir: root directory to be removed from the file paths
+                    for example:
+                          file_directory: this is as seen from python app
+                              /example/python/data/dir/to/search
+                          container_dir: this is the path as seen from the
+                              triplestore
+                              /data
+                          root_dir: the portion of the path to remove so
+                              both directories match
+                              /example/python/data
+            file_extensions: a list of file extensions to filter
+                    example ['xml', 'rdf']. If none include all files
+            include_subfolders: as implied
+            namespace: the Blazegraph namespace to load the data
+            graph: uri of the graph to load the data. Default is None
+            create_namespace: False(default) or True will create the
+                    namespace if it does not exist
+            use_threading(bool): Whether to use threading or not
         """
-
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(kwargs.get("log_level", self.log_level))
         if kwargs.get('reset') == True:
             self.reset_namespace()
         namespace = kwargs.get('namespace', self.namespace)
@@ -415,9 +442,6 @@ class Blazegraph(RdfwConnections):
                 container_dir: the directory as seen by blazegraph - defaults to
                         instance attribute if not passed
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(kwargs.get("log_level", self.log_level))
         time_start = datetime.datetime.now()
         url = self._make_url(namespace)
         params = {}
@@ -467,9 +491,6 @@ class Blazegraph(RdfwConnections):
                      'textIndex': False,
                      'truthMaintenance': False}
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         namespace = pick(namespace, self.namespace)
         params = pick(params, self.namespace_params)
         if not namespace:
@@ -483,9 +504,6 @@ class Blazegraph(RdfwConnections):
                    'rdr': False,
                    'textIndex': False,
                    'truthMaintenance': False}
-
-        # if self.has_namespace(namespace):
-        #     raise IOError("Namespace already exists")
         if params:
             _params.update(params)
         content_type = "text/plain"
@@ -519,9 +537,9 @@ class Blazegraph(RdfwConnections):
         # if not self.has_namespace(namespace):
         #     return "Namespace does not exists"
 
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+        # log = logging.getLogger("%s.%s" % (self.log_name,
+        #                                    inspect.stack()[0][3]))
+        # log.setLevel(self.log_level)
 
         url = self._make_url(namespace).replace("/sparql", "")
         result = requests.delete(url=url)
@@ -556,13 +574,6 @@ class Blazegraph(RdfwConnections):
         elif not rtn_url.endswith("sparql"):
             rtn_url = os.path.join(rtn_url, "sparql").replace("\\", "/")
         return rtn_url
-
-    # def __repr__(self):
-    #     url = self.ext_url
-    #     if self.url:
-    #         url = self.url
-    #     return "<Blazegraph([{'host': '%s', 'namespace': '%s'}])>" % \
-    #            (url, self.namespace)
 
     def reset_namespace(self, namespace=None, params=None):
         """ Will delete and recreate specified namespace
@@ -599,10 +610,6 @@ class Blazegraph(RdfwConnections):
                 create_namespace: False(default) or True will create the
                         namespace if it does not exist
         """
-
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(kwargs.get("log_level", self.log_level))
         namespace = kwargs.get('namespace', self.namespace)
         graph = kwargs.get('graph', self.graph)
         if kwargs.get('reset') == True:
@@ -640,7 +647,6 @@ class Blazegraph(RdfwConnections):
                            for key, value in _params.items() \
                            if isinstance(value, str)})
         data = BULK_LOADER_XML.format(**new_params)
-        # data = BULK_LOADER_XML2
         print(data)
         pdb.set_trace()
         url = os.path.join(self.url, 'dataloader')
@@ -659,7 +665,6 @@ class Blazegraph(RdfwConnections):
                                kwargs.get('include_subfolders', True),
                                include_root=kwargs.get('include_root', False),
                                root_dir=root_dir)
-        # pdb.set_trace()
         log.info(" bulk_load results: %s\nThe following files successfully loaded: \n\t%s",
                  result.text,
                  "\n\t".join([os.path.splitext(file[1])[0] \

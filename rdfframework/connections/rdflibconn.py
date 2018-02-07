@@ -11,16 +11,21 @@ import requests
 import threading
 import pdb
 
-from lxml import etree
+
 from bs4 import BeautifulSoup
 from rdfframework.utilities import list_files, pick, pyfile_path
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
 from rdflib import Namespace, Graph, URIRef, ConjunctiveGraph
 from .connmanager import RdfwConnections
+
+try:
+    from lxml import etree
+except ImportError:
+    import xml.etree.ElementTree as etree
+
 __author__ = "Mike Stabile, Jeremy Nelson"
 
-MNAME = pyfile_path(inspect.stack()[0][1])
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
@@ -31,8 +36,6 @@ class RdflibTstoreSingleton(type):
             cls._instances[cls] = super(RdflibTstoreSingleton,
                     cls).__call__(*args, **kwargs)
         return cls._instances[cls]
-
-
 
 class RdflibTriplestore(metaclass=RdflibTstoreSingleton):
     """ psuedo triplestore functionality for managing graphs and namespaces
@@ -107,8 +110,6 @@ class RdflibTriplestore(metaclass=RdflibTstoreSingleton):
         else:
             return self.namespaces[namespace]
 
-
-
 class RdflibConn(RdfwConnections):
     """ An API for interacting between rdflib python package and the
         rdfframework
@@ -122,8 +123,6 @@ class RdflibConn(RdfwConnections):
         """
     vendor = 'rdflib'
     conn_type = 'triplestore'
-    log_name = "%s-RdfLibConn" % MNAME
-    log_level = logging.INFO
 
     # file externsions that contain rdf data
     rdf_formats = ['xml', 'rdf', 'ttl', 'gz', 'nt']
@@ -173,9 +172,6 @@ class RdflibConn(RdfwConnections):
                 mode: ['get'(default), 'update'] the type of sparql query
                 rtn_format: ['json'(default), 'xml'] format of query results
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         if kwargs.get("debug"):
             log.setLevel(logging.DEBUG)
         conn = self.conn
@@ -239,9 +235,6 @@ class RdflibConn(RdfwConnections):
               filepath, determine the datatype from the file extension,
               read the file and send it to blazegraph as a datastream
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         if kwargs.get('debug'):
             log.setLevel(logging.DEBUG)
         time_start = datetime.datetime.now()
@@ -318,9 +311,6 @@ class RdflibConn(RdfwConnections):
                 use_threading(bool): Whether to use threading or not
         """
 
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         if kwargs.get('reset') == True:
             self.reset_namespace()
         namespace = kwargs.get('namespace', self.namespace)
@@ -417,9 +407,6 @@ class RdflibConn(RdfwConnections):
             params: ignore in rdflib connection
 
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         return self.tstore.create_namespace(namespace)
 
     def delete_namespace(self, namespace):
@@ -431,10 +418,6 @@ class RdflibConn(RdfwConnections):
 
         # if not self.has_namespace(namespace):
         #     return "Namespace does not exists"
-
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
 
         return self.tstore.delete_namespace(namespace)
 
@@ -450,9 +433,6 @@ class RdflibConn(RdfwConnections):
             namespace(str): Namespace to reset
             params(dict): params used to reset the namespace
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         namespace = pick(namespace, self.namespace)
         params = pick(params, self.namespace_params)
         log.warning(" Reseting namespace '%s' at host: %s",
@@ -478,10 +458,6 @@ class RdflibConn(RdfwConnections):
                 create_namespace: False(default) or True will create the
                         namespace if it does not exist
         """
-
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         namespace = kwargs.get('namespace', self.namespace)
         graph = kwargs.get('graph', self.graph)
         if kwargs.get('reset') == True:

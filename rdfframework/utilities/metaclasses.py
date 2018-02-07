@@ -61,6 +61,8 @@ class KeyRegistryMeta(type):
                    if base not in [object, str, int]]
         try:
             reg_cls = reg_cls[-1]
+            if hasattr(reg_cls, "__reg_cls__"):
+                reg_cls = reg_cls.__reg_cls__
         except IndexError:
             # if there are now classes use the current class as the
             # class for registration

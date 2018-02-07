@@ -23,7 +23,6 @@ __CONNS__ = ConnManager()
 __CFG__ = RdfConfigManager()
 __NSM__ = RdfNsManager()
 
-__MNAME__ = pyfile_path(inspect.stack()[0][1])
 
 class DefManagerMeta(type):
     """ Metaclass ensures that there is only one instance of the RdfConnManager
@@ -51,8 +50,10 @@ class DefManagerMeta(type):
         cls._instances = {}
 
 class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
-    """ class for managing database connections """
-    log_name = "%s:DefintionManager" % __MNAME__
+    """
+    RDF Vocabulary Manager. This class manages all of the RDF vocabulary
+    for the rdfframework
+    """
     log_level = logging.INFO
     is_initialized = False
     vocab_dir = os.path.join(os.path.split(os.path.realpath(__file__))[0],
@@ -118,7 +119,7 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
         "bf": {
             "filename": "bf.rdf",
             "namespace": "http://id.loc.gov/ontologies/bibframe/",
-            "download": "http://bibframe.org/vocab.rdf"
+            "download": "http://id.loc.gov/ontologies/bibframe.rdf"
         }
 
     }
@@ -185,8 +186,6 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
         args:
             vocab_name: the prefix, uri or filename of a vocabulary
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
         log.setLevel(kwargs.get("log_level", self.log_level))
 
         vocab = self.get_vocab(vocab_name   , **kwargs)

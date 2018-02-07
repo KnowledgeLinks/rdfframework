@@ -114,6 +114,11 @@ class XsdString(str, BaseRdfDataType):
             return rdflib.Literal(self.value, lang=self.lang)
         return rdflib.Literal(self.value, datatype=self.datatype.rdflib)
 
+class RdfXMLLiteral(XsdString):
+    datatype = Uri("rdf:XMLLiteral")
+    class_type = "RdfXMLLiteral"
+    py_type = None
+    es_type = "text"
 
 class XsdBoolean(BaseRdfDataType):
     """ Boolean instance of rdf xsd:boolean type value"""

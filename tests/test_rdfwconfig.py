@@ -1,6 +1,8 @@
 import unittest
 import pdb
 import rdfframework.configuration.rdfwconfig as configuration
+import logging
+configuration.log.setLevel(logging.CRITICAL)
 
 class TestConfigSingleton(unittest.TestCase):
 
@@ -29,9 +31,8 @@ class TestRdfConfigManagerInitialization(unittest.TestCase):
                               configuration.RdfConfigManager)
 
     def test_init_values(self):
-        self.assertFalse(self.config_mgr.is_initialized)
-        self.assertFalse(self.config_mgr.locked)
-
+        self.assertFalse(self.config_mgr.__is_initialized__)
+        self.assertFalse(self.config_mgr.__locked__)
 
     def tearDown(self):
         pass
@@ -45,7 +46,7 @@ class TestRdfConfigManagerInitSimpleConfig(unittest.TestCase):
 
 
     def test_simple_config(self):
-        config_mgr = configuration.RdfConfigManager(self.config)
+        config_mgr = configuration.RdfConfigManager(self.config, verify=False)
         self.assertEqual(
             config_mgr.base_url,
             self.config.get("base_url"))

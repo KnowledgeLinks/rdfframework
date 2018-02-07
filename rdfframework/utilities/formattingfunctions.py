@@ -1,8 +1,8 @@
 import pdb
 
+
 from .baseutilities import make_list
 from .rdfvocabcorrelations import *
-
 
 def string_wrap(string, width=80, indent=0, subindent='auto'):
     rtn_list = []
@@ -162,3 +162,136 @@ def make_doc_string(name, cls_def, bases=[], props={}):
     doc_items.append(footer)
     return "\n\n".join(doc_items)
 
+def reduce_multiline(string):
+    """
+    reduces a multiline string to a single line of text.
+
+
+    args:
+        string: the text to reduce
+    """
+    string = str(string)
+    return " ".join([item.strip()
+                     for item in string.split("\n")
+                     if item.strip()])
+
+def format_multiline(text, params={}, **kwargs):
+    """
+    Takes a list or multline text string and formats it.
+        * multiline text strings get converted to a single line
+        * list entries are joined by a carriage return
+        * params are passed into the sting with a python format call
+
+    args:
+        text: list or string to format
+        params: argments for formating the text
+
+    kwargs:
+        prepend: string to prepend to each line
+        max_width: int of max width for a line
+        indent: number of spaces to indent
+    """
+
+
+    def format_kwargs(text, params={}, **kwargs):
+        if params:
+            if isinstance(params, dict):
+                kwargs.update(params)
+            else:
+                kwargs = params
+        try:
+            return text.format(**kwargs)
+        except (TypeError, IndexError):
+            if isinstance(kwargs, str):
+                return text.format(kwargs)
+            else:
+                return text.format(*kwargs)
+
+    if isinstance(text, list):
+        new_text = "\n".join([format_max_width(
+                                format_kwargs(
+                                    reduce_multiline(item), params, **kwargs),
+                                               **kwargs)
+                              for item in text])
+    else:
+        new_text = format_max_width(format_kwargs(reduce_multiline(text),
+                                                             params,
+                                                             **kwargs),
+                                    **kwargs)
+    return new_text
+
+def format_max_width(text, max_width=None, **kwargs):
+    """
+    Takes a string and formats it to a max width seperated by carriage
+    returns
+
+    args:
+        max_width: the max with for a line
+
+    kwargs:
+        indent: the number of spaces to add to the start of each line
+        prepend: text to add to the start of each line
+    """
+
+    ind = ''
+    if kwargs.get("indent"):
+        ind = ''.ljust(kwargs['indent'], ' ')
+    prepend = ind + kwargs.get("prepend", "")
+    if not max_width:
+        return "{}{}".format(prepend, text)
+
+    len_pre = len(kwargs.get("prepend", "")) + kwargs.get("indent", 0)
+    test_words = text.split(" ")
+    word_limit = max_width - len_pre
+    if word_limit < 3:
+        word_limit = 3
+        max_width = len_pre + word_limit
+    words = []
+    for word in test_words:
+        if len(word) + len_pre > max_width:
+            n = max_width - len_pre
+            words += [word[i:i + word_limit]
+                      for i in range(0, len(word), word_limit)]
+        else:
+            words.append(word)
+    idx = 0
+    lines = []
+    idx_limit = len(words) - 1
+    sub_idx_limit = idx_limit
+    while idx < idx_limit:
+        current_len = len_pre
+        line = prepend
+        for i, word in enumerate(words[idx:]):
+            if (current_len + len(word)) == max_width and line == prepend:
+                idx += i or 1
+                line += word
+                lines.append(line)
+                if idx == idx_limit:
+                    idx -= 1
+                    sub_idx_limit -= 1
+                    del words[0]
+                break
+            if (current_len + len(word) + 1) > max_width:
+                idx += i
+                if idx == idx_limit:
+                    idx -= 1
+                    sub_idx_limit -= 1
+                    del words[0]
+                if idx == 0:
+                    del words[0]
+                lines.append(line)
+                break
+            if (i + idx) == sub_idx_limit:
+                idx += i or 1
+                if line != prepend:
+                    line = " ".join([line, word])
+                elif word:
+                    line += word
+                lines.append(line)
+            else:
+                if line != prepend:
+                    line = " ".join([line, word])
+                elif word:
+                    line += word
+                current_len = len(line)
+    return "\n".join(lines)

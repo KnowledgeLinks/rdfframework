@@ -14,7 +14,7 @@ ORGANIZATION = {
 }
 
 # The name used for the site
-SITE_NAME = "TEST-RDFFRAMEWORK"
+# SITE_NAME = "TEST-RDFFRAMEWORK"
 
 # URL used in generating IRIs
 BASE_URL = "http://knowledgelinks.io/"
@@ -27,9 +27,14 @@ BASE_URL = "http://knowledgelinks.io/"
 #! The docker container should be volume mapped to this location.
 #! Example: -v {python_dir}:{docker_container_dir}
 #!          -v /home/username/local_data:/local_data
-LOCAL_DATA_PATH = os.path.join(os.path.expanduser("~"), 'local_data')
-CACHE_DATA_PATH = os.path.join(os.path.expanduser("~"), 'cache_data')
-CONFIG_FILE_PATH = os.path.split(inspect.stack()[0][1])[0]
+DIRECTORIES = [{"name": "fasdf",
+                "path": r"c:\home"}]
+                # os.path.join(os.path.expanduser("~"),
+                #                      'rdfw',
+                #                      SITE_NAME,
+                #                      'cache')}]
+
+
 
 # urls for use internal to the config file use
 __blazegraph_url__ = "http://localhost:9999/blazegraph"
@@ -42,14 +47,14 @@ __fedora_local_url__ = "http://localhost:8080/rest"
 CONNECTIONS = [
     # Declaration for the triplestore that stores data for the application
     {
-        "conn_type": "triplestore",
+        "conn_type": "triplestores",
         "name": "datastore",
         "vendor": "rdflib",
         "url": __blazegraph_url__,
         "local_url": __blazegraph_local_url__,
         # The 'container_dir' is linked with the LOCAL_DATA_PATH declaration
         # This is how the triplestore sees the file path.
-        "container_dir": "local_data",
+        "container_dir": "/local_data",
         "namespace": "kean_all", # "kb",
         "graph": "bd:nullGraph",
         "namespace_params": {"quads": True},
@@ -70,7 +75,7 @@ CONNECTIONS = [
         "vendor": "rdflib",
         "url": __blazegraph_url__,
         "local_url": __blazegraph_local_url__,
-        "container_dir": "local_data",
+        "container_dir": "/local_data",
         "graph": "<http://knowledgelinks.io/ns/application-framework/>",
         "namespace": "active_defs",
         "namespace_params": {"quads": True},
@@ -84,7 +89,7 @@ CONNECTIONS = [
         "vendor": "blazegraph",
         "url": __blazegraph_url__,
         "local_url": __blazegraph_local_url__,
-        "container_dir": "local_data",
+        "container_dir": "/local_data",
         "graph": "<http://knowledgelinks.io/ns/application-framework/>",
         "namespace": "active_defs",
         "namespace_params": {"quads": True}
@@ -96,7 +101,7 @@ CONNECTIONS = [
         "vendor": "blazegraph",
         "url": __blazegraph_url__,
         # "local_url": __blazegraph_local_url__,
-        "container_dir": "local_data",
+        "container_dir": "/local_data",
         "namespace": "rml_maps",
         "namespace_params": {"quads": True}
     },
@@ -119,27 +124,6 @@ CONNECTIONS = [
     }
 ]
 
-
-# RML mappings locations to be used in the application.
-# This is a list of tuples:
-#    [("package" or "directory", "package name or directory path")]
-RML_MAPS = [
-    ("package_all", "bibcat.maps"),
-    ("directory", None)
-    ]
-RDF_DEFS = [
-    ("directory", os.path.join(os.path.realpath(".."),
-                               "data",
-                               "rdfw-definitions")),
-    ("vocabularies", ["rdf", "owl", "rdfs", "schema", "skos", "bf"]),
-    ("package_all", "bibcat.maps")
-    ]
-
-# Declaration for the triplestore storing the rdf vocab and rdfframework files
-# that define the applications classes, forms, and APIs
-
-REPOSITORY_URL = "http://localhost:8080/rest"
-
 # Dictionary of web accessibale datasets
 DATASET_URLS = {
     "loc_subjects_skos.nt.gz":
@@ -150,9 +134,9 @@ DATASET_URLS = {
             "http://id.loc.gov/ontologies/bibframe.rdf"
 }
 
-RDF_NAMESPACES = {
+NAMESPACES = {
     "kds": "http://knowledgelinks.io/ns/data-structures/",
-    "kdr": "http://knowledgelinks.io/ns/data-resources/",
+    "kdr": "ttp://knowledgelinks.io/ns/data-resources/",
     "bf": "http://id.loc.gov/ontologies/bibframe/",
     "dpla": "http://dp.la/about/map/",
     "skos": "http://www.w3.org/2004/02/skos/core#",
@@ -176,14 +160,4 @@ RDF_NAMESPACES = {
     "relator": "http://id.loc.gov/vocabulary/relators/",
     "foaf": "http://xmlns.com/foaf/0.1/",
     "mads": "<http://www.loc.gov/mads/rdf/v1#>"
-}
-
-
-
-# Default data to load at initial application creation
-FRAMEWORK_DEFAULT = []
-
-DATE_FORMAT = {
-    "python": "",
-    "json": ""
 }

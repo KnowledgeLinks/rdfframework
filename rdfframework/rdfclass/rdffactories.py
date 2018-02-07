@@ -22,9 +22,8 @@ __author__ = "Mike Stabile, Jeremy Nelson"
 
 # Setup Module logger
 
-MNAME = pyfile_path(inspect.stack()[0][1])
-MLOG_LVL = logging.INFO
-logging.basicConfig(level=MLOG_LVL)
+CACHE_DIR = 'def_files'
+CACHE_FILE_LIST = 'vocab_files.txt'
 lg_r = logging.getLogger("requests")
 lg_r.setLevel(logging.CRITICAL)
 
@@ -32,32 +31,67 @@ CFG = RdfConfigManager()
 NSM = RdfNsManager()
 
 class RdfBaseFactory(object):
-    lg_name = "%s-RdfBaseGenerator" % MNAME
-    log_level = MLOG_LVL #logging.DEBUG
+
+    log_level = logging.INFO
     cache_file = "base.json"
     cache_filepath = ""
 
     def __init__(self, conn, sparql_template, reset=False, nsm=NSM, cfg=CFG):
-        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
         start = datetime.datetime.now()
-        log.info(" Starting")
+        log.info("Starting '%s' class creation", self.__class__.__name__)
         self.conn = conn
         self.cfg = cfg
         self.nsm = nsm
         self.def_sparql = sparql_template #
-        self.cache_filepath = os.path.join(self.cfg.CACHE_DATA_PATH,
-                                           'def_files',
+        self.cache_filepath = os.path.join(self.cfg.dirs.cache,
+                                           CACHE_DIR,
                                            self.cache_file)
-        if not os.path.isdir(os.path.join(self.cfg.CACHE_DATA_PATH,
-                                          'def_files')):
-            os.makedirs(os.path.join(self.cfg.CACHE_DATA_PATH,
-                                          'def_files'))
+        if not os.path.isdir(os.path.join(self.cfg.dirs.cache,
+                                          CACHE_DIR)):
+            os.makedirs(os.path.join(self.cfg.dirs.cache,
+                                          CACHE_DIR))
+        self.loaded_filepath = os.path.join(self.cfg.dirs.cache,
+                                            CACHE_DIR,
+                                            CACHE_FILE_LIST)
         self.get_defs(not reset)
         self.conv_defs()
         self.make()
         setattr(self.cfg, "props_initialized", True)
         log.info(" completed in %s", (datetime.datetime.now() - start))
+
+    def __use_cache__(self, cache):
+        """
+        checks for changes in the vocabulary and mod times of the files
+        to see if the cache should be used.
+
+        Args:
+            cache: the kwarg passed in to use the cache during __init__
+
+        Returns:
+            Bool: True = use the cache files
+                  False = requery the triplestore
+        """
+        # check for changes in the file mod times
+        try:
+            cache_mod = os.path.getmtime(self.cache_filepath)
+        except FileNotFoundError:
+            return False
+        last_file_mod = sorted( \
+                self.conn.mgr.loaded_times.values())[-1].timestamp()
+        if last_file_mod > cache_mod:
+            return False
+        curr_load = set(self.conn.mgr.loaded)
+        # check to see if there is a change in the loaded files
+        try:
+            with open(self.loaded_filepath, "r") as fo:
+                loaded_files = set(json.loads(fo.read()))
+            if curr_load != loaded_files:
+                return False
+        except FileNotFoundError:
+            return False
+        # otherwise return the orginal cache init kwarg value
+        return cache
+
 
     def get_defs(self, cache=True):
         """ Gets the defitions
@@ -66,9 +100,9 @@ class RdfBaseFactory(object):
             cache: True will read from the file cache, False queries the
                    triplestore
         """
-        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
-        log.setLevel(self.log_level)
+
         log.debug(" *** Started")
+        cache = self.__use_cache__(cache)
         if cache:
             log.info(" loading json cache")
             try:
@@ -89,10 +123,12 @@ class RdfBaseFactory(object):
                      len(self.results))
             with open(self.cache_filepath, "w") as file_obj:
                 file_obj.write(json.dumps(self.results, indent=4))
+            with open(self.loaded_filepath, "w") as file_obj:
+                file_obj.write((json.dumps(self.conn.mgr.loaded)))
 
     def conv_defs(self):
         """ Reads through the JSON object and converts them to Dataset """
-        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
+
         log.setLevel(self.log_level)
         start = datetime.datetime.now()
         log.debug(" Converting to a Dataset: %s Triples", len(self.results))
@@ -105,8 +141,7 @@ class RdfBaseFactory(object):
 
 class RdfPropertyFactory(RdfBaseFactory):
     """ Extends RdfBaseFactory for property creation specific querying """
-    lg_name = "%s-RdfPropertyFactory" % MNAME
-    log_level = MLOG_LVL #logging.DEBUG
+
     cache_file = "properties.json"
 
     def __init__(self, conn, reset=False, nsm=NSM, cfg=CFG):
@@ -116,7 +151,6 @@ class RdfPropertyFactory(RdfBaseFactory):
     def make(self):
         """ reads through the definitions and generates an python class for each
         definition """
-        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
         log.setLevel(self.log_level)
         created = []
         prop_list = [item for item in self.defs if item.type == 'uri']
@@ -127,7 +161,6 @@ class RdfPropertyFactory(RdfBaseFactory):
 
 class RdfClassFactory(RdfBaseFactory):
     """ Extends RdfBaseFactory to property creation specific querying """
-    lg_name = "%s-RdfClassFactory" % MNAME
     log_level = logging.DEBUG #MLOG_LVL #
     cache_file = "classes.json"
     classes_key = set([Uri(item) for item in RDF_CLASSES])
@@ -145,7 +178,6 @@ class RdfClassFactory(RdfBaseFactory):
     def make(self):
         """ reads through the definitions and generates an python class for each
         definition """
-        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
         log.setLevel(self.log_level)
         created = []
         self.set_class_dict()
@@ -229,7 +261,6 @@ class RdfClassFactory(RdfBaseFactory):
         args:
             class_list: a list of class names to run
         """
-        log = logging.getLogger("%s.%s" % (self.lg_name, inspect.stack()[0][3]))
         log.setLevel(self.log_level)
         start = datetime.datetime.now()
         log.info(" Tieing properties to the class")

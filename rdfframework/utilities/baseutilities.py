@@ -12,13 +12,13 @@ import requests
 import pdb
 import logging
 import inspect
+import pprint
 
 from base64 import b64decode
 from flask import json
 from jinja2 import Template, Environment, FileSystemLoader
 from rdflib import XSD
 from dateutil.parser import parse
-from rdfframework.utilities import pp
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -410,15 +410,23 @@ def get_dict_key(data, key):
 
 def get_attr(item, name, default=None):
     ''' similar to getattr and get but will test for class or dict '''
+    try:
+        val = item[name]
+    except (KeyError, TypeError):
+        try:
+            val = getattr(item, name)
+        except AttributeError:
+            val = default
+    return val
 
-    if isinstance(item, dict):
-        return_val = item.get(name, default)
-    else:
-        if hasattr(item, name):
-            return_val = getattr(item, name)
-        else:
-            return_val = default
-    return return_val
+    # if isinstance(item, dict):
+    #     return_val = item.get(name, default)
+    # else:
+    #     if hasattr(item, name):
+    #         return_val = getattr(item, name)
+    #     else:
+    #         return_val = default
+    # return return_val
 
 def copy_obj(obj):
     ''' does a deepcopy of an object, but does not copy a class
@@ -547,7 +555,7 @@ class DictClass(metaclass=DictClassMeta):
         return str(self.dict())
 
     def __repr__(self):
-        return "DictClass(\n%s\n)" % pp.pformat(self.dict())
+        return "DictClass(\n%s\n)" % pprint.pformat(self.dict())
 
     def __setattr__(self, attr, value):
         if isinstance(value, dict) or isinstance(value, list):
@@ -669,7 +677,7 @@ def initialized(func):
 
     def wrapper(self, *args, **kwargs):
         """ internal wrapper function """
-        if not self.is_initialized:
+        if not self.__is_initialized__:
             return EmptyDot()
         return func(self, *args, **kwargs)
     return wrapper
@@ -691,3 +699,33 @@ class UniqueList(list):
             self.append(value)
         return self
 
+class reg_patterns():
+    """
+    Class of pattern matchers for regular expression matching
+    """
+    url = re.compile(r"^(https?):\/\/\w+(\.\w+)*(:[0-9]+)?\/?(\/[-_%#.\w]*)*$", re.IGNORECASE)
+    url_no_http = re.compile(r"^\w+(\.\w+)*(:[0-9]+)?\/?(\/[-_%.#\w]*)*$", re.IGNORECASE)
+    email = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+    dir_win = re.compile(r'^[a-zA-Z]:\\(((?![<>:"/\\|?*]).)+((?<![ .])\\)?)*$')
+    dir_linux = re.compile(r'^(\/[\w^ ]+)+\/?([\w.])+[^.]$')
+    isbn = re.compile(r"^(\d+)\b")
+
+def clean_iri(uri_string):
+    '''removes the <> signs from a string start and end'''
+    uri_string = str(uri_string).strip()
+    if uri_string[:1] == "<" and uri_string[len(uri_string)-1:] == ">":
+        uri_string = uri_string[1:len(uri_string)-1]
+    return uri_string
+
+class DummyLogger():
+
+    @classmethod
+    def no_call(*args, **kwargs):
+        pass
+    debug = no_call
+    info = no_call
+    warn = no_call
+    warning = no_call
+
+    def __getattr__(*args, **kwargs):
+        return no_call

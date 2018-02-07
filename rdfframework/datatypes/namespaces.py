@@ -9,7 +9,7 @@ import functools
 import rdflib
 
 from rdfframework.utilities import cbool, is_not_null, DictClass, new_id, \
-        memorize, RegInstanceMeta, RegPerformInstanceMeta
+        memorize, RegInstanceMeta, RegPerformInstanceMeta, clean_iri
 from .datatypeerrors import NsPrefixExistsError, NsUriExistsError, \
         NsUriBadEndingError
 from .uriformatters import http_formatter, uri_formatter, ttl_formatter, \
@@ -611,11 +611,12 @@ class RdfNsManager(metaclass=NsmSingleton):
                                 parts[1])
     @staticmethod
     def clean_iri(uri_string):
-        '''removes the <> signs from a string start and end'''
-        uri_string = str(uri_string).strip()
-        if uri_string[:1] == "<" and uri_string[len(uri_string)-1:] == ">":
-            uri_string = uri_string[1:len(uri_string)-1]
-        return uri_string
+        '''removes the <> signs from a string start and end
+
+        ags:
+            uri_string: the uri string
+        '''
+        return clean_iri(uri_string)
 
     @staticmethod
     def iri(uri_string):

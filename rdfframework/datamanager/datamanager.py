@@ -22,11 +22,9 @@ __CONNS__ = ConnManager()
 __CFG__ = RdfConfigManager()
 __NSM__ = RdfNsManager()
 
-__MNAME__ = pyfile_path(inspect.stack()[0][1])
 
 class DataFileManager():
     """ class for managing database connections """
-    log_name = "%s:DataFileManager" % __MNAME__
     log_level = logging.INFO
     is_initialized = False
 
@@ -140,7 +138,7 @@ class DataFileManager():
         # add a path for a subfolder 'vocabularies'
         test_dirs = cache_dirs
         try:
-            test_dirs += [os.path.join(__CFG__.CACHE_DATA_PATH, "data")]
+            test_dirs += [__CFG__.dirs.data]
         except (RuntimeWarning, TypeError):
             pass
         cache_dir = None
@@ -156,8 +154,6 @@ class DataFileManager():
         args:
             filepath: the path to the file
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
         log.setLevel(kwargs.get("log_level", self.log_level))
         filename = os.path.split(filepath)[-1]
         if filename in self.loaded:
@@ -216,8 +212,6 @@ class DataFileManager():
         args:
             filename: the filename to remove
         """
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
         log.setLevel(kwargs.get("log_level", self.log_level))
         conn = self.__get_conn__(**kwargs)
         result = conn.update_query("DROP GRAPH %s" % \
@@ -244,8 +238,6 @@ class DataFileManager():
 
     def load_times(self, **kwargs):
         """ get the load times for the all of the definition files"""
-        log = logging.getLogger("%s.%s" % (self.log_name,
-                                           inspect.stack()[0][3]))
         log.setLevel(kwargs.get("log_level", self.log_level))
         conn = self.__get_conn__(**kwargs)
         result = conn.query("""
