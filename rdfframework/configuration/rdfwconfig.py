@@ -12,6 +12,7 @@ import pprint
 import sys
 import json
 import shutil
+import copy
 
 from collections import OrderedDict
 from rdfframework.utilities import (DictClass,
@@ -97,6 +98,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                     "logging.config.dictConfig()",
                      "default": True}),
         ("TURN_ON_VOCAB", {"required": True,
+                           "type": bool,
                            "description": "True: intelligent classes are "
                                           "created based off of the RDF "
                                           "vocabulary definitions and custom "
@@ -343,6 +345,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                     value = input('-> ')
                     if value.strip() != '':
                         return value
+            elif req['type'] == list:
+                return []
         def fix_str(self, attr, key, value):
             req = self.__cfg_reqs__[attr]
             while True:
@@ -353,19 +357,16 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                         msg=colors.yellow(value['msg']),
                         desc=colors.green(req['description'])))
                 errors = test_attr({key: new_val}, req)
-                # pdb.set_trace()
                 if not errors:
                     return new_val
                 value = errors['items'][key]
 
         def fix_item(self, req, obj):
-            # pdb.set_trace()
             for key, val in req.items():
                 while True:
                     errors = test_attr([strip_errors(obj)], {"type": list,
                                                              "item_type": dict,
                                                              "item_dict": req})
-                    # pdb.set_trace()
                     for ky in errors.get('items',
                                          [{}])[0].get('__error_keys__', []):
                         obj[ky] = errors['items'][0][ky]
@@ -408,7 +409,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                         desc=desc))
                         new_val = new_val or obj.get(key)
                     errors = test_attr(new_val, val, obj)
-                    # pdb.set_trace()
                     if not errors:
                         obj[key] = new_val
                         try:
@@ -444,7 +444,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                 cfg_obj[attr] = [new_item]
                         else:
                             cfg_obj[attr][item['__list_idx__']] = new_item
-                        # pdb.set_trace()
                 elif err['reason'] == "dict_error":
                     if self.__cfg_reqs__[attr]['item_type'] == dict:
                         req = self.__cfg_reqs__[attr]['item_dict']
@@ -544,7 +543,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                                  self.__cfg_reqs__,
                                                  **kwargs))
 
-            # pdb.set_trace()
 
     def __set_cfg_attrs__(self, config, **kwargs):
 
@@ -571,10 +569,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                              self.__err_file_name__)
             new_config = read_module_attrs(config, self.__reserved)
         else:
-            new_config = config
+            new_config = copy.deepcopy(config)
         self.__config__ = OrderedDict()
         for attr, req in self.__cfg_reqs__.items():
-            # pdb.set_trace()
             if new_config.get(attr):
                 self.__config__[attr] = new_config.pop(attr)
             elif "default" in req:
@@ -927,7 +924,7 @@ def test_attr(attr, req, parent_attr=None):
         else:
             rtn_obj["reason"] = "missing"
         return rtn_obj
-    if not attr:
+    if attr is None:
         return {}
     if not isinstance(attr, req['type']):
         rtn_obj.update({"reason": "type",
@@ -958,10 +955,9 @@ def test_attr(attr, req, parent_attr=None):
                     item_copy['__list_idx__'] = idx
                     item_copy['__error_keys__'] = list(dict_errors)
                     error_list.append(item_copy)
-                    # pdb.set_trace()
             # if item_errors:
             #     error_list.append(item_errors)
-        # pdb.set_trace()
+
         req_key = None
         req_values = []
         if req.get("req_items"):
@@ -975,14 +971,13 @@ def test_attr(attr, req, parent_attr=None):
                 if not value in [item[req_key] for item in attr]:
                     error_item = {
                             "__list_idx__": None,
-                            "__msg__": "'%s:%s' is a required item" % \
-                                    (key, value),
+                            "__msg__": "'%s: %s' is a required item" % \
+                                    (req_key, value),
                             "__error_keys__":
                                 [ky for ky, val in
                                         req['item_dict'].items()
                                  if val.get("required")
                                  and ky != req_key]}
-                    # pdb.set_trace()
                     missing_dict = {"msg": "required",
                                     "reason": "missing",
                                     "value": None }
@@ -992,7 +987,6 @@ def test_attr(attr, req, parent_attr=None):
                     error_req[req_key] = value
                     error_item.update(error_req)
                     error_list.append(error_item)
-                    # pdb.set_trace()
         if req.get("optional_items"):
             if not req_key:
                 req_key = [key for key in req['optional_items'][0].keys()
@@ -1015,7 +1009,6 @@ def test_attr(attr, req, parent_attr=None):
                                         req['item_dict'].items()
                                  if val.get("required")
                                  and ky != key]}
-                    # pdb.set_trace()
                     missing_dict = {"msg": "Not an allowed option",
                                     "reason": "not_allowed",
                                     "value": None }
