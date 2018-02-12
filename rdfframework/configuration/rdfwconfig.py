@@ -22,7 +22,7 @@ from rdfframework.utilities import (DictClass,
                                     reg_patterns,
                                     format_multiline,
                                     colors,
-                                    is_writeable_dir)
+                                    is_writable_dir)
 import pydoc
 
 __author__ = "Mike Stabile, Jeremy Nelson"
@@ -109,9 +109,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                           "advanced rdfframework functions.",
                            "default": False}),
         ("SECRET_KEY", {"required": True,
-                        "description": """secret key to be used
-                                       by the Flask application
-                                       security setting""",
+                        "description": "secret key to be used "
+                                       "by the Flask application "
+                                       "security setting",
                         "type": str,
                         "length": {"min": 64, "max": 256}}),
         ("SITE_NAME", {"required": True,
@@ -121,7 +121,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                       "description": "base URL for the site",
                       "type": str,
                       "format": "url"}),
-        ("CONNECTIONS", {"required": False,
+        ("CONNECTIONS", {"required": True,
                          "type": list,
                          "item_type": dict,
                          "item_dict": OrderedDict([
@@ -158,16 +158,24 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                          connection"""}),
                             ("container_dir", {
                                 "type": str,
-                                "format": "directory",
+                                # "format": "directory",
                                 "required": False,
                                 "description": """directory path as the docker
                                         container of the connetion sees a
                                         shared directory with the python
                                         application. This is paired with the
                                         'python_dir' value."""}),
+                            ("namespace", {
+                                "type": str,
+                                "required": False,
+                                "description": "Only applicable for "
+                                        "'triplestore' connection types. Each "
+                                        "namespace acts a different store "
+                                        "within the same triplestore."
+                                }),
                             ("python_dir", {
                                 "type": str,
-                                "format": "directory",
+                                # "format": "directory",
                                 "required": False,
                                 "description": """directory path as the python
                                         application sees a shared directory
@@ -191,7 +199,20 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                          #                    {"name":'repository'},
                          #                    {"name":'active_defs'}]
                          "req_items": [{"name": "datastore",
-                                        "description": "data triplestore" }]
+                                        "description": "data triplestore",
+                                        "default_values": {
+                                            "namespace": "kb",
+                                            "conn_type": "triplestore"
+                                         } },
+                                       {"name": "active_defs",
+                                        "description": "triplestore for "
+                                                "storing vocabularies and "
+                                                "defintions for class "
+                                                "generation.",
+                                        "default_values": {
+                                            "namespace": "active_defs",
+                                            "conn_type": "triplestore"
+                                         } }]
             }),
         ("DIRECTORIES", {"required": True,
                          "type": list,
@@ -227,8 +248,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                                 base/vocabularies"""]}),
                                 ("path", {"type": str,
                                           "required": True,
-                                          "description": "directory path",
-                                          "format": "directory"})]),
+                                          "description": "directory path"})]),
                          "format": "directory",
                          "action": {"type": "add_attr",
                                     "key": "name",
@@ -241,7 +261,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                                     ("base", "vocabularies")}},
                          "req_items": [{"name": "base",
                                         "description": """the base directory for
-                                                saving application data"""}]}),
+                                                saving application data""",
+                                        "dict_params": {"path":
+                                                        {"format":
+                                                         "writable"}}}]}),
         ("NAMESPACES", {"required": False,
                         "type": dict,
                         "item_type": str,
@@ -275,10 +298,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             raise ImportError("RdfConfigManager has already been initialized")
         self.__set_cfg_reqs__(**kwargs)
         self.__set_cfg_attrs__(config, **kwargs)
-        if kwargs.get("verify") != False:
-            errors = self.__verify_config__(self.__config__, **kwargs)
-            self.__reslove_errors__(errors, **kwargs)
-
+        errors = self.__verify_config__(self.__config__, **kwargs)
+        self.__reslove_errors__(errors, **kwargs)
         self.__is_initialized__ = True
         self.__initialize_directories__(**kwargs)
         self.__initialize_conns__(**kwargs)
@@ -325,8 +346,13 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         log.info("Verifiying config settings")
         error_dict = OrderedDict()
         for attr, req in self.__cfg_reqs__.items():
+            req = update_req(attr, req)
             result = test_attr(get_attr(config, attr), req)
             if result:
+                if 'value' not in result \
+                        and result['reason'] not in ['dict_error',
+                                                     'list_error']:
+                    result['value'] = get_attr(config, attr)
                 error_dict[attr] = result
         return error_dict
 
@@ -336,37 +362,110 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         args:
             errors: list of config errors
         """
+        def process_entry(req_type, new_value, old_value=''):
+            new_value = new_value.strip()
+            if new_value == '':
+                return old_value
+            elif new_value.lower() == 'help()':
+                print(format_multiline(__MSGS__['help']))
+                return old_value
+            elif new_value.lower() == 'clear()':
+                return ClearClass
+            elif new_value.lower() == 'none()':
+                return None
+            elif new_value.lower() == 'ignore()':
+
+                rtn_val = (IgnoreClass, old_value)
+                return rtn_val
+            try:
+                return req_type(new_value)
+            except:
+                try:
+                    return eval(new_value)
+                except:
+                    raise
+
         def get_missing(self, attr):
+            req = self.__cfg_reqs__[attr]
+            errors = {"msg": '', "value": ''}
+            if req['type'] == str:
+                while True:
+                    err = ''
+                    if errors['msg']:
+                        err = "{} [{}]".format(colors.warning(errors['msg']),
+                                               colors.fail(value))
+
+                    print("Enter {attr}: {desc} {err}"
+                          "".format(attr=colors.fail(attr),
+                                    desc=colors.cyan(req['description']),
+                                    err=err))
+                    value = input('-> ')
+                    try:
+
+                        value = process_entry(req['type'],
+                                              value,
+                                              errors['value'])
+
+                        errors = test_attr(value, req)
+                        if not errors and value != '':
+                            return value
+                        errors['value'] = value
+                    except SyntaxError:
+                        pass
+            elif req['type'] == list:
+                return []
+
+        def fix_format(self, attr, error, value=None):
             req = self.__cfg_reqs__[attr]
             if req['type'] == str:
                 while True:
-                    print("{}: {}".format(colors.fail('Enter ' + attr),
-                            colors.cyan(req['description'])))
-                    value = input('-> ')
-                    if value.strip() != '':
-                        return value
+                    print("{err} {attr}: {desc} Error: {error}"
+                          "\n\tEnter corrected value [{val}]"
+                          "".format(err=colors.fail("ERROR"),
+                                    attr=colors.fail(attr),
+                                    desc=colors.cyan(req['description']),
+                                    error=colors.warning(error.get("msg")),
+                                    val=colors.fail(value)))
+                    val = input('-> ')
+                    try:
+                        val = process_entry(req['type'], val, value)
+                        new_err = test_attr({attr: val}, req)
+                        if not new_err:
+                            return val
+                    except SyntaxError:
+                        pass
+
             elif req['type'] == list:
                 return []
+
         def fix_str(self, attr, key, value):
             req = self.__cfg_reqs__[attr]
             while True:
-                new_val = input("{err} {key} | value: {val} | *** {msg}\n\t{desc}\n - Enter corrected value [{val}]: ".format(
-                        err=colors.fail("ERROR"),
-                        key=colors.warning(key),
-                        val=colors.fail(value['value']),
-                        msg=colors.yellow(value['msg']),
-                        desc=colors.green(req['description'])))
-                errors = test_attr({key: new_val}, req)
-                if not errors:
-                    return new_val
-                value = errors['items'][key]
+                print("{err} {key} | value: {val} | *** {msg}\n\t{desc}\n - "
+                      "Enter corrected value [{val}]: "
+                      "".format(err=colors.fail("ERROR"),
+                                key=colors.warning(key),
+                                val=colors.fail(value['value']),
+                                msg=colors.yellow(value['msg']),
+                                desc=colors.green(req['description'])))
+                new_val = input("-> ")
+                try:
+                    new_val = process_entry(req['type'], new_val, value)
+                    errors = test_attr({key: new_val}, req)
+                    if not errors:
+                        return new_val
+                    value = errors['items'][key]
+                except SyntaxError:
+                    pass
 
         def fix_item(self, req, obj):
-            for key, val in req.items():
+            for key, val in req['item_dict'].items():
                 while True:
-                    errors = test_attr([strip_errors(obj)], {"type": list,
-                                                             "item_type": dict,
-                                                             "item_dict": req})
+                    new_req = copy.deepcopy(req)
+
+                    errors = test_attr([strip_errors(obj)],
+                                       new_req,
+                                       skip_req_items=True)
                     for ky in errors.get('items',
                                          [{}])[0].get('__error_keys__', []):
                         obj[ky] = errors['items'][0][ky]
@@ -383,7 +482,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                   for i_key, i_val in sorted(val.items())
                                   if i_key.lower() not in ["doc", "options"]]
                     if val.get("doc"):
-                        doc = get_obj_frm_str(val['doc'], **obj)
+                        try:
+                            doc = get_obj_frm_str(val['doc'], **obj)
+                        except AttributeError:
+                            doc = None
                         if doc:
                             desc_items.append("__doc__: %s" % doc.__doc__)
                     if val.get("options"):
@@ -392,30 +494,59 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                     desc = "\n\t".join(desc_items)
                     if isinstance(obj.get(key), dict) and \
                             (obj[key].get('msg') or obj[key].get('reason')):
-                        new_val = input(
-                                "{err} {key} | value: {val} | *** {msg}\n\t{desc}\n - Enter corrected value [{val}]: ".format(
+                        print("{err} {key} | value: {val} | *** {msg}\n\t{desc}\n - Enter corrected value [{val}]: ".format(
                                         err=colors.fail("ERROR"),
                                         key=colors.warning(key),
                                         val=colors.fail(obj[key]['value']),
                                         msg=colors.yellow(obj[key].get('msg') \
                                                 or obj[key].get('reason')),
                                         desc=colors.green(desc)))
-                        new_val = new_val or obj[key]['value']
+                        new_val = input("-> ")
+                        try:
+                            new_val = process_entry(val['type'],
+                                                    new_val,
+                                                    obj[key]['value'])
+                        except (SyntaxError, NameError):
+                            obj[key] = {"msg": "SyntaxError",
+                                        "value": new_val}
+                            continue
+                        # new_val = new_val or obj[key]['value']
                     else:
-                        new_val = input("{ok} {key} | value: {val}\n\t{desc}\n - Enter to keep current value [{val}]: ".format(
+                        print("{ok} {key} | value: {val}\n\t{desc}\n - Enter to keep current value [{val}]: ".format(
                                         ok=colors.green("OK"),
                                         key=colors.lcyan(key),
                                         val=colors.green(obj.get(key)),
                                         desc=desc))
-                        new_val = new_val or obj.get(key)
+                        new_val = input("-> ")
+                        try:
+                            new_val = process_entry(val['type'],
+                                                    new_val,
+                                                    obj.get(key))
+                        except SyntaxError:
+                            obj[key] = {"msg": "SyntaxError",
+                                        "value": new_val}
+                            continue
+
                     errors = test_attr(new_val, val, obj)
                     if not errors:
-                        obj[key] = new_val
+                        if key == 'kwargs' and new_val:
+                            obj.update(new_val)
+                            try:
+                                del obj['kwargs']
+                            except KeyError:
+                                pass
+                        else:
+                            obj[key] = new_val
                         try:
                             obj['__error_keys__'].remove(key)
                         except ValueError:
                             pass
-                        break
+                        errors = test_attr([strip_errors(obj)],
+                                            new_req,
+                                            skip_req_items=True)
+                        if key not in errors.get('items',
+                                [{}])[0].get('__error_keys__', []):
+                            break
                     else:
                         errors["value"] = new_val
                         obj[key] = errors
@@ -427,15 +558,21 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             for attr, err in errors.items():
                 if err.get("set"):
                     cfg_obj[attr] = err['set']
+                elif err['reason'] == "format":
+                    cfg_obj[attr] = fix_format(self,
+                                               attr,
+                                               err,
+                                               cfg_obj.get(attr))
                 elif err['reason'] == "missing":
                     cfg_obj[attr] = get_missing(self, attr)
                 elif err['reason'] == "list_error":
-                    req = self.__cfg_reqs__[attr]['item_dict']
+                    req = self.__cfg_reqs__[attr] #['item_dict']
                     print("Correcting list items for configuration item: \n\n",
                           "***",
                           attr,
                           "****\n")
                     for item in err['items']:
+
                         new_item = fix_item(self, req, item)
                         if item['__list_idx__'] == None:
                             try:
@@ -446,7 +583,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                             cfg_obj[attr][item['__list_idx__']] = new_item
                 elif err['reason'] == "dict_error":
                     if self.__cfg_reqs__[attr]['item_type'] == dict:
-                        req = self.__cfg_reqs__[attr]['item_dict']
+                        req = self.__cfg_reqs__[attr] #['item_dict']
                     elif self.__cfg_reqs__[attr]['item_type'] == str:
                         req = self.__cfg_reqs__[attr]
                         print("Correcting dictionay for item:\n\n",
@@ -458,15 +595,15 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         if not errors:
             return
 
-
-        colors.turn_off
-        nocolor_err_msg = self.__format_err_summary__(errors)
-        colors.turn_on
-        err_msg = self.__format_err_summary__(errors)
         msg_kwargs = dict(time=datetime.datetime.now(),
-                          err_msg=err_msg,
+                          err_msg=self.__format_err_summary__(errors),
                           cfg_path=self.__config_file__,
                           err_path=self.__err_file__)
+        if kwargs.get("verify") == False:
+            log.warning("IGNORING BELOW CONFIGURATION ERRORS")
+            log.warning(self.__make_error_msg__(errors, False, **kwargs))
+            self.__write_error_file__(errors, **kwargs)
+            return
         print(format_multiline(__MSGS__["initial"], **msg_kwargs))
         while True:
             if kwargs.get("exit_on_error") == True:
@@ -475,17 +612,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                 resolve_choice = input(format_multiline(\
                                         __MSGS__["resolve_options"]))
             if resolve_choice.strip() == "2":
-                err_text = format_multiline(__MSGS__["exit"], **msg_kwargs)
-                if self.__err_file__:
-                    with open(self.__err_file__, "w") as fo:
-                        colors.turn_off
-                        msg_kwargs['err_msg'] = nocolor_err_msg
-                        fo.write(format_multiline(__MSGS__["exit"],
-                                                  **msg_kwargs))
-                        colors.turn_on
-                        msg_kwargs['err_msg'] = err_msg
-                sys.exit(err_text)
+                sys.exit(self.__make_error_msg__(errors, **kwargs))
             elif resolve_choice.strip() in ["", "1"]:
+                print(format_multiline(__MSGS__['help']))
                 break
         while True:
             cycle_errors(self, errors, self.__config__)
@@ -493,8 +622,49 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             if not errors:
                 break
         self.__save_config__(**kwargs)
-        print(self.__format_err_summary__(errors))
+        self.__remove_ignore__(**kwargs)
+        # print(self.__format_err_summary__(errors))
 
+    def __remove_ignore__(self, **kwargs):
+
+        def test_ignore(val):
+            if isinstance(val, tuple) and val:
+                if val[0] == IgnoreClass:
+                    return val[1]
+            return val
+
+        def clean_ignore(item):
+            if isinstance(item, dict):
+                for key, val in item.items():
+                    item[key] = clean_ignore(val)
+            elif isinstance(item, list):
+                for i, sub in enumerate(item):
+                    item[i] = clean_ignore(sub)
+            return test_ignore(item)
+
+        new_config = clean_ignore(self.__config__)
+
+        pprint.pprint(new_config)
+
+
+    def __write_error_file__(self, errors, **kwargs):
+
+        if self.__err_file__:
+            with open(self.__err_file__, "w") as fo:
+                fo.write(self.__make_error_msg__(errors, False, **kwargs))
+                msg_kwargs['err_msg'] = err_msg
+
+    def __make_error_msg__(self, errors, colors_on=True, **kwargs):
+        colors.turn_on
+        if not colors_on:
+            colors.turn_off
+        msg_kwargs = dict(time=datetime.datetime.now(),
+                          err_msg=self.__format_err_summary__(errors),
+                          cfg_path=self.__config_file__,
+                          err_path=self.__err_file__)
+        msg = format_multiline(__MSGS__["exit"], **msg_kwargs)
+        colors.turn_on
+        return msg
     def __save_config__(self, **kwargs):
         """
         Provides the user the option to save the current configuration
@@ -527,7 +697,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                     if not os.path.isdir(path[0]):
                         print(" ** directory does not exist")
                         raise OSError
-                    elif not is_writeable_dir(path[0]):
+                    elif not is_writable_dir(path[0], mkdir=True):
                         print(" ** directory is not writable")
                         raise OSError
                     new_path = os.path.join(*path)
@@ -814,6 +984,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                               max_width=78,
                                               **pp_kwargs))
             value = obj.get(attr, req.get('standard', req.get('default')))
+            if isinstance(value, tuple) and value:
+                if value[0] == IgnoreClass:
+                    value = value[1]
+                    parts.append("#! Ignored errors for this item")
             if attr in obj:
                 parts.append(attr_str.format(attr=attr,
                                              value=pprint.pformat(value,
@@ -864,12 +1038,25 @@ __MSGS__ = {
              colors.warning("2 - enter new save file path"),
              colors.fail("3 - do not save changes. Changes lost on exit. "),
              '',
-             colors.warning("Enter option number(1/2/3) -> ")]
+             colors.warning("Enter option number(1/2/3) -> ")],
+    "help": [colors.warning("Prompt commands:"),
+             "clear() - %s" % colors.cyan("clears the current entry"),
+             "ignore() - %s" % colors.cyan("ignores the current error"),
+             "help() - %s" % colors.cyan("prints help commands"),
+             "none() - %s" % colors.cyan("submits None/null as value"),
+             "ENTER key - %s" % colors.cyan("keeps the currnet value")]
 }
 
+def get_req_key(req_items=[{}]):
+    """
+    Determines the base key in the dict for required items
+    """
+    return [key for key in req_items[0].keys()
+            if key not in ["description",
+                           "dict_params",
+                           "default_values"]][0]
 
-
-def test_attr(attr, req, parent_attr=None):
+def test_attr(attr, req, parent_attr=None, **kwargs):
     """ tests the validity of the attribute supplied in the config
 
     args:
@@ -877,6 +1064,7 @@ def test_attr(attr, req, parent_attr=None):
         reg: the requirement definition
         config: the config obj
     """
+
 
     def test_format(attr_val, fmat):
         """ test an attribute value to see if it matches the required
@@ -914,15 +1102,34 @@ def test_attr(attr, req, parent_attr=None):
                         return "invalid directory path"
                     log.warning("windows env: linux/mac directory path %s",
                                 attr_val)
+        if fmat == "writable":
+            try:
+                if not is_writable_dir(attr_val, mkdir=True):
+                    return "path is not writable"
+            except:
+                return "path is not writable"
         return None
 
     rtn_obj = {}
-    if req.get("required") and attr is None:
+    try:
+        if IgnoreClass in attr:
+
+            return
+    except TypeError:
+        pass
+
+    req_key = None
+    if req.get("req_items"):
+        req_key = get_req_key(req['req_items'])
+
+
+    if req.get("required") and attr in [None, '']:
         if "default" in req:
             rtn_obj["set"] = req['default']
             rtn_obj["reason"] = "using default"
         else:
             rtn_obj["reason"] = "missing"
+            rtn_obj['msg'] = "missing required item"
         return rtn_obj
     if attr is None:
         return {}
@@ -933,6 +1140,7 @@ def test_attr(attr, req, parent_attr=None):
 
     if req['type'] == list:
         error_list = []
+
         if req['item_type'] == str and req.get("format"):
             fmat = req['format']
             for item in attr:
@@ -943,7 +1151,11 @@ def test_attr(attr, req, parent_attr=None):
             for idx, item in enumerate(attr):
                 item_errors = []
                 dict_errors = {}
-                for key, item_req in req['item_dict'].items():
+                if req['item_dict'].get("req_items"):
+                    req_key = get_req_key(req['item_dict']['req_items'])
+
+                new_req = update_req(item.get(req_key), req)
+                for key, item_req in new_req['item_dict'].items():
                     msg = test_attr(item.get(key), item_req, item)
                     if msg:
                         msg['value'] = item.get(key)
@@ -955,15 +1167,12 @@ def test_attr(attr, req, parent_attr=None):
                     item_copy['__list_idx__'] = idx
                     item_copy['__error_keys__'] = list(dict_errors)
                     error_list.append(item_copy)
-            # if item_errors:
-            #     error_list.append(item_errors)
 
         req_key = None
         req_values = []
-        if req.get("req_items"):
+        if req.get("req_items") and not kwargs.get("skip_req_items"):
              #determine the matching key
-            req_key = [key for key in req['req_items'][0].keys()
-                       if key != "description"][0]
+            req_key = get_req_key(req['req_items'])
             for item in req['req_items']:
 
                 value = item[req_key]
@@ -971,13 +1180,15 @@ def test_attr(attr, req, parent_attr=None):
                 if not value in [item[req_key] for item in attr]:
                     error_item = {
                             "__list_idx__": None,
-                            "__msg__": "'%s: %s' is a required item" % \
+                            "__msg__": "%s: '%s' is a required item" % \
                                     (req_key, value),
+                            "__dict_params__": item.get("dict_params"),
                             "__error_keys__":
                                 [ky for ky, val in
                                         req['item_dict'].items()
                                  if val.get("required")
-                                 and ky != req_key]}
+                                 and ky != req_key
+                                 and ky not in item.get("default_values", {})]}
                     missing_dict = {"msg": "required",
                                     "reason": "missing",
                                     "value": None }
@@ -985,6 +1196,9 @@ def test_attr(attr, req, parent_attr=None):
                                  for ky, val in req['item_dict'].items()
                                  if val.get("required")}
                     error_req[req_key] = value
+                    for def_ky, def_val in item.get("default_values",
+                                                    {}).items():
+                        error_req[def_ky] = def_val
                     error_item.update(error_req)
                     error_list.append(error_item)
         if req.get("optional_items"):
@@ -1025,7 +1239,7 @@ def test_attr(attr, req, parent_attr=None):
             return rtn_obj
         return rtn_obj
     if req['type'] == dict:
-        if req['item_type'] == str and req.get("format"):
+        if req.get('item_type') == str and req.get("format"):
             fmat = req['format']
             # error_list = []
             error_dict = {}
@@ -1035,15 +1249,22 @@ def test_attr(attr, req, parent_attr=None):
                     error_dict[key] = {"value": item,
                                        "msg": msg}
                     # error_list.append({key: msg})
-        elif req['item_type'] == dict:
+        elif req.get('item_type')  == dict:
             for item, value in attr.items():
                 item_errors = []
-                for key, item_req in req['item_dict'].items():
+
+                new_req_dict = update_req(item.get(req_key), req)
+                for key, item_req in new_req_dict.items():
                     msg = test_attr(value.get(key), item_req, value)
                     if msg:
                         item_errors.append({value.get(key): msg})
             if item_errors:
                 error_list.append({item: item_errors})
+        # if item_type is
+        elif not req.get("item_type"):
+            # if isinstance(attr, dict) and isinstance(parent_attr, dict)
+            #     parent_attr.update(attr)
+            error_dict = {}
 
         if error_dict:
             rtn_obj.update({"reason": "dict_error",
@@ -1055,7 +1276,7 @@ def test_attr(attr, req, parent_attr=None):
         rtn_obj["reason"] = "format"
         msg = test_format(attr, fmat)
         if msg:
-            rtn_obj.update({"msg": msg})
+            rtn_obj.update({"msg": msg, "value": attr})
             return rtn_obj
     if req.get("options"):
         options = get_options_from_str(req['options'],**parent_attr)
@@ -1065,8 +1286,30 @@ def test_attr(attr, req, parent_attr=None):
                     attr,
                     options)
         if msg:
-            rtn_obj.update({"msg": msg})
+            rtn_obj.update({"msg": msg, "value": attr})
             return rtn_obj
+
+def update_req(name, old_req):
+    """
+    Takes a requirement and updates it based on a specific attribute key
+
+    args:
+        name: the name of the attribute
+        old_req: the requirement definition
+    """
+    if not name:
+        return old_req
+    new_req = copy.deepcopy(old_req)
+    if "req_items" in old_req:
+        req_key = get_req_key(old_req['req_items'])
+        for item in old_req['req_items']:
+            if name == item[req_key] and item.get("dict_params"):
+                for param, value in item['dict_params'].items():
+                    new_req['item_dict'][param].update(value)
+
+    return new_req
+
+
 
 def get_options_from_str(obj_str, **kwargs):
     """
@@ -1079,9 +1322,12 @@ def get_options_from_str(obj_str, **kwargs):
     kwargs:
         * kwargs used to format the 'obj_str'
     """
-    obj = get_obj_frm_str(obj_str, **kwargs)
-    if obj:
-        return list(obj)
+    try:
+        obj = get_obj_frm_str(obj_str, **kwargs)
+        if obj:
+            return list(obj)
+    except AttributeError:
+        pass
     return []
 
 def get_obj_frm_str(obj_str, **kwargs):
@@ -1173,3 +1419,9 @@ def strip_errors(obj):
 
 #     def validate(self, value):
 #         pass
+
+class ClearClass():
+    pass
+
+class IgnoreClass():
+    pass

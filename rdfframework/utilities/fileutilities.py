@@ -12,7 +12,7 @@ __MNAME__ = "%s.%s" % \
          os.path.basename(inspect.stack()[0][1]))
 __LOG_LEVEL__ = logging.DEBUG
 
-def is_writeable_dir(directory, **kwargs):
+def is_writable_dir(directory, **kwargs):
     """ tests to see if the directory is writable. If the directory does
         it can attempt to create it. If unable returns False
 

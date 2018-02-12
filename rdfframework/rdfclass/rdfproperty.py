@@ -43,7 +43,7 @@ class RdfPropertyMeta(type):
         new_def = prepare_prop_defs(prop_defs, prop_name, cls_names)
         new_def = filter_prop_defs(prop_defs, hierarchy, cls_names)
         new_def['__doc__'] = doc_string
-        new_def['class_name'] = cls_names
+        new_def['class_names'] = cls_names
         new_def['_prop_name'] = prop_name
         if prop_name == 'rdf_type':
             new_def['append'] = unique_append
@@ -80,7 +80,9 @@ class RdfLinkedPropertyMeta(RdfPropertyMeta):
                      if isinstance(attr, Uri.__wrapped__)}
         prop_name = bases[0]._prop_name
 
-        new_def = filter_prop_defs(prop_defs, linked_cls, cls_name)
+        new_def = filter_prop_defs(prop_defs,
+                                   linked_cls.hierarchy,
+                                   [cls_name])
         new_def['__doc__'] = bases[0].__doc__
         new_def['_cls_name'] = cls_name
         new_def['_linked_cls'] = linked_cls
@@ -223,13 +225,20 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
             return _sub_convert(value)
 
         try:
+            # rng_defs = [rng_def for rng_def in self.kds_rangeDef \
+            #             if not isinstance(rng_def, BlankNode) \
+            #             and (self._cls_name in rng_def.get('kds_appliesToClass', []) \
+            #             or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass', []))]
+            cls_options = set(self.class_names + ['kdr_AllClasses'])
             rng_defs = [rng_def for rng_def in self.kds_rangeDef \
                         if not isinstance(rng_def, BlankNode) \
-                        and (self._cls_name in rng_def.get('kds_appliesToClass', []) \
-                        or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass', []))]
+                        and cls_options.difference(\
+                                set(rng_def.get('kds_appliesToClass', []))) < \
+                                cls_options]
         except AttributeError:
             rng_defs = []
-
+        if self.__class__.__name__ == 'rdf_type':
+            pdb.set_trace()
         if len(rng_defs) > 1:
             pass
             #! write function to merge range defs
@@ -241,14 +250,34 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         rtn_list = []
         ranges = self.rdfs_range # pylint: disable=no-member
         # if self._prop_name == 'bf_shelfMark':
-        #     pdb.set_trace()
+        # pdb.set_trace()
         if not idx_types:
             nested = False
             for rng in ranges:
-                if hasattr(MODULE.rdfclass, rng) and \
-                        rng != 'rdfs_Literal' and \
-                        isinstance(getattr(MODULE.rdfclass, rng),
-                                   MODULE.rdfclass.RdfClassMeta):
+                def test_rng(rng, rdfclass):
+                    """ Test to see if rng for the class should be an object
+                    or a litteral
+                    """
+                    if rng == 'rdfs_Literal':
+                        return False
+                    if hasattr(rdfclass, rng):
+                        mod_class = getattr(rdfclass, rng)
+                        for item in mod_class.cls_defs['rdf_type']:
+                            try:
+                                if issubclass(getattr(rdfclass, item),
+                                              rdfclass.rdfs_Literal):
+                                    return False
+                            except AttributeError:
+                                pass
+                        if isinstance(mod_class, rdfclass.RdfClassMeta):
+                            return True
+                    return False
+
+                # if hasattr(MODULE.rdfclass, rng) and \
+                #         rng != 'rdfs_Literal' and \
+                #         isinstance(getattr(MODULE.rdfclass, rng),
+                #                    MODULE.rdfclass.RdfClassMeta):
+                if test_rng(rng, MODULE.rdfclass):
                     nested = True
             for value in self:
                 if isinstance(value, MODULE.rdfclass.RdfClassBase):

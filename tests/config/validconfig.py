@@ -35,7 +35,8 @@ CONNECTIONS = [{'conn_type': 'triplestore',
   'vendor': 'rdflib'},
  {'conn_type': 'triplestore',
   'container_dir': '/local_data',
-  'data_upload': [('vocabularies', ['rdf', 'owl', 'schema', 'bf', 'skos']),
+  'data_upload': [('vocabularies',
+                   ['rdf', 'rdfs', 'owl', 'schema', 'bf', 'skos']),
                   ('package_all', 'bibcat.rdfw-definitions')],
   'graph': '<http://knowledgelinks.io/ns/application-framework/>',
   'local_url': 'http://localhost:9999/blazegraph',
@@ -79,8 +80,7 @@ CONNECTIONS = [{'conn_type': 'triplestore',
 ## rdfframework. 1. base - a base directory for creating addtional directories
 ## *required 2. logs
 
-DIRECTORIES = [{'name': 'fasdf', 'path': '/home/stabiledev/rdfw_test1'},
- {'name': 'base', 'path': '/home/stabiledev/rdfw_base'}]
+DIRECTORIES = [{'name': 'base', 'path': '/home/stabiledev/rdfw_base'}]
 
 ## URI for an RDF namespace
 
@@ -107,18 +107,18 @@ NAMESPACES = {'acl': '<http://www.w3.org/ns/auth/acl#>',
  'relator': 'http://id.loc.gov/vocabulary/relators/',
  'schema': 'http://schema.org/',
  'skos': 'http://www.w3.org/2004/02/skos/core#',
+ 'vcard': 'http://www.w3.org/2006/vcard/ns#',
  'void': 'http://rdfs.org/ns/void#',
- 'xsd': 'http://www.w3.org/2001/XMLSchema#',
- 'vcard': 'http://www.w3.org/2006/vcard/ns#'}
+ 'xsd': 'http://www.w3.org/2001/XMLSchema#'}
 
 
 #! *** non specified attributes ***
 
 
-ORGANIZATION = {'description': '',
- 'name': 'knowledgeLinks.io',
- 'url': 'http://knowledgelinks.io/'}
-
 DATASET_URLS = {'bibframe_vocab_rdf': 'http://id.loc.gov/ontologies/bibframe.rdf',
  'loc_subjects_skos.nt.gz': 'http://id.loc.gov/static/data/authoritiessubjects.nt.skos.gz',
  'marc_relators_nt': 'http://id.loc.gov/static/data/vocabularyrelators.nt.zip'}
+
+ORGANIZATION = {'description': '',
+ 'name': 'knowledgeLinks.io',
+ 'url': 'http://knowledgelinks.io/'}

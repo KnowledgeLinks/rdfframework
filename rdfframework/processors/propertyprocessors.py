@@ -13,14 +13,26 @@ class PropSingleton(type):
                                         cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
+class PropertyProcessor(object):
+    def __use_processor__(self, prop):
+        """
+        Tests to see if the processor should be used for a particular instance
+        of a calling property based on the tied rdfclass for the property
+        """
+        if not set(prop.classnames).difference(set(self.classnames)) < \
+                prop.classnames:
+            return False
+        return True
+
 class AddClassProcessor(object, metaclass=PropSingleton):
     """ adds the rdf:Class URI to the property's list of values
 
     Args:
         prop(RdfPropertyBase): The instance of the rdf property
     """
-    def __init__(self, params=None):
+    def __init__(self, params=None, classnames=[]):
         self.params = params
+        self.classnames = classnames
 
     def __call__(self, prop):
         prop += prop.bound_class.class_names
@@ -39,12 +51,16 @@ class AddClassHeirarchyProcessor(object, metaclass=PropSingleton):
         ['schema:Thing', 'schema:Person'] will be added to the property list
         of values since 'schema:Person' is a subclass of 'schema:Thing'
     """
-    def __init__(self, params=None):
+    def __init__(self, params=None, classnames=[]):
         self.params = params
+        self.classnames = set(classnames)
 
     def __call__(self, prop):
-        for prop_uri in prop.bound_class.heirarchy:
-            prop.append(prop_uri)
+
+        rtn_list = [item for item in prop]
+        for prop_uri in prop.bound_class.hierarchy:
+            rtn_list.append(prop_uri)
+        return rtn_list
 
 prop_processor_mapping = {
     Uri('kdr:AddClassProcessor'): AddClassProcessor,

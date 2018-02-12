@@ -9,5 +9,5 @@ from .codetimer import *
 from .debug import *
 from .frameworkutilities import *
 from .valuecalculator import *
-from .fileutilities import list_files, is_writeable_dir
+from .fileutilities import list_files, is_writable_dir
 from .gitutilities import *

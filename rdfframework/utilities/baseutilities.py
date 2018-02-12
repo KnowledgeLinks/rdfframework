@@ -707,7 +707,8 @@ class reg_patterns():
     url_no_http = re.compile(r"^\w+(\.\w+)*(:[0-9]+)?\/?(\/[-_%.#\w]*)*$", re.IGNORECASE)
     email = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
     dir_win = re.compile(r'^[a-zA-Z]:\\(((?![<>:"/\\|?*]).)+((?<![ .])\\)?)*$')
-    dir_linux = re.compile(r'^(\/[\w^ ]+)+\/?([\w.])+[^.]$')
+    # dir_linux = re.compile(r'^(\/[\w^ ]+)+\/?([\w.])+[^.]$')
+    dir_linux = re.compile(r'^(\/\w+)(\/\w+)(\/\w+)$')
     isbn = re.compile(r"^(\d+)\b")
 
 def clean_iri(uri_string):

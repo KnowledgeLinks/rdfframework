@@ -16,7 +16,7 @@ from rdfframework.connections import ConnManager
 from rdfframework.datatypes import RdfNsManager, XsdDatetime, pyrdf
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.utilities import pyfile_path, make_list, list_files, \
-        is_writeable_dir
+        is_writable_dir
 
 __CONNS__ = ConnManager()
 __CFG__ = RdfConfigManager()
@@ -143,7 +143,7 @@ class DataFileManager():
             pass
         cache_dir = None
         for directory in test_dirs:
-            if is_writeable_dir(directory, mkdir=True):
+            if is_writable_dir(directory, mkdir=True):
                 cache_dir = directory
                 break
         self.cache_dir = cache_dir

@@ -16,7 +16,7 @@
 # from rdfframework.datatypes import RdfNsManager, XsdDatetime, pyrdf
 # from rdfframework.configuration import RdfConfigManager
 # from rdfframework.utilities import pyfile_path, make_list, list_files, \
-#         is_writeable_dir
+#         is_writable_dir
 from .defmanager import DefinitionManager
 from .datamanager import DataFileManager
 
@@ -241,7 +241,7 @@ from .datamanager import DataFileManager
 # #                     [os.path.join(__CFG__.CACHE_DATA_PATH, "vocabularies")]
 # #         cache_dir = None
 # #         for directory in test_dirs:
-# #             if is_writeable_dir(directory, mkdir=True):
+# #             if is_writable_dir(directory, mkdir=True):
 # #                 cache_dir = directory
 # #                 break
 # #         self.cache_dir = cache_dir
@@ -570,7 +570,7 @@ from .datamanager import DataFileManager
 #                     [os.path.join(__CFG__.CACHE_DATA_PATH, "data")]
 #         cache_dir = None
 #         for directory in test_dirs:
-#             if is_writeable_dir(directory, mkdir=True):
+#             if is_writable_dir(directory, mkdir=True):
 #                 cache_dir = directory
 #                 break
 #         self.cache_dir = cache_dir
