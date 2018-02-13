@@ -64,4 +64,4 @@ def configure_logging(modules, method="dummy"):
 configure_logging(__modules__, "active")
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.22'
+__version__ = '0.0.23'
