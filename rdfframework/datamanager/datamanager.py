@@ -64,29 +64,30 @@ class DataFileManager():
 
     def loaded_files(self, **kwargs):
         """ returns a list of loaded definition files """
-        conn = self.__get_conn__(**kwargs)
-        # pdb.set_trace()
-        if self.loaded and not kwargs.get('reset', False):
-            return self.loaded
-        result = conn.query("""
-                SELECT ?file
-                {
-                    {
-                        SELECT DISTINCT ?g
-                        {
-                            graph ?g {?s ?p ?o} .
-                            FILTER(?g!=<http://www.bigdata.com/rdf#nullGraph>
-                                   && ?g!=kdr:load_times)
-                        }
-                    }
-                    bind(REPLACE(str(?g) ,
-                         "http://knowledgelinks.io/ns/data-resources/", "")
-                         as ?file)
-                }""")
-        if result:
-            self.loaded = [val['file']['value'] for val in result]
-        else:
-            self.loaded = result
+        # conn = self.__get_conn__(**kwargs)
+        # # pdb.set_trace()
+        # if self.loaded and not kwargs.get('reset', False):
+        #     return self.loaded
+        # result = conn.query("""
+        #         SELECT ?file
+        #         {
+        #             {
+        #                 SELECT DISTINCT ?g
+        #                 {
+        #                     graph ?g {?s ?p ?o} .
+        #                     FILTER(?g!=<http://www.bigdata.com/rdf#nullGraph>
+        #                            && ?g!=kdr:load_times)
+        #                 }
+        #             }
+        #             bind(REPLACE(str(?g) ,
+        #                  "http://knowledgelinks.io/ns/data-resources/", "")
+        #                  as ?file)
+        #         }""")
+        # if result:
+        #     self.loaded = [val['file']['value'] for val in result]
+        # else:
+        #     self.loaded = result
+        self.loaded = list(self.load_times(**kwargs))
         return self.loaded
 
     def load(self, file_locations=[], **kwargs):

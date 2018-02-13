@@ -4,7 +4,10 @@ import pdb
 from hashlib import sha1
 
 # from rdfframework import rdfclass
-from rdfframework.utilities import LABEL_FIELDS, VALUE_FIELDS, make_doc_string
+from rdfframework.utilities import (LABEL_FIELDS,
+                                    VALUE_FIELDS,
+                                    make_doc_string,
+                                    get_attr)
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, RdfNsManager
 from rdfframework.configuration import RdfConfigManager
 
@@ -152,7 +155,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             setattr(self,
                     pred,
                     new_prop)
-            self[pred] = getattr(self, pred)(self, self.dataset)
+            self[pred] = getattr(self, pred)(self, get_attr(self, "dataset"))
             self[pred].append(obj)
 
     @property

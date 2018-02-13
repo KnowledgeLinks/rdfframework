@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "MIT License"
-__version__ = "0.0.21"
+__version__ = "0.0.22"
 
 from setuptools import find_packages, setup
 import pdb

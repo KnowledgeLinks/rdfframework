@@ -223,7 +223,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 rtn_obj['value'] = rtn_obj['rdfs_label']
                 return rtn_obj
             return _sub_convert(value)
-
+        # pdb.set_trace()
         try:
             # rng_defs = [rng_def for rng_def in self.kds_rangeDef \
             #             if not isinstance(rng_def, BlankNode) \
@@ -237,8 +237,8 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                                 cls_options]
         except AttributeError:
             rng_defs = []
-        if self.__class__.__name__ == 'rdf_type':
-            pdb.set_trace()
+        # if self.__class__.__name__ == 'rdf_type':
+        #     pdb.set_trace()
         if len(rng_defs) > 1:
             pass
             #! write function to merge range defs
@@ -279,9 +279,15 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 #                    MODULE.rdfclass.RdfClassMeta):
                 if test_rng(rng, MODULE.rdfclass):
                     nested = True
-            for value in self:
-                if isinstance(value, MODULE.rdfclass.RdfClassBase):
-                    nested = True
+            value_class = [value.__class__ for value in self
+                           if isinstance(value, MODULE.rdfclass.RdfClassBase)]
+            if value_class:
+                nested = True
+            else:
+                nested = False
+            # for value in self:
+            #     if isinstance(value, MODULE.rdfclass.RdfClassBase):
+            #         nested = True
             if nested:
                 idx_types.append('es_Nested')
 

@@ -300,10 +300,15 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         self.__set_cfg_attrs__(config, **kwargs)
         errors = self.__verify_config__(self.__config__, **kwargs)
         self.__reslove_errors__(errors, **kwargs)
+        log.info("CONFIGURATION validated")
         self.__is_initialized__ = True
+        log.info("Initializing directories")
         self.__initialize_directories__(**kwargs)
-        self.__initialize_conns__(**kwargs)
+        log.info("setting RDF Namespaces")
         self.__load_namespaces__(**kwargs)
+        log.info("Initializing Connections")
+        self.__initialize_conns__(**kwargs)
+
         self.__run_defs__(**kwargs)
 
     def __load_namespaces__(self, **kwargs):
@@ -322,6 +327,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                                RdfClassFactory)
             conn = self.__config__.get('conns',{}).get('active_defs')
             if conn:
+                log.info("Starting RDF Property and Class creation")
                 RdfPropertyFactory(conn, reset=kwargs.get("reset"))
                 RdfClassFactory(conn, reset=kwargs.get("reset"))
             else:
@@ -609,8 +615,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             if kwargs.get("exit_on_error") == True:
                 resolve_choice = "2"
             else:
-                resolve_choice = input(format_multiline(\
-                                        __MSGS__["resolve_options"]))
+                print(format_multiline(__MSGS__["resolve_options"]))
+                resolve_choice = input("-> ")
             if resolve_choice.strip() == "2":
                 sys.exit(self.__make_error_msg__(errors, **kwargs))
             elif resolve_choice.strip() in ["", "1"]:
@@ -679,7 +685,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         filename = os.path.split(self.__config_file__)[1]
         if not kwargs.get("autosave"):
             while True:
-                option = input(format_multiline(__MSGS__['save'])).strip()
+                print(format_multiline(__MSGS__['save']))
+                option = input("-> ").strip()
                 if option in ["1", "2", "3"]:
                     break
         if option == "3":

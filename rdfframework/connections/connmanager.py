@@ -99,7 +99,7 @@ class ConnManager(metaclass=ConnManagerMeta):
     def set_conn(self, **kwargs):
         """ takes a connection and creates the connection """
 
-        log = logging.getLogger("%s.%s" % (self.log, inspect.stack()[0][3]))
+        # log = logging.getLogger("%s.%s" % (self.log, inspect.stack()[0][3]))
         log.setLevel(kwargs.get('log_level',self.log_level))
 
         conn_name = kwargs.get("name")
@@ -116,6 +116,7 @@ class ConnManager(metaclass=ConnManagerMeta):
             err_msg = ["a connection requires a valid 'conn_type':\n",
                        "%s"]
             raise NameError("".join(err_msg) % (list(self.conn_mapping.nested)))
+        log.info("Setting '%s' connection", conn_name)
         if conn_type == "triplestore":
             conn = make_tstore_conn(kwargs)
         else:

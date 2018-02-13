@@ -20,7 +20,7 @@ MODULE = __import__(__name__)
 # import rdfframework.rdfclass as rdfclass
 CFG = RdfConfigManager()
 
-
+__a__ = Uri("rdf:type")
 class RdfDataset(dict):
     """ A container for holding rdf data """
     _reserved = ['add_triple',
@@ -52,9 +52,9 @@ class RdfDataset(dict):
         if base_uri:
             base_uri = Uri(base_uri)
         self.base_uri = base_uri
+
         # realate_bnode_obj_types sets whether to relate the object of a class
         # back to itself
-
         self.relate_obj_types = ['bnode','uri']
         if kwargs.get("bnode_only"):
             self.relate_obj_types = ['bnode']
@@ -69,7 +69,7 @@ class RdfDataset(dict):
                (self.base_uri,
                 [key.sparql for key in self if key.type != 'bnode'])
 
-    def set_map(self, **kwargs):
+    def __set_map__(self, **kwargs):
         """ sets the subject predicat object json mapping
 
         kwargs:
@@ -97,7 +97,7 @@ class RdfDataset(dict):
                 obj_method: if "list" than the object will be returned in the
                             form of a list
         """
-        self.set_map(**kwargs)
+        self.__set_map__(**kwargs)
         strip_orphans = kwargs.get("strip_orphans", False)
         obj_method = kwargs.get("obj_method")
         if isinstance(sub, DictClass) or isinstance(sub, dict):
@@ -105,7 +105,7 @@ class RdfDataset(dict):
             obj = sub[self.omap]
             sub = sub[self.smap]
 
-        pred = pyrdf(pred)
+        prclassesed = pyrdf(pred)
         obj = pyrdf(obj)
         sub = pyrdf(sub)
 
@@ -133,11 +133,14 @@ class RdfDataset(dict):
         base_only = kwargs.get("base_only", False)
 
         if compress:
-            new_obj = copy.deepcopy(self)
-            for key, value in new_obj.items():
+            new_obj = copy.copy(self)
+            for key, value in self.items():
                 for skey, svalue in value.items():
                     if isinstance(svalue, list) and len(svalue) == 1:
-                        new_obj[key][skey] = svalue[0]
+                        try:
+                            new_obj[key][skey] = svalue[0]
+                        except KeyError:
+                            new_obj[key] = {skey: svalue[0]}
             format_obj = new_obj
         else:
             format_obj = self
@@ -194,17 +197,20 @@ class RdfDataset(dict):
                 obj_method: "list", or None: if "list" the object of a method
                             will be in the form of a list.
         """
-        self.set_map(**kwargs)
+        self.__set_map__(**kwargs)
         if isinstance(data, list):
             data = self._convert_results(data, **kwargs)
-        class_types = self._group_data(data, **kwargs)
+        # if self.base_uri == "pyuri_aHR0cHM6Ly9wbGFpbnMycGVha3Mub3JnLw==_1f142250-0871-11e8-ad63-005056c00008":
+        #     pdb.set_trace()
+        class_types = self.__group_data__(data, **kwargs)
+
         # generate classes and add attributes to the data
         self._generate_classes(class_types, self.non_defined, **kwargs)
         # add triples to the dataset
         for triple in data:
             self.add_triple(sub=triple, **kwargs)
 
-    def _group_data(self, data, **kwargs):
+    def __group_data__(self, data, **kwargs):
         """ processes the data in to groups prior to loading into the
             dataset
 
@@ -213,7 +219,7 @@ class RdfDataset(dict):
         """
         # strip all of the rdf_type triples and merge
 
-        class_types = self._merge_classtypes(self._get_classtypes(data))
+        class_types = self._merge_classtypes(self.__get_classtypes__(data))
         self.subj_list = list([item[self.smap] for item in class_types])
         # get non defined classes
         self.non_defined = self._get_non_defined(data, class_types)
@@ -253,21 +259,17 @@ class RdfDataset(dict):
             return rtn_list
 
     @property
-    def set_classes(self):
+    def __set_classes__(self):
         def add_class(key, value):
             nonlocal rtn_obj
             try:
-                #pdb.set_trace()
                 rtn_obj[value].append(key)
             except AttributeError:
-                #pdb.set_trace()
                 rtn_obj[value] = [rtn_obj[value['rdf_type']]]
                 rtn_obj[value].append(key)
             except KeyError:
-                #pdb.set_trace()
                 rtn_obj[value] = [key]
             except TypeError:
-                #pdb.set_trace()
                 for item in value:
                     add_class(key, item)
         rtn_obj = {}
@@ -280,7 +282,7 @@ class RdfDataset(dict):
         self.classes = rtn_obj
         #return rtn_obj
 
-    def _get_classtypes(self, data):
+    def __get_classtypes__(self, data):
         """ returns all of the triples where rdf:type is the predicate and
             removes them from the data list
 
@@ -290,7 +292,7 @@ class RdfDataset(dict):
         rtn_list = []
         remove_index = []
         for i, triple in enumerate(data):
-            if triple[self.pmap] == "rdf:type":
+            if triple[self.pmap] == __a__:
                 remove_index.append(i)
                 rtn_list.append(triple)
         for i in reversed(remove_index):
@@ -306,13 +308,15 @@ class RdfDataset(dict):
         """
         kwargs['dataset'] = self
         for class_type in class_types:
-            self[class_type[self.smap]] = self._get_rdfclass(class_type, **kwargs)\
-                    (class_type, **kwargs)
+            self[class_type[self.smap]] = self._get_rdfclass(class_type,
+                                                             **kwargs)\
+                                                            (class_type,
+                                                             **kwargs)
             #setattr(self, class_type[self.smap], RdfBaseClass(class_type))
         for class_type in non_defined:
             self[class_type] = RdfClassBase(class_type, **kwargs)
             #setattr(self, class_type, RdfBaseClass(class_type))
-        self.set_classes
+        self.__set_classes__
         try:
             self.base_class = self[self.base_uri]
         except KeyError:
@@ -335,15 +339,14 @@ class RdfDataset(dict):
             return RdfClassBase
 
         if isinstance(class_type[self.omap], list):
-            bases = [select_class(class_name) for class_name in class_type[self.omap]]
+            bases = [select_class(class_name)
+                     for class_name in class_type[self.omap]]
             bases = [base for base in bases if base != RdfClassBase]
             if len(bases) == 0:
                 return RdfClassBase
             elif len(bases) == 1:
                 return bases[0]
             else:
-                # return types.new_class("_".join(class_type[self.omap]),
-                #                        tuple(bases))
                 bases = remove_parents(bases)
                 if len(bases) == 1:
                     return bases[0]
