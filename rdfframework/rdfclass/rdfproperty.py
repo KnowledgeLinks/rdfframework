@@ -223,7 +223,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 rtn_obj['value'] = rtn_obj['rdfs_label']
                 return rtn_obj
             return _sub_convert(value)
-        # pdb.set_trace()
+
         try:
             # rng_defs = [rng_def for rng_def in self.kds_rangeDef \
             #             if not isinstance(rng_def, BlankNode) \
@@ -238,7 +238,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         except AttributeError:
             rng_defs = []
         # pdb.set_trace()
-        # if self.__class__._prop_name == 'bf_subject':
+        # if self.__class__._prop_name == 'rdf_type':
         #     pdb.set_trace()
         if len(rng_defs) > 1:
             pass
@@ -250,8 +250,13 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         idx_types = rng_def.get('kds_esIndexType', []).copy()
         rtn_list = []
         ranges = self.rdfs_range # pylint: disable=no-member
+
         # if self._prop_name == 'bf_shelfMark':
         # pdb.set_trace()
+        # copy the current data into the es_values attribute then run
+        # the es_processors to manipulate that data
+        self.es_values = self.copy()
+        self._run_processors(self._es_processors)
         if not idx_types:
             nested = False
             for rng in ranges:
@@ -273,14 +278,11 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                         if isinstance(mod_class, rdfclass.RdfClassMeta):
                             return True
                     return False
-
-                # if hasattr(MODULE.rdfclass, rng) and \
-                #         rng != 'rdfs_Literal' and \
-                #         isinstance(getattr(MODULE.rdfclass, rng),
-                #                    MODULE.rdfclass.RdfClassMeta):
                 if test_rng(rng, MODULE.rdfclass):
                     nested = True
-            value_class = [value.__class__ for value in self
+
+
+            value_class = [value.__class__ for value in self.es_values
                            if isinstance(value, MODULE.rdfclass.RdfClassBase)]
             if value_class:
                 nested = True
@@ -295,7 +297,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         if 'es_Nested' in idx_types:
             if kwargs.get('depth', 0) > 6:
                 return  [val.subject.sparql_uri for val in self]
-            for value in self:
+            for value in self.es_values:
                 # if self._prop_name == "bf_shelfMark":
                 #     pdb.set_trace()
                 try:
@@ -304,7 +306,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                     rtn_list.append(_convert_value(value,
                                                    "missing_obj"))
         else:
-            for value in self:
+            for value in self.es_values:
                 # if value.__class__.__name__ == "bf_shelfMark":
                 #     pdb.set_trace()
                 rtn_list.append(_convert_value(value))

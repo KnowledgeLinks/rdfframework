@@ -305,8 +305,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                   depending upon whether it is used as a subject of an object.
                   options are kds_esNested or rdf_Class
         """
-        if self.__class__.__name__ == 'bf_Topic':
-            pdb.set_trace()
+        # if self.__class__.__name__ == 'rdf_type':
+        #     pdb.set_trace()
         rtn_obj = {}
         # pdb.set_trace()
         if kwargs.get("depth"):
@@ -337,8 +337,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                             rtn_obj[prop] = new_val[0]
                         else:
                             rtn_obj[prop] = new_val
-        if self.__class__.__name__ == 'bf_Topic':
-            pdb.set_trace()
+        # if self.__class__.__name__ == 'bf_Topic':
+        #     pdb.set_trace()
         if self.subject.type == 'uri':
             rtn_obj['uri'] = self.subject.sparql_uri
             try:

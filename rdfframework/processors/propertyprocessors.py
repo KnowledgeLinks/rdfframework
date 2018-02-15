@@ -57,10 +57,10 @@ class AddClassHeirarchyProcessor(object, metaclass=PropSingleton):
 
     def __call__(self, prop):
 
-        rtn_list = [item for item in prop]
+        rtn_list = [item for item in prop.es_values]
         for prop_uri in prop.bound_class.hierarchy:
             rtn_list.append(prop_uri)
-        return rtn_list
+        prop.es_values = list(set(rtn_list))
 
 prop_processor_mapping = {
     Uri('kdr:AddClassProcessor'): AddClassProcessor,
