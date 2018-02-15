@@ -238,8 +238,8 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         except AttributeError:
             rng_defs = []
         # pdb.set_trace()
-        if self.__class__._prop_name == 'bf_subject':
-            pdb.set_trace()
+        # if self.__class__._prop_name == 'bf_subject':
+        #     pdb.set_trace()
         if len(rng_defs) > 1:
             pass
             #! write function to merge range defs
@@ -288,7 +288,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 nested = False
             # for value in self:
             #     if isinstance(value, MODULE.rdfclass.RdfClassBase):
-            #         nested = True
+            #         nensted = True
             if nested:
                 idx_types.append('es_Nested')
 
