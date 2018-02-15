@@ -237,8 +237,9 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                                 cls_options]
         except AttributeError:
             rng_defs = []
-        # if self.__class__.__name__ == 'rdf_type':
-        #     pdb.set_trace()
+        # pdb.set_trace()
+        if self.__class__._prop_name == 'bf_subject':
+            pdb.set_trace()
         if len(rng_defs) > 1:
             pass
             #! write function to merge range defs
