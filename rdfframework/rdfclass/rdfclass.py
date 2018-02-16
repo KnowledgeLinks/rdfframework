@@ -1,7 +1,7 @@
 """ Module for generating RdfClasses. These classes are the base mode for
 dealing with RDF data, conversion, validation and CRUD operations """
 import pdb
-from hashlib import sha1
+
 
 # from rdfframework import rdfclass
 from rdfframework.utilities import (LABEL_FIELDS,
@@ -10,6 +10,9 @@ from rdfframework.utilities import (LABEL_FIELDS,
                                     get_attr)
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, RdfNsManager
 from rdfframework.configuration import RdfConfigManager
+from rdfframework.rdfclass.esconversion import (get_es_value,
+                                                get_es_label,
+                                                get_es_ids)
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -304,6 +307,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             role: the role states how the class data should be returned
                   depending upon whether it is used as a subject of an object.
                   options are kds_esNested or rdf_Class
+            remove_empty: True removes empty items from es object
         """
         # if self.__class__.__name__ == 'rdf_type':
         #     pdb.set_trace()
@@ -329,8 +333,6 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                 nested_props = list(self.keys())
             for prop, value in self.items():
                 if prop in nested_props:
-                    # if prop == 'bf_shelfMark':
-                    #     pdb.set_trace()
                     new_val = value.es_json(**kwargs)
                     if (remove_empty and new_val) or not remove_empty:
                         if len(new_val) == 1:
@@ -339,47 +341,9 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                             rtn_obj[prop] = new_val
         # if self.__class__.__name__ == 'bf_Topic':
         #     pdb.set_trace()
-        if self.subject.type == 'uri':
-            rtn_obj['uri'] = self.subject.sparql_uri
-            try:
-                path = ""
-                for base in [self.__class__] + list(self.__class__.__bases__):
-
-                    if hasattr(base, 'es_defs') and base.es_defs:
-                        path = "%s/%s/" % (base.es_defs['kds_esIndex'][0],
-                                           base.es_defs['kds_esDocType'][0])
-                        continue
-            except KeyError:
-                path = ""
-            rtn_obj['id'] = path + sha1(rtn_obj['uri'].encode()).hexdigest()
-        try:
-            rtn_obj['label'] = [self.cls_defs[label][0] \
-                                for label in LABEL_FIELDS \
-                                if self.cls_defs.get(label)][0]
-        except IndexError:
-            print("Missing class label: ", self.__class__.__name__)
-            rtn_obj['label'] = self.__class__.__name__.split("_")[-1]
-        except AttributeError:
-            # an attribute error is cause when the class is an only
-            # an instance of the BaseRdfClass. We will search the rdf_type
-            # property and construct a label from rdf_type value
-            if self.get('rdf_type'):
-                rtn_obj['label'] = self['rdf_type'][-1].value[1]
-            else:
-                rtn_obj['label'] = "no_label"
-        try:
-            rtn_obj['value'] = [rtn_obj.get(label) \
-                                for label in VALUE_FIELDS + LABEL_FIELDS \
-                                if rtn_obj.get(label)][0]
-        except IndexError:
-            rtn_obj['value'] = ", ".join(["%s: %s" % (value.get('label'), value.get('value')) \
-                                for prop, value in rtn_obj.items() \
-                                if isinstance(value, dict) and \
-                                value.get('label')])
-        if isinstance(rtn_obj['value'], list):
-            rtn_obj['value'] = ", ".join(rtn_obj['value'])
-        if rtn_obj['value'].strip().endswith("/"):
-            rtn_obj['value'] = rtn_obj['value'].strip()[:-1].strip()
+        rtn_obj = get_es_ids(rtn_obj, self)
+        rtn_obj = get_es_label(rtn_obj, self)
+        rtn_obj = get_es_value(rtn_obj, self)
         return rtn_obj
 
     def _set_subject(self, subject):

@@ -9,6 +9,8 @@ from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, \
         RdfNsManager
 from rdfframework.processors import prop_processor_mapping
 from rdfframework.configuration import RdfConfigManager
+from rdfframework.rdfclass.esconversion import (convert_value_to_es,
+                                                range_is_obj)
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -91,7 +93,6 @@ class RdfLinkedPropertyMeta(RdfPropertyMeta):
                                                      new_def)
         new_def['_es_processors'] = get_processors('kds_esProcessor',
                                                    new_def)
-        # pdb.set_trace()
         return new_def
         # x = super().__prepare__(name, bases, **new_def)
         # pdb.set_trace()
@@ -198,37 +199,8 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
     def es_json(self, **kwargs):
         """ Returns a JSON object of the property for insertion into es
         """
-
-        def _convert_value(value, method=None):
-
-            def _sub_convert(val):
-                if isinstance(val, BaseRdfDataType):
-                    return val.to_json
-                elif isinstance(value, MODULE.rdfclass.RdfClassBase):
-                    return val.subject.sparql_uri
-                return val
-
-            if method == "missing_obj":
-                rtn_obj = {
-                    "rdf_type": [rng.sparql_uri for rng in self.rdfs_range], # pylint: disable=no-member
-                    "label": [getattr(self, label)[0] \
-                             for label in LABEL_FIELDS \
-                             if hasattr(self, label)][0]}
-                try:
-                    rtn_obj['uri'] = value.sparql_uri
-                    rtn_obj["rdfs_label"] = NSM.nouri(value.sparql_uri)
-                except AttributeError:
-                    rtn_obj['uri'] = "None Specified"
-                    rtn_obj['rdfs_label'] = _sub_convert(value)
-                rtn_obj['value'] = rtn_obj['rdfs_label']
-                return rtn_obj
-            return _sub_convert(value)
-
+        rtn_list = []
         try:
-            # rng_defs = [rng_def for rng_def in self.kds_rangeDef \
-            #             if not isinstance(rng_def, BlankNode) \
-            #             and (self._cls_name in rng_def.get('kds_appliesToClass', []) \
-            #             or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass', []))]
             cls_options = set(self.class_names + ['kdr_AllClasses'])
             rng_defs = [rng_def for rng_def in self.kds_rangeDef \
                         if not isinstance(rng_def, BlankNode) \
@@ -237,8 +209,8 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                                 cls_options]
         except AttributeError:
             rng_defs = []
-        # pdb.set_trace()
-        # if self.__class__._prop_name == 'rdf_type':
+
+        # if self.__class__._prop_name == 'bf_hasInstance':
         #     pdb.set_trace()
         if len(rng_defs) > 1:
             pass
@@ -248,39 +220,25 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         except IndexError:
             rng_def = {}
         idx_types = rng_def.get('kds_esIndexType', []).copy()
-        rtn_list = []
+        if 'es_Ignore' in idx_types:
+            return rtn_list
         ranges = self.rdfs_range # pylint: disable=no-member
 
-        # if self._prop_name == 'bf_shelfMark':
-        # pdb.set_trace()
         # copy the current data into the es_values attribute then run
         # the es_processors to manipulate that data
         self.es_values = self.copy()
+        # determine if using inverseOf object
+        if hasattr(self, 'kds_esLookup') and self.kds_esLookup:
+            self.es_values =  self.dataset.json_qry("%s.$" % getattr(self,
+                    self.kds_esLookup[0])[0].pyuri,
+                    {'$':self.bound_class.subject})
+
         self._run_processors(self._es_processors)
         if not idx_types:
             nested = False
             for rng in ranges:
-                def test_rng(rng, rdfclass):
-                    """ Test to see if rng for the class should be an object
-                    or a litteral
-                    """
-                    if rng == 'rdfs_Literal':
-                        return False
-                    if hasattr(rdfclass, rng):
-                        mod_class = getattr(rdfclass, rng)
-                        for item in mod_class.cls_defs['rdf_type']:
-                            try:
-                                if issubclass(getattr(rdfclass, item),
-                                              rdfclass.rdfs_Literal):
-                                    return False
-                            except AttributeError:
-                                pass
-                        if isinstance(mod_class, rdfclass.RdfClassMeta):
-                            return True
-                    return False
-                if test_rng(rng, MODULE.rdfclass):
+                if range_is_obj(rng, MODULE.rdfclass):
                     nested = True
-
 
             value_class = [value.__class__ for value in self.es_values
                            if isinstance(value, MODULE.rdfclass.RdfClassBase)]
@@ -288,9 +246,6 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
                 nested = True
             else:
                 nested = False
-            # for value in self:
-            #     if isinstance(value, MODULE.rdfclass.RdfClassBase):
-            #         nensted = True
             if nested:
                 idx_types.append('es_Nested')
 
@@ -298,18 +253,13 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
             if kwargs.get('depth', 0) > 6:
                 return  [val.subject.sparql_uri for val in self]
             for value in self.es_values:
-                # if self._prop_name == "bf_shelfMark":
-                #     pdb.set_trace()
                 try:
                     rtn_list.append(value.es_json('es_Nested', **kwargs))
                 except AttributeError:
-                    rtn_list.append(_convert_value(value,
-                                                   "missing_obj"))
+                    rtn_list.append(convert_value_to_es(value, "missing_obj"))
         else:
             for value in self.es_values:
-                # if value.__class__.__name__ == "bf_shelfMark":
-                #     pdb.set_trace()
-                rtn_list.append(_convert_value(value))
+                rtn_list.append(convert_value_to_es(value))
         return rtn_list
 
 
