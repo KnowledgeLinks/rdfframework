@@ -210,7 +210,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         except AttributeError:
             rng_defs = []
 
-        # if self.__class__._prop_name == 'bf_hasInstance':
+        # if self.__class__._prop_name == 'bf_hasItem':
         #     pdb.set_trace()
         if len(rng_defs) > 1:
             pass
