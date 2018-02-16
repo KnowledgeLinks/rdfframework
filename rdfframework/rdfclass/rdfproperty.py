@@ -228,10 +228,11 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         # the es_processors to manipulate that data
         self.es_values = self.copy()
         # determine if using inverseOf object
-        if hasattr(self, 'kds_esLookup') and self.kds_esLookup:
-            self.es_values =  self.dataset.json_qry("%s.$" % getattr(self,
-                    self.kds_esLookup[0])[0].pyuri,
+        if rng_def.get('kds_esLookup'):
+            self.es_values += self.dataset.json_qry("%s.$" % getattr(self,
+                    rng_def['kds_esLookup'][0])[0].pyuri,
                     {'$':self.bound_class.subject})
+            self.es_values = list(set(self.es_values))
 
         self._run_processors(self._es_processors)
         if not idx_types:
