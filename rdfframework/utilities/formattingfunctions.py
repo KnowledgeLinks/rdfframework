@@ -109,9 +109,10 @@ def make_doc_string(name, cls_def, bases=[], props={}):
                                   subdivider="\n")
     if len(description) > 0:
         doc_items.append(description)
-    parents = [("", NSM.ttluri(base.__name__)) for base in bases[:-1] if
+    parents = [("", base.__name__.sparql) for base in bases[:-1] if
                base.__name__ not in ['RdfPropertyBase', 'RdfClassBase']]
     if len(parents) > 0:
+        # pdb.set_trace()
         cls_hierarchy = format_doc_vals(data=parents,
                                         descriptor="Class Hierarchy",
                                         divider=" -> ",
@@ -295,3 +296,8 @@ def format_max_width(text, max_width=None, **kwargs):
                     line += word
                 current_len = len(line)
     return "\n".join(lines)
+
+def print_doc(self=None):
+    """ simple function for print the classes docstring. Used for assigning
+    a property value in a metaclass """
+    print(self.__doc__)

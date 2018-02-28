@@ -33,6 +33,11 @@ class Test_XsdString(unittest.TestCase):
                                   {'type': 'literal',
                                    'value': 'test lang string',
                                    'lang': 'en'}]
+        self.test_json_values = [({"lang":"en", "value":"lang_dict"},
+                                   'lang_dict'),
+                                 ({"value": "dict"}, 'dict'),
+                                 ("str_input", 'str_input'),
+                                 (1, '1')]
 
 
     def test_str_instance(self):
@@ -55,14 +60,20 @@ class Test_XsdString(unittest.TestCase):
         values = [rdt.XsdString(value) for value in self.test_lang_options]
         self.assertTrue(len(set(values)) == 1)
 
+    def test_json_values(self):
+        for tup in self.test_json_values:
+            self.assertEqual(rdt.XsdString(tup[0]).to_json, tup[1])
+
 class Test_XsdBool(unittest.TestCase):
     """docstring for Test_XsdBool"""
     def setUp(self):
         self.true_inputs = [True, "1", 1, "true", "True"]
-        self.false_inputs = [False, "0", "false", "False"]
+        self.false_inputs = [False, "0", 0, "false", "False"]
         self.error_inputs = [None, "adfa"]
         self.test_sparql_values = [(True,'"true"^^xsd:boolean'),
                                    (False, '"false"^^xsd:boolean')]
+        self.test_json_values = [(True, 'true'),
+                                 (False, 'false')]
 
     def test_true(self):
         for value in self.true_inputs:
@@ -80,6 +91,9 @@ class Test_XsdBool(unittest.TestCase):
         for tup in self.test_sparql_values:
             self.assertEqual(rdt.XsdBoolean(tup[0]).sparql, tup[1])
 
+    def test_json_values(self):
+        for tup in self.test_json_values:
+            self.assertEqual(rdt.XsdBoolean(tup[0]).to_json, tup[1])
 
 if __name__ == '__main__':
     unittest.main()

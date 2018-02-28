@@ -274,6 +274,12 @@ def get_reverse_json_qry_item(dataset, param, no_key=False, initial_val=None):
         def reverse_filter_list(ds, key, filter_tup, initial_val=None):
 
             def get_reverse_ds_dict(ds, key, filter_tup, initial_val=None):
+                if hasattr(ds, 'rmap') and initial_val:
+                    # pdb.set_trace()
+                    if key:
+                        return ds.rmap[initial_val][key]
+                    else:
+                        return ds.rmap[initial_val]
                 data_list = UniqueList()
                 if not key and not initial_val:
                     return data_list

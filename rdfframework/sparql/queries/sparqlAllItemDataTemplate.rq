@@ -1,3 +1,16 @@
+# sparlAllItemDataTemplate.rq
+#
+# Query will return triples multiple edges out from a base iri or from a list
+# a list of IRIs
+#
+# kwargs:
+#       ouput: ['rdf', 'json'] rdf will run a construct query
+#       item_uri: uri for a single item
+#       uri_list: list of Uri()s to retreive
+#       special_union: additional query statments
+#       filters: filter statement
+#       prefix: the sparql prefix declarations
+
 {{ prefix }}
 {% if output == 'rdf'%}
 CONSTRUCT {
@@ -8,7 +21,17 @@ WHERE
 {% endif %}
 SELECT DISTINCT ?s ?p ?o
 {
+    {% if item_uri %}
+    # Return a single item
     BIND({{ item_uri }} as ?item) .
+    {% endif %}
+    {% if uri_list %}
+    # Get Items for multipe items
+    VALUES ?item {
+        {% for item in uri_list %}{{ item.sparql }}
+        {% endfor %}
+    }
+    {% endif %}
     { # Gather all primary triples
         ?item ?p ?o.
         BIND(?item as ?s) .
@@ -63,7 +86,7 @@ SELECT DISTINCT ?s ?p ?o
         Filter(?p0 != rdf:type).
         Filter(isiri(?s0)||isblank(?s0)) .
         Filter(?p1 != ?p0) .
-    } UNION { # Select Triples where the URI is the Object one level deep
+    } UNION { # Select Triples where the URI is the Object three level deep
         ?s0 ?p0 ?item .
         ?s0 ?p1 ?s1 .
         ?s1 ?p2 ?o2 .
@@ -74,9 +97,11 @@ SELECT DISTINCT ?s ?p ?o
         Filter(?p2 != rdf:type).
         Filter(?p1 != rdf:type).
         Filter(?p!= bf:heldBy).
+        Filter(?p!= bf:partOf).
+        Filter(?p!= bf:subject).
         Filter(isiri(?s0)||isblank(?s0)) .
         Filter(?p1 != ?p0) .
-    } UNION { # Select Triples where the URI is the Object one level deep
+    } UNION { # Select Triples where the URI is the Object four levels deep
         ?s0 ?p0 ?item .
         ?s0 ?p1 ?s1 .
         ?s1 ?p2 ?o2 .
@@ -87,6 +112,8 @@ SELECT DISTINCT ?s ?p ?o
         Filter(?p2 != rdf:type).
         Filter(?p1 != rdf:type).
         Filter(?p3!= bf:heldBy).
+        Filter(?p3!= bf:partOf).
+        Filter(?p3!= bf:subject).
         Filter(isiri(?s0)||isblank(?s0)) .
         Filter(?p1 != ?p0) .
     }  UNION { # Select Triples where the URI is the Object one level deep
@@ -101,6 +128,8 @@ SELECT DISTINCT ?s ?p ?o
         Filter(?p2 != rdf:type).
         Filter(?p1 != rdf:type).
         Filter(?p3!= bf:heldBy).
+        Filter(?p3!= bf:partOf).
+        Filter(?p3!= bf:subject).
         Filter(isiri(?s0)||isblank(?s0)) .
         Filter(?p1 != ?p0) .
         Filter(isblank(?s)) .

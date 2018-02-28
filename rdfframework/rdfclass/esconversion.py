@@ -5,18 +5,29 @@ elasticsearch representation
 import pdb
 from hashlib import sha1
 from rdfframework.utilities import LABEL_FIELDS, VALUE_FIELDS
-from rdfframework.datatypes import BaseRdfDataType
+from rdfframework.datatypes import BaseRdfDataType, BlankNode, RdfNsManager
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 __MODULE__ = __import__(__name__)
 
+es_idx_types = {
+    'es_Raw': {'keyword': {'type': 'keyword'}},
+    'es_Lower': {'lower': {'type': 'text',
+                           'analyzer': 'keylower'}},
+    'es_NotAnalyzed': "keyword",
+    'es_NotIndexed': False,
+    'es_Ignored': False,
+    'es_Standard': {}
+}
+NSM = RdfNsManager()
 
-def convert_value_to_es(value, method=None):
+def convert_value_to_es(value, ranges, obj, method=None):
     """
     Takes an value and converts it to an elasticsearch representation
 
     args:
         value: the value to convert
+        ranges: the list of ranges
         method: convertion method to use
                 'None': default -> converts the value to its json value
                 'missing_obj': adds attributes as if the value should have
@@ -39,10 +50,10 @@ def convert_value_to_es(value, method=None):
 
     if method == "missing_obj":
         rtn_obj = {
-            "rdf_type": [rng.sparql_uri for rng in self.rdfs_range], # pylint: disable=no-member
-            "label": [getattr(self, label)[0] \
+            "rdf_type": [rng.sparql_uri for rng in ranges], # pylint: disable=no-member
+            "label": [getattr(obj, label)[0] \
                      for label in LABEL_FIELDS \
-                     if hasattr(self, label)][0]}
+                     if hasattr(obj, label)][0]}
         try:
             rtn_obj['uri'] = value.sparql_uri
             rtn_obj["rdfs_label"] = NSM.nouri(value.sparql_uri)
@@ -52,6 +63,57 @@ def convert_value_to_es(value, method=None):
         rtn_obj['value'] = rtn_obj['rdfs_label']
         return rtn_obj
     return sub_convert(value)
+
+def get_idx_types(rng_def, ranges):
+    """
+    Returns the elasticsearch index types for the obj
+
+    args:
+        rng_def: the range defintion dictionay
+        ranges: rdfproperty ranges
+    """
+    idx_types = rng_def.get('kds_esIndexType', []).copy()
+    if not idx_types:
+        nested = False
+        for rng in ranges:
+            if range_is_obj(rng, __MODULE__.rdfclass):
+                nested = True
+        if nested:
+            idx_types.append('es_Nested')
+    return idx_types
+
+def get_prop_range_defs(class_names, def_list):
+    """
+    Filters the range defitions based on the bound class
+
+    args:
+        obj: the rdffroperty instance
+    """
+
+    try:
+        cls_options = set(class_names + ['kdr_AllClasses'])
+        return [rng_def for rng_def in def_list \
+                if not isinstance(rng_def, BlankNode) \
+                and cls_options.difference(\
+                        set(rng_def.get('kds_appliesToClass', []))) < \
+                        cls_options]
+    except AttributeError:
+        return []
+
+def get_prop_range_def(rng_defs):
+    """
+    Returns unique range defintion for current instance
+
+    args:
+        rng_defs: the output from 'get_prop_range_defs'
+    """
+    if len(rng_defs) > 1:
+        pass
+        #! write function to merge range defs
+    try:
+        return rng_defs[0]
+    except IndexError:
+        return {}
 
 def range_is_obj(rng, rdfclass):
     """ Test to see if range for the class should be an object
@@ -75,6 +137,7 @@ def range_is_obj(rng, rdfclass):
 __IGN_KEYS__ = ['uri', 'id', 'value', 'label', 'rdf_type']
 __COMBINED__ = VALUE_FIELDS + LABEL_FIELDS
 __ALL_IGN__ = set(__COMBINED__ + __IGN_KEYS__)
+
 def get_es_value(obj, def_obj):
     """
     Returns the value for an object that goes into the elacticsearch 'value'
@@ -89,12 +152,12 @@ def get_es_value(obj, def_obj):
         Returns the string representation of the dict item
         """
         if isinstance(item, dict):
-            return item.get('value')
-        return item
+            return str(item.get('value'))
+        return str(item)
 
     value_flds = []
     if def_obj.es_defs.get('kds_esValue'):
-        value_fls = def_obj.es_defs['kds_esValue']
+        value_flds = def_obj.es_defs['kds_esValue'].copy()
     else:
         # pdb.set_trace()
         value_flds = set(obj).difference(__ALL_IGN__)
@@ -109,11 +172,15 @@ def get_es_value(obj, def_obj):
                                   for prop, value in obj.items()
                                   if isinstance(value, dict) and \
                                   value.get('label')])
-    obj['value'] = get_dict_val(obj['value'])
+
     if isinstance(obj['value'], list):
         obj['value'] = ", ".join([get_dict_val(item) for item in obj['value']])
-    if obj['value'].strip().endswith("/"):
-        obj['value'] = obj['value'].strip()[:-1].strip()
+    else:
+        obj['value'] = get_dict_val(obj['value'])
+    if str(obj['value']).strip().endswith("/"):
+        obj['value'] = str(obj['value']).strip()[:-1].strip()
+    if not obj['value']:
+        obj['value'] = obj['uri']
     return obj
 
 def get_es_label(obj, def_obj):
@@ -136,7 +203,7 @@ def get_es_label(obj, def_obj):
         if not obj.get('label'):
             obj['label'] = def_obj.__class__.__name__.split("_")[-1]
     except AttributeError:
-        # an attribute error is caused when the class is an only
+        # an attribute error is caused when the class is only
         # an instance of the BaseRdfClass. We will search the rdf_type
         # property and construct a label from rdf_type value
         if def_obj.get('rdf_type'):
@@ -168,3 +235,5 @@ def get_es_ids(obj, def_obj):
             path = ""
         obj['id'] = path + sha1(obj['uri'].encode()).hexdigest()
     return obj
+
+

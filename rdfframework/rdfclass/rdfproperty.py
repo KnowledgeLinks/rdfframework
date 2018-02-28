@@ -3,26 +3,42 @@ import pdb
 import types
 # pdb.set_trace()
 # import rdfframework.rdfclass as rdfclass
-from rdfframework.utilities import find_values, make_doc_string, LABEL_FIELDS, \
-        RANGE_FIELDS, DESCRIPTION_FIELDS, DOMAIN_FIELDS, pick
+from rdfframework.utilities import (find_values,
+                                    make_doc_string,
+                                    LABEL_FIELDS,
+                                    RANGE_FIELDS,
+                                    DESCRIPTION_FIELDS,
+                                    DOMAIN_FIELDS,
+                                    RegistryDictionary,
+                                    pick,
+                                    print_doc)
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, \
         RdfNsManager
 from rdfframework.processors import prop_processor_mapping
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfclass.esconversion import (convert_value_to_es,
-                                                range_is_obj)
+                                                range_is_obj,
+                                                get_prop_range_defs,
+                                                get_prop_range_def,
+                                                es_idx_types,
+                                                get_idx_types)
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
 CFG = RdfConfigManager()
 NSM = RdfNsManager()
 MODULE = __import__(__name__)
-properties = {}
 domain_props = {}
 
+properties = RegistryDictionary()
 
 class RdfPropertyMeta(type):
     """ Metaclass for generating rdfproperty classes """
+
+    @property
+    def doc(cls):
+        """ Prints the docstring for the class."""
+        print_doc(cls)
 
     @classmethod
     def __prepare__(mcs, name, bases, **kwargs):
@@ -45,6 +61,7 @@ class RdfPropertyMeta(type):
         new_def = prepare_prop_defs(prop_defs, prop_name, cls_names)
         new_def = filter_prop_defs(prop_defs, hierarchy, cls_names)
         new_def['__doc__'] = doc_string
+        new_def['doc'] = property(print_doc)
         new_def['class_names'] = cls_names
         new_def['_prop_name'] = prop_name
         if prop_name == 'rdf_type':
@@ -107,13 +124,7 @@ class RdfLinkedPropertyMeta(RdfPropertyMeta):
 class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
     """ Property Base Class """
 
-    es_idx_types = {
-        'es_Raw': {'keyword': {'type': 'keyword'}},
-        'es_Lower': {'lower': {'type': 'text',
-                               'analyzer': 'keylower'}},
-        'es_NotAnalyzed': "keyword",
-        'es_NotIndexed': False
-    }
+
 
 
     def __init__(self, bound_class, dataset=None):
@@ -148,11 +159,19 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
 
         es_map = {}
         ranges = cls.rdfs_range # pylint: disable=no-member
-        rng_defs = [rng_def for rng_def in cls.kds_rangeDef # pylint: disable=no-member
-                    if not isinstance(rng_def, BlankNode)
-                    and (cls._cls_name in rng_def.get('kds_appliesToClass', []) # pylint: disable=no-member
-                         or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass',
-                                                            []))]
+
+        # rng_defs = [rng_def for rng_def in cls.kds_rangeDef # pylint: disable=no-member
+        #             if not isinstance(rng_def, BlankNode)
+        #             and (cls._cls_name in rng_def.get('kds_appliesToClass', []) # pylint: disable=no-member
+        #                  or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass',
+        #                                                     []))]
+        rng_defs = get_prop_range_defs(cls.class_names, cls.kds_rangeDef)
+        rng_def = get_prop_range_def(rng_defs)
+
+        idx_types = get_idx_types(rng_def, ranges)
+        if 'es_Ignored' in idx_types:
+            return {'type': 'text',
+                    'index': es_idx_types['es_NotIndexed']}
         if 'es_Nested' in idx_types:
             if (kwargs.get('depth', 0) >= 1 and \
                     kwargs.get('class') == ranges[0]) or \
@@ -167,7 +186,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         elif len(idx_types) > 1:
             fields = {}
             for idx in idx_types:
-                fields.update(self.es_idx_types[idx])
+                fields.update(es_idx_types[idx])
             es_map['fields'] = fields
         elif len(idx_types) == 1:
             if cls._prop_name == 'rdf_type': # pylint: disable=no-member
@@ -175,7 +194,7 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
             elif idx_types[0] == 'es_NotIndexed':
                 es_map['index'] = False
             else:
-                es_map['type'] = self.es_idx_types[idx_types[0]]
+                es_map['type'] = es_idx_types[idx_types[0]]
         try:
             if not es_map.get('type'):
                 fld_type = BaseRdfDataType[ranges[0]].es_type
@@ -200,30 +219,14 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         """ Returns a JSON object of the property for insertion into es
         """
         rtn_list = []
-        try:
-            cls_options = set(self.class_names + ['kdr_AllClasses'])
-            rng_defs = [rng_def for rng_def in self.kds_rangeDef \
-                        if not isinstance(rng_def, BlankNode) \
-                        and cls_options.difference(\
-                                set(rng_def.get('kds_appliesToClass', []))) < \
-                                cls_options]
-        except AttributeError:
-            rng_defs = []
-
-        # if self.__class__._prop_name == 'bf_hasItem':
+        rng_defs = get_prop_range_defs(self.class_names, self.kds_rangeDef)
+        # if self.__class__._prop_name == 'bf_partOf':
         #     pdb.set_trace()
-        if len(rng_defs) > 1:
-            pass
-            #! write function to merge range defs
-        try:
-            rng_def = rng_defs[0]
-        except IndexError:
-            rng_def = {}
+        rng_def = get_prop_range_def(rng_defs)
         idx_types = rng_def.get('kds_esIndexType', []).copy()
         if 'es_Ignore' in idx_types:
             return rtn_list
         ranges = self.rdfs_range # pylint: disable=no-member
-
         # copy the current data into the es_values attribute then run
         # the es_processors to manipulate that data
         self.es_values = self.copy()
@@ -240,27 +243,46 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
             for rng in ranges:
                 if range_is_obj(rng, MODULE.rdfclass):
                     nested = True
+                    break
 
             value_class = [value.__class__ for value in self.es_values
                            if isinstance(value, MODULE.rdfclass.RdfClassBase)]
-            if value_class:
+            if value_class or nested:
                 nested = True
             else:
                 nested = False
             if nested:
                 idx_types.append('es_Nested')
-
+        rtn_obj = {}
         if 'es_Nested' in idx_types:
             if kwargs.get('depth', 0) > 6:
                 return  [val.subject.sparql_uri for val in self]
+
             for value in self.es_values:
                 try:
-                    rtn_list.append(value.es_json('es_Nested', **kwargs))
+                    new_value = value.es_json('es_Nested', **kwargs)
                 except AttributeError:
-                    rtn_list.append(convert_value_to_es(value, "missing_obj"))
+                    new_value = convert_value_to_es(value,
+                                                    ranges,
+                                                    self,
+                                                    "missing_obj")
+                rtn_list.append(new_value)
+                if rng_def.get("kds_esField"):
+                    es_value_fld = rng_def['kds_esValue'][0] \
+                            if rng_def['kds_esValue'] else None
+                    es_field = rng_def['kds_esField'][0]
+                    for item in value.get(es_field):
+                        if new_value.get(es_value_fld):
+                            val = new_value.get(es_value_fld , [])
+                            try:
+                                rtn_obj[item.pyuri] += val
+                            except KeyError:
+                                rtn_obj[item.pyuri] = val
         else:
             for value in self.es_values:
-                rtn_list.append(convert_value_to_es(value))
+                rtn_list.append(convert_value_to_es(value, ranges, self))
+        if rtn_obj:
+            return rtn_obj
         return rtn_list
 
 
@@ -345,34 +367,34 @@ def get_properties(cls_def):
 
     return prop_list
 
-def get_idx_types(prop_name, prop_def):
-    if len(prop_def.rng_defs) > 1:
-        pass
-        #! write function to merge range defs
-    try:
-        rng_def = prop_def.rng_defs[0]
-    except IndexError:
-        rng_def = {}
-    idx_types = rng_def.get('kds_esIndexType', []).copy()
-    # pdb.set_trace()
-    try:
-        idx_types.remove('es_Standard')
-    except ValueError:
-        pass
+# def get_idx_types(prop_name, prop_def):
+#     if len(prop_def.rng_defs) > 1:
+#         pass
+#         #! write function to merge range defs
+#     try:
+#         rng_def = prop_def.rng_defs[0]
+#     except IndexError:
+#         rng_def = {}
+#     idx_types = rng_def.get('kds_esIndexType', []).copy()
+#     # pdb.set_trace()
+#     try:
+#         idx_types.remove('es_Standard')
+#     except ValueError:
+#         pass
 
-    if prop_name == "rdfs_label": # pylint: disable=no-member
-        idx_types += ['es_Raw', 'es_Lower']
-    if idx_types:
-        nested = False
-        for rng in ranges:
-            if hasattr(MODULE.rdfclass, rng) and \
-                    rng != 'rdfs_Literal' and \
-                    isinstance(getattr(MODULE.rdfclass, rng),
-                               MODULE.rdfclass.RdfClassMeta)\
-                    and cls._prop_name != 'rdf_type': # pylint: disable=no-member
-                nested = True
-        if nested:
-            idx_types.append('es_Nested')
+#     if prop_name == "rdfs_label": # pylint: disable=no-member
+#         idx_types += ['es_Raw', 'es_Lower']
+#     if idx_types:
+#         nested = False
+#         for rng in ranges:
+#             if hasattr(MODULE.rdfclass, rng) and \
+#                     rng != 'rdfs_Literal' and \
+#                     isinstance(getattr(MODULE.rdfclass, rng),
+#                                MODULE.rdfclass.RdfClassMeta)\
+#                     and cls._prop_name != 'rdf_type': # pylint: disable=no-member
+#                 nested = True
+#         if nested:
+#             idx_types.append('es_Nested')
 
 def filter_prop_defs(prop_defs, hierarchy, cls_names):
     """ Reads through the prop_defs and returns a dictionary filtered by the

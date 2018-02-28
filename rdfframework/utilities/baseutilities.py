@@ -13,6 +13,7 @@ import pdb
 import logging
 import inspect
 import pprint
+import pydoc
 
 from base64 import b64decode
 from flask import json
@@ -32,6 +33,76 @@ ENV = Environment(loader=FileSystemLoader(
     [os.path.join(FRAMEWORK_BASE, "sparql", "queries"),
      os.path.join(FRAMEWORK_BASE, "turtle")]))
 
+def get_obj_frm_str(obj_str, **kwargs):
+    """
+    Returns a python object from a python object string
+
+    args:
+        obj_str: python object path expamle
+                    "rdfframework.connections.ConnManager[{param1}]"
+
+    kwargs:
+        * kwargs used to format the 'obj_str'
+    """
+    obj_str = obj_str.format(**kwargs)
+    args = []
+    kwargs = {}
+    params = []
+    # parse the call portion of the string
+    if "(" in obj_str:
+        call_args = obj_str[obj_str.find("("):]
+        obj_str = obj_str[:obj_str.find("(")]
+        call_args = call_args[1:-1]
+        if call_args:
+            call_args = call_args.split(",")
+        else:
+            call_args = []
+        call_args = [arg.strip() for arg in call_args]
+
+        for arg in call_args:
+            if "=" in arg:
+                parts = arg.split("=")
+                kwargs[parts[0]] = parts[1]
+            else:
+                args.append(arg)
+    # parse a the __getitem__ portion of the string
+    if "[" in obj_str:
+        params = obj_str[obj_str.find("["):]
+        obj_str = obj_str[:obj_str.find("[")]
+        params = [part.replace("[", "").replace("]", "")
+                  for part in params.split("][")]
+    obj = pydoc.locate(obj_str)
+    if params:
+        for part in params:
+            obj = get_attr(obj, part)
+    if args or kwargs:
+        if kwargs:
+            obj = obj.__call__(*args, **kwargs)
+        else:
+            obj = obj.__call__(*args)
+    return obj
+
+class RegistryDictionary(dict):
+    """
+    Extends basic dictionay for access of items in the dictionary
+    """
+    def find(self, value):
+        """
+        returns a dictionary of items based on the a lowercase search
+
+        args:
+            value: the value to search by
+        """
+        value = str(value).lower()
+        rtn_dict = RegistryDictionary()
+        for key, item in self.items():
+            if value in key.lower():
+                rtn_dict[key] = item
+        return rtn_dict
+
+    def __getattr__(self, value):
+        return self[value]
+
 class memorize():
     def __init__(self, function):
         self.__wrapped__ = function
@@ -41,7 +112,7 @@ class memorize():
         self.full = False
 
     def pop_first_used(self):
-        if self.full or self.__len > 10000:
+        if self.full or self.__len > 10000000:
             self.full = False
             counter = 1000
             while counter:
@@ -727,6 +798,8 @@ class DummyLogger():
     info = no_call
     warn = no_call
     warning = no_call
+    setLevel = no_call
+    level = no_call
 
     def __getattr__(*args, **kwargs):
         return no_call

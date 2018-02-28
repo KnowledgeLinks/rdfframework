@@ -13,6 +13,7 @@ import sys
 import json
 import shutil
 import copy
+import logging
 
 from collections import OrderedDict
 from rdfframework.utilities import (DictClass,
@@ -22,7 +23,8 @@ from rdfframework.utilities import (DictClass,
                                     reg_patterns,
                                     format_multiline,
                                     colors,
-                                    is_writable_dir)
+                                    is_writable_dir,
+                                    get_obj_frm_str)
 import pydoc
 
 __author__ = "Mike Stabile, Jeremy Nelson"
@@ -211,8 +213,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                                 "generation.",
                                         "default_values": {
                                             "namespace": "active_defs",
-                                            "conn_type": "triplestore"
-                                         } }]
+                                            "conn_type": "triplestore"},
+                                        "remove_if": {"attr": "TURN_ON_VOCAB",
+                                                      "value": False}
+                                       }]
             }),
         ("DIRECTORIES", {"required": True,
                          "type": list,
@@ -298,12 +302,17 @@ class RdfConfigManager(metaclass=ConfigSingleton):
             raise ImportError("RdfConfigManager has already been initialized")
         self.__set_cfg_reqs__(**kwargs)
         self.__set_cfg_attrs__(config, **kwargs)
+        self.__config__['TURN_ON_VOCAB'] = kwargs.get("turn_on_vocab",
+                  self.__config__.get("TURN_ON_VOCAB",
+                  self.__cfg_reqs__["TURN_ON_VOCAB"]['default']))
         errors = self.__verify_config__(self.__config__, **kwargs)
         self.__reslove_errors__(errors, **kwargs)
         log.info("CONFIGURATION validated")
         self.__is_initialized__ = True
         log.info("Initializing directories")
         self.__initialize_directories__(**kwargs)
+        log.info("Setting Logging")
+        self.__set_logging__(**kwargs)
         log.info("setting RDF Namespaces")
         self.__load_namespaces__(**kwargs)
         log.info("Initializing Connections")
@@ -311,11 +320,28 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
         self.__run_defs__(**kwargs)
 
+    def __set_logging__(self, **kwargs):
+        import rdfframework
+        if not self.LOGGING:
+            rdfframework.configure_logging(rdfframework.__modules__, "dummy")
+        if self.LOGGING == True:
+          return
+        for handler in self.LOGGING.get('handlers', {}):
+            if self.LOGGING['handlers'][handler].get('filename'):
+                fname = self.LOGGING['handlers'][handler]['filename']
+                fname = os.path.join(self.dirs.logs, fname)
+                self.LOGGING['handlers'][handler]['filename'] = fname
+
+        logging.config.dictConfig(self.LOGGING)
+        rdfframework.set_module_loggers(rdfframework.__modules__,
+                                        method='active')
+
     def __load_namespaces__(self, **kwargs):
-        if not self.namespaces:
-            return
         ns_mgr = get_obj_frm_str("rdfframework.datatypes.RdfNsManager")
-        self.__config__['nsm'] = ns_mgr(self.namespaces)
+        if not self.namespaces:
+            self.__config__['nsm'] = ns_mgr(self.namespaces)
+        else:
+            self.__config__['nsm'] = ns_mgr()
 
     def __run_defs__(self, **kwargs):
         """
@@ -335,13 +361,14 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                             "initialized with out definitions")
         else:
             source = []
-            if self.__config__.get("TURN_ON_VOCAB") == False:
-                source.append("config file")
             if kwargs.get("turn_on_vocab") == False:
-                source.append("keywords")
+                source = ("keyword arg", "turn_on_vocab")
+            elif self.__config__.get("TURN_ON_VOCAB") == False:
+                source = ("config attr", "TURN_ON_VOCAB")
             log.warning("rdfframework initialized without rdf "
-                        "definitions because of 'TURN_ON_VOCAB' in %s",
-                        source)
+                        "definitions because of '%s' -> '%s'",
+                        *source)
+
     def __verify_config__(self, config, **kwargs):
         """ reads through the config object and validates missing arguments
 
@@ -352,7 +379,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         log.info("Verifiying config settings")
         error_dict = OrderedDict()
         for attr, req in self.__cfg_reqs__.items():
-            req = update_req(attr, req)
+            req = update_req(attr, req, config)
             result = test_attr(get_attr(config, attr), req)
             if result:
                 if 'value' not in result \
@@ -652,7 +679,6 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
         pprint.pprint(new_config)
 
-
     def __write_error_file__(self, errors, **kwargs):
 
         if self.__err_file__:
@@ -671,6 +697,7 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         msg = format_multiline(__MSGS__["exit"], **msg_kwargs)
         colors.turn_on
         return msg
+
     def __save_config__(self, **kwargs):
         """
         Provides the user the option to save the current configuration
@@ -680,9 +707,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                       False prompts user
         """
         option = "1"
-        new_path = self.__config_file__
-        config_dir = os.path.split(self.__config_file__)[0]
-        filename = os.path.split(self.__config_file__)[1]
+        if self.__config_file__:
+            new_path = self.__config_file__
+            config_dir = os.path.split(self.__config_file__)[0]
+            filename = os.path.split(self.__config_file__)[1]
         if not kwargs.get("autosave"):
             while True:
                 print(format_multiline(__MSGS__['save']))
@@ -692,11 +720,19 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         if option == "3":
             return
         if option == "1" and not self.__config_file__:
+            print(colors.red("Config file location could not be determined"))
             option = "2"
         if option == "2":
             while True:
                 new_path = input("Enter a file path to save the new "
-                                 "configuation -> ")
+                                 "configuation [exit(), continue()]-> ")
+                if new_path.lower() == "exit()":
+                    sys.exit()
+                elif new_path.lower() == "continue()":
+                    option = "3"
+                    break
+                elif not new_path:
+                    continue
                 try:
                     path = os.path.split(new_path)
                     if not path[0]:
@@ -714,12 +750,10 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
         elif option == "1":
             shutil.copy(self.__config_file__, self.__config_file__ + ".bak")
-
         with open(new_path, "w") as fo:
             fo.write(self.__format_save_config__(self.__config__,
                                                  self.__cfg_reqs__,
                                                  **kwargs))
-
 
     def __set_cfg_attrs__(self, config, **kwargs):
 
@@ -746,7 +780,9 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                              self.__err_file_name__)
             new_config = read_module_attrs(config, self.__reserved)
         else:
-            new_config = copy.deepcopy(config)
+            new_config = copy.deepcopy({attr: value
+                                        for attr, value in config.items()
+                                        if not attr.startswith("_")})
         self.__config__ = OrderedDict()
         for attr, req in self.__cfg_reqs__.items():
             if new_config.get(attr):
@@ -1296,7 +1332,7 @@ def test_attr(attr, req, parent_attr=None, **kwargs):
             rtn_obj.update({"msg": msg, "value": attr})
             return rtn_obj
 
-def update_req(name, old_req):
+def update_req(name, old_req, config={}):
     """
     Takes a requirement and updates it based on a specific attribute key
 
@@ -1307,12 +1343,19 @@ def update_req(name, old_req):
     if not name:
         return old_req
     new_req = copy.deepcopy(old_req)
+    del_idxs = []
     if "req_items" in old_req:
         req_key = get_req_key(old_req['req_items'])
-        for item in old_req['req_items']:
+        for i, item in enumerate(old_req['req_items']):
             if name == item[req_key] and item.get("dict_params"):
                 for param, value in item['dict_params'].items():
                     new_req['item_dict'][param].update(value)
+            if item.get("remove_if"):
+                test_val = get_attr(config, item['remove_if']['attr'])
+                if test_val == item['remove_if']['value']:
+                    del_idxs.append(i)
+        for idx in sorted(del_idxs, reverse=True):
+            del new_req['req_items'][idx]
 
     return new_req
 
@@ -1337,54 +1380,6 @@ def get_options_from_str(obj_str, **kwargs):
         pass
     return []
 
-def get_obj_frm_str(obj_str, **kwargs):
-    """
-    Returns a python object from a python object string
-
-    args:
-        obj_str: python object path expamle
-                    "rdfframework.connections.ConnManager[{param1}]"
-
-    kwargs:
-        * kwargs used to format the 'obj_str'
-    """
-    obj_str = obj_str.format(**kwargs)
-    args = []
-    kwargs = {}
-    params = []
-    # parse the call portion of the string
-    if "(" in obj_str:
-        call_args = obj_str[obj_str.find("("):]
-        obj_str = obj_str[:obj_str.find("(")]
-        call_args = call_args[1:-1]
-        if call_args:
-            call_args = call_args.split(",")
-        else:
-            call_args = []
-        call_args = [arg.strip() for arg in call_args]
-
-        for arg in call_args:
-            if "=" in arg:
-                parts = arg.split("=")
-                kwargs[parts[0]] = parts[1]
-            else:
-                args.append(arg)
-    # parse a the __getitem__ portion of the string
-    if "[" in obj_str:
-        params = obj_str[obj_str.find("["):]
-        obj_str = obj_str[:obj_str.find("[")]
-        params = [part.replace("[", "").replace("]", "")
-                  for part in params.split("][")]
-    obj = pydoc.locate(obj_str)
-    if params:
-        for part in params:
-            obj = get_attr(obj, part)
-    if args or kwargs:
-        if kwargs:
-            obj = obj.__call__(*args, **kwargs)
-        else:
-            obj = obj.__call__(*args)
-    return obj
 
 def strip_errors(obj):
     """

@@ -36,15 +36,15 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
             data_upload: list of tuples describing the files to upload
         """
         self.mgr = None
-        if kwargs.get("data_upload"):
-            import rdfframework.datamanager as dm
-            mgr = kwargs.get('data_file_manager', kwargs.get("name", True))
-            if isinstance(mgr, dm.DataFileManager):
-                self.mgr = mgr
-            elif mgr == 'active_defs':
-                self.mgr = dm.DefinitionManager(conn=self, **kwargs)
-            else:
-                self.mgr = dm.DataFileManager(conn=self, **kwargs)
+        # if kwargs.get("data_upload"):
+        import rdfframework.datamanager as dm
+        mgr = kwargs.get('data_file_manager', kwargs.get("name", True))
+        if isinstance(mgr, dm.DataFileManager):
+            self.mgr = mgr
+        elif mgr == 'active_defs':
+            self.mgr = dm.DefinitionManager(conn=self, **kwargs)
+        else:
+            self.mgr = dm.DataFileManager(conn=self, **kwargs)
         if self.mgr and kwargs.get('data_upload'):
             self.mgr.__file_locations__ += kwargs['data_upload']
             if kwargs.get("delay_check"):
@@ -148,7 +148,6 @@ class ConnManager(metaclass=ConnManagerMeta):
             conn_list: list of connection defitions
         """
         for conn in conn_list:
-            # pdb.set_trace()
             conn['delay_check'] = kwargs.get('delay_check', False)
             self.set_conn(**conn)
 
@@ -266,7 +265,6 @@ def make_tstore_conn(params, **kwargs):
                                        inspect.stack()[0][3]))
     log.setLevel(params.get('log_level', __LOG_LEVEL__))
     log.debug("\n%s", params)
-    # pdb.set_trace()
     params.update(kwargs)
     try:
         vendor = RdfwConnections['triplestore'][params.get('vendor')]
@@ -297,7 +295,6 @@ def setup_conn(**kwargs):
     if kwargs.get("conn"):
         conn = kwargs['conn']
     elif kwargs.get("tstore_def"):
-        pdb.set_trace()
         conn = make_tstore_conn(kwargs['tstore_def'])
     elif kwargs.get("triplestore_url"):
         conn = RdfwConnections['triplestore']['blazegraph']( \

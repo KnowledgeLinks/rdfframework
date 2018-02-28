@@ -7,11 +7,15 @@ import pdb
 from rdfframework.utilities import (LABEL_FIELDS,
                                     VALUE_FIELDS,
                                     make_doc_string,
-                                    get_attr)
+                                    get_attr,
+                                    RegistryDictionary,
+                                    print_doc)
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, RdfNsManager
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfclass.esconversion import (get_es_value,
                                                 get_es_label,
+                                                get_prop_range_defs,
+                                                get_prop_range_def,
                                                 get_es_ids)
 
 __author__ = "Mike Stabile, Jeremy Nelson"
@@ -22,6 +26,23 @@ MODULE = __import__(__name__)
 
 # List of class names that will be excluded when examining the bases of a class
 IGNORE_CLASSES = ['RdfClassBase', 'dict', 'list']
+__a__ = Uri("rdf:type")
+
+def find(value):
+        """
+        returns a dictionary of rdfclasses based on the a lowercase search
+
+        args:
+            value: the value to search by
+        """
+        value = str(value).lower()
+        rtn_dict = RegistryDictionary()
+        for attr in dir(MODULE.rdfclass):
+            if value in attr.lower():
+                item = getattr(MODULE.rdfclass, attr)
+                if issubclass(item, RdfClassBase):
+                    rtn_dict[attr] = item
+        return rtn_dict
 
 class RegistryMeta(type):
     """ Registry meta class for use with the Registry class """
@@ -37,12 +58,28 @@ class Registry(type, metaclass=RegistryMeta):
 
     def __new__(mcs, name, bases, clsdict):
         cls = super(Registry, mcs).__new__(mcs, name, bases, clsdict)
-        if bases[:-1]:
+        # if the RdfClassBase is not in the bases then the class is merged
+        # from multiple classes and should not be registred
+        try:
+            if RdfClassBase not in bases:
+                return cls
+        except NameError:
+            pass
+        if bases[:-1] and len(bases[0].class_names) == 1:
+            # pdb.set_trace()
             try:
                 mcs._registry[bases[0].__name__].append(cls)
             except KeyError:
                 mcs._registry[bases[0].__name__] = [cls]
         return cls
+
+def list_base_properties(bases):
+    """ returns a dictionary of properties assigned to the class"""
+    rtn_dict = {}
+    for base in bases:
+        if hasattr(base, 'properties'):
+            rtn_dict.update(base.properties)
+    return rtn_dict
 
 class RdfClassMeta(Registry):
     """ Metaclass for generating RdfClasses. This metaclass will take the
@@ -55,13 +92,8 @@ class RdfClassMeta(Registry):
         print_doc(cls)
 
     @property
-    def properties(cls):
-        """ Lists the properties for the class
-
-        Returns:
-            list of properties
-        """
-        return list_properties(cls)
+    def subclasses(cls):
+        return Registry[cls.__name__]
 
     @classmethod
     def __prepare__(mcs, name, bases, **kwargs):
@@ -76,7 +108,7 @@ class RdfClassMeta(Registry):
             # if name == 'bf_Topic': pdb.set_trace()
             new_def['__doc__'] = doc_string
             new_def['doc'] = property(print_doc)
-            new_def['properties'] = property(list_properties)
+            new_def['properties'] = list_base_properties(bases) #property(list_properties)
             # new_def['json_def'] = cls_defs
             new_def['hierarchy'] = list_hierarchy(name, bases)
             new_def['id'] = None
@@ -85,15 +117,24 @@ class RdfClassMeta(Registry):
             if hasattr(bases[0], 'es_defs'):
                 es_defs.update(bases[0].es_defs)
             new_def['es_defs'] = es_defs
+            new_def['query_kwargs'] = get_query_kwargs(es_defs)
             new_def['uri'] = Uri(name).sparql_uri
             for prop, value in props.items():
                 new_def[prop] = MODULE.rdfclass.make_property(value,
                                                        prop,
                                                        new_def['class_names'])
-                # new_def[prop] = value
-            if 'rdf_type' not in new_def.keys():
-                new_def[Uri('rdf_type')] = MODULE.rdfclass.properties.get('rdf_type')
+                new_def['properties'][prop] = new_def[prop]
+            if __a__ not in new_def.keys():
+                new_def[__a__] = MODULE.rdfclass.properties.get(__a__)
+                new_def['properties'][__a__] = new_def[__a__]
             new_def['cls_defs'] = cls_defs #cls_defs.pop(name)
+            new_def['es_props'] = []
+            for prop_name, prop in new_def['properties'].items():
+                rng_def = get_prop_range_def(\
+                            get_prop_range_defs(new_def['class_names'],
+                                                prop.kds_rangeDef))
+                if rng_def.get('kds_esLookup'):
+                    new_def['es_props'].append(prop_name)
             return new_def
         except KeyError:
             return {}
@@ -118,10 +159,10 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
     class_names = []
     uri_format = 'sparql_uri'
 
-    def __init__(self, subject=None, **kwargs):
+    def __init__(self, subject=None, dataset=None, **kwargs):
         super().__init__(self)
+        self.dataset = dataset
         self._set_subject(subject)
-        self.dataset = kwargs.get('dataset')
         if self.__class__ != RdfClassBase:
             self._initilize_props()
 
@@ -145,21 +186,35 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         pred = Uri(pred)
         try:
             self[pred].append(obj)
-        except AttributeError:
-            new_list = [self[pred]]
-            new_list.append(obj)
-            self[pred] = new_list
+        # except AttributeError:
+        #     new_list = [self[pred]]
+        #     new_list.append(obj)
+        #     self[pred] = new_list
         except KeyError:
             try:
-                new_prop = MODULE.rdfclass.properties[pred]
+                new_prop = self.properties[pred]
+            except AttributeError:
+                self.properties = {}
+                self.add_property(pred, obj)
+                return
             except KeyError:
-                new_prop = MODULE.rdfclass.make_property({},
-                                                  pred, self.class_names)
+                try:
+                    new_prop = MODULE.rdfclass.properties[pred]
+                except KeyError:
+                    new_prop = MODULE.rdfclass.make_property({},
+                                                      pred, self.class_names)
+                try:
+                    self.properties[pred] = new_prop
+                except AttributeError:
+                    self.properties = {pred: new_prop}
+            init_prop = new_prop(self, get_attr(self, "dataset"))
             setattr(self,
                     pred,
-                    new_prop)
-            self[pred] = getattr(self, pred)(self, get_attr(self, "dataset"))
+                    init_prop)
+            self[pred] = init_prop
             self[pred].append(obj)
+        if self.dataset:
+            self.dataset.add_rmap_item(self, pred, obj)
 
     @property
     def subclasses(self):
@@ -231,7 +286,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                   are es_Nested or rdf_Class
         """
 
-        def _prop_filter(prop, value):
+        def _prop_filter(prop, value, **kwargs):
             """ filters out props that should not be used for es_mappings:
             These include props that of the owl:inverseOf the parent_props.
             Use of these props will cause a recursion depth error
@@ -255,9 +310,12 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             return False
 
         es_map = {}
+        # pdb.set_trace()
         if kwargs.get("depth"): # and kwargs.get('class') == cls.__name__:
             kwargs['depth'] += 1
+            initial = False
         else:
+            initial = True
             kwargs['depth'] = 1
             kwargs['class'] = cls.__name__
             kwargs['class_obj'] = cls
@@ -280,19 +338,20 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                                                list(cls.properties.keys()))
             es_map = {prop: value.es_mapping(base_class, **kwargs) \
                       for prop, value in cls.properties.items() \
-                      if _prop_filter(prop, value, kwargs)}
+                      if _prop_filter(prop, value, **kwargs)}
         ref_map = {
             "type" : "keyword"
         }
         ignore_map = {
             "index": False,
-            "include_in_all": False,
             "type": "text"
         }
-        es_map['label'] = ref_map
-        es_map['value'] = ref_map
+        if cls == base_class:
+            es_map['label'] = ref_map
+            es_map['value'] = ref_map
 
-        if cls.cls_defs.get('kds_storageType') != "blanknode":
+        if cls.cls_defs.get('kds_storageType') != "blanknode" \
+                and cls == base_class:
             es_map['id'] = ref_map
             es_map['uri'] = ref_map
             if role == 'rdf_Class':
@@ -332,14 +391,18 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             except AttributeError:
                 nested_props = list(self.keys())
             for prop, value in self.items():
+                # if prop == 'rdfs_label' and 'bf_Organization' in self.class_names:
+                #     pdb.set_trace()
                 if prop in nested_props:
                     new_val = value.es_json(**kwargs)
                     if (remove_empty and new_val) or not remove_empty:
                         if len(new_val) == 1:
-                            rtn_obj[prop] = new_val[0]
+                            rtn_obj[prop] = new_val[0] \
+                                    if not isinstance(new_val, dict) \
+                                    else new_val
                         else:
                             rtn_obj[prop] = new_val
-        # if self.__class__.__name__ == 'bf_Topic':
+        # if 'bf_Work' in self.hierarchy:
         #     pdb.set_trace()
         rtn_obj = get_es_ids(rtn_obj, self)
         rtn_obj = get_es_label(rtn_obj, self)
@@ -359,10 +422,13 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
 
             Returns: Uri or Bnode """
             if not isinstance(value, (Uri.__wrapped__, BlankNode)):
-                if value.startswith("_:"):
-                    return BlankNode(value)
-                else:
-                    return Uri(value)
+                try:
+                    if value.startswith("_:"):
+                        return BlankNode(value)
+                    else:
+                        return Uri(value)
+                except:
+                    return BlankNode()
             else:
                 return value
 
@@ -380,24 +446,29 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
 
     def _initilize_props(self):
         """ Adds an intialized property to the class dictionary """
+        # if self.subject == "pyuri_aHR0cDovL3R1dHQuZWR1Lw==_":
+        #     pdb.set_trace()
         try:
             # pdb.set_trace()
-            for prop, prop_class in self.properties.items():
-                # passing in the current dataset tie
-                self[prop] = prop_class(self, self.dataset)
+            for prop in self.es_props:
+                self[prop] = self.properties[prop](self, self.dataset)
                 setattr(self, prop, self[prop])
-            bases = remove_parents((self.__class__,) +
-                                    self.__class__.__bases__)
-            for base in bases:
-                if base.__name__ not in IGNORE_CLASSES:
-                    base_name = Uri(base.__name__)
-                    try:
-                        self['rdf_type'].append(base_name)
-                    except KeyError:
-                        self[Uri('rdf_type')] = MODULE.rdfclass.make_property({},
-                                'rdf_type',
-                                self.__class__.__name__)(self, self.dataset)
-                        self['rdf_type'].append(base_name)
+            # for prop, prop_class in self.properties.items():
+            #     # passing in the current dataset tie
+            #     self[prop] = prop_class(self, self.dataset)
+            #     setattr(self, prop, self[prop])
+            # bases = remove_parents((self.__class__,) +
+            #                         self.__class__.__bases__)
+            # for base in bases:
+            #     if base.__name__ not in IGNORE_CLASSES:
+            #         base_name = Uri(base.__name__)
+            #         try:
+            #             self['rdf_type'].append(base_name)
+            #         except KeyError:
+            #             self[Uri('rdf_type')] = MODULE.rdfclass.make_property({},
+            #                     'rdf_type',
+            #                     self.__class__.__name__)(self, self.dataset)
+            #             self['rdf_type'].append(base_name)
         except (AttributeError, TypeError):
             pass
 
@@ -413,10 +484,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
     def sparql_uri(self):
         return self.subject.sparql_uri
 
-def print_doc(self=None):
-    """ simple function for print the classes docstring. Used for assigning
-    a property value in a metaclass """
-    print(self.__doc__)
+
 
 def list_hierarchy(class_name, bases):
     """ creates a list of the class hierarchy
@@ -442,7 +510,7 @@ def es_get_class_defs(cls_def, cls_name):
     # cls_def = cls_defs[cls_name]
     rtn_dict = {key: value for key, value in cls_def.items() \
                 if key.startswith("kds_es")}
-    for key in rtn_dict.keys():
+    for key in rtn_dict:
         del cls_def[key]
     return rtn_dict
 
@@ -492,3 +560,20 @@ def remove_parents(bases):
         except IndexError:
             print("Unable to delete base: ", bases)
     return bases
+
+def get_query_kwargs(es_defs):
+    """
+    Reads the es_defs and returns a dict of special kwargs to use when
+    query for data of an instance of a class
+
+    reference: rdfframework.sparl.queries.sparqlAllItemDataTemplate.rq
+    """
+    rtn_dict = {}
+    if es_defs:
+        if es_defs.get("kds_esSpecialUnion"):
+            rtn_dict['special_union'] = \
+                    es_defs["kds_esSpecialUnion"][0]
+        if es_defs.get("kds_esQueryFilter"):
+            rtn_dict['filters'] = \
+                    es_defs["kds_esQueryFilter"][0]
+    return rtn_dict

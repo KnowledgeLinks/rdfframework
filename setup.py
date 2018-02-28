@@ -3,15 +3,15 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'jermnelson@gmail.com',
                              'mstabile75@gmail.com'
                             ])
-__license__ = "MIT License"
-__version__ = "0.0.23"
+__license__ = "GPLv3"
+__version__ = "0.0.24"
 
 from setuptools import find_packages, setup
-import pdb
+
 def readme():
     with open('README.md') as rm_fo:
         return rm_fo.read()
-# pdb.set_trace()
+
 setup(
     name='rdfframework',
     version= __version__,

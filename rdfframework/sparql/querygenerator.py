@@ -11,30 +11,38 @@ from rdfframework.datatypes import RdfNsManager, Uri
 NSM = RdfNsManager()
 DEBUG = True
 
-def get_all_item_data(item_uri, conn, graph=None, output='json', **kwargs):
+def get_all_item_data(items, conn, graph=None, output='json', **kwargs):
     """ queries a triplestore with the provided template or uses a generic
     template that returns triples 3 edges out in either direction from the
     provided item_uri
 
     args:
-        item_uri: the starting uri of the query
+        items: the starting uri or list of uris to the query
         conn: the rdfframework triplestore connection to query against
         output: 'json' or 'rdf'
 
     kwargs:
         template: template to use in place of the generic template
+        rdfclass: rdfclass the items are based on.
+        filters: list of filters to apply
     """
+    # set the jinja2 template to use
     if kwargs.get('template'):
         template = kwargs.pop('template')
     else:
         template = "sparqlAllItemDataTemplate.rq"
-    # kwargs['filters'] = filters
-    filter_str = make_sparql_filter(kwargs.get('filters'))
-    sparql = render_without_request(template,
-                                    prefix=NSM.prefix(),
-                                    item_uri=Uri(item_uri).sparql,
-                                    output=output,
-                                    filters=filter_str)
+    # build the keyword arguments for the templace
+    template_kwargs = {"prefix": NSM.prefix(), "output": output}
+    if isinstance(items, list):
+        template_kwargs['uri_list'] = items
+    else:
+        template_kwargs['item_uri'] = Uri(items).sparql
+    if kwargs.get('rdfclass'):
+        # pdb.set_trace()
+        template_kwargs.update(kwargs['rdfclass'].query_kwargs)
+    if kwargs.get("filters"):
+        template_kwargs['filters'] = make_sparql_filter(kwargs.get('filters'))
+    sparql = render_without_request(template, **template_kwargs)
     return conn.query(sparql, **kwargs)
 
 def get_graph(graph, conn, **kwargs):
@@ -87,3 +95,10 @@ def make_sparql_filter(filters):
     for param in filters:
         rtn_str += make_filter_str(**param)
     return rtn_str
+
+def add_sparql_line_nums(sparql):
+    """
+    Returns a sparql query with line numbers prepended
+    """
+    lines = sparql.split("\n")
+    return "\n".join(["%s %s" % (i + 1, line) for i, line in enumerate(lines)])

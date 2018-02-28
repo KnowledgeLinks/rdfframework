@@ -8,6 +8,7 @@ import types
 import datetime
 import functools
 import pprint, pdb
+import logging
 
 # from rdfframework import rdfclass
 from rdfframework.utilities import DictClass, make_list
@@ -23,6 +24,7 @@ CFG = RdfConfigManager()
 __a__ = Uri("rdf:type")
 class RdfDataset(dict):
     """ A container for holding rdf data """
+    log_level = logging.INFO
     _reserved = ['add_triple',
                   '_format',
                   '_reserved',
@@ -42,17 +44,20 @@ class RdfDataset(dict):
                  'relate_obj_types',
                  'smap',
                  'pmap',
-                 'omap']
+                 'omap',
+                 'rmap']
 
     def __init__(self, data=None, base_uri=None, **kwargs):
         start = datetime.datetime.now()
         self.smap = 's'
         self.pmap = 'p'
         self.omap = 'o'
+        self.rmap = {}
         if base_uri:
             base_uri = Uri(base_uri)
         self.base_uri = base_uri
-
+        if kwargs.get("debug"):
+            log.setLevel(logging.DEBUG)
         # realate_bnode_obj_types sets whether to relate the object of a class
         # back to itself
         self.relate_obj_types = ['bnode','uri']
@@ -105,7 +110,7 @@ class RdfDataset(dict):
             obj = sub[self.omap]
             sub = sub[self.smap]
 
-        prclassesed = pyrdf(pred)
+        pred = pyrdf(pred)
         obj = pyrdf(obj)
         sub = pyrdf(sub)
 
@@ -117,7 +122,7 @@ class RdfDataset(dict):
         try:
             self[sub].add_property(pred, obj)
         except KeyError:
-            self[sub] = RdfClassBase(sub, **kwargs)
+            self[sub] = RdfClassBase(sub, self, **kwargs)
             self[sub].add_property(pred, obj)
 
     def format(self, **kwargs):
@@ -186,18 +191,21 @@ class RdfDataset(dict):
                           add_ids=True))
 
     def load_data(self, data, **kwargs):
-        """ Bulk adds rdf data to the class
+        """
+        Bulk adds rdf data to the class
 
-            args:
-                data: the data to be loaded
+        args:
+            data: the data to be loaded
 
-            kwargs:
-                strip_orphans: True or False - remove triples that have an
-                               orphan blanknode as the object
-                obj_method: "list", or None: if "list" the object of a method
-                            will be in the form of a list.
+        kwargs:
+            strip_orphans: True or False - remove triples that have an
+                           orphan blanknode as the object
+            obj_method: "list", or None: if "list" the object of a method
+                         will be in the form of a list.
         """
         self.__set_map__(**kwargs)
+        start = datetime.datetime.now()
+        log.debug("Dataload stated")
         if isinstance(data, list):
             data = self._convert_results(data, **kwargs)
         # if self.base_uri == "pyuri_aHR0cHM6Ly9wbGFpbnMycGVha3Mub3JnLw==_1f142250-0871-11e8-ad63-005056c00008":
@@ -209,6 +217,8 @@ class RdfDataset(dict):
         # add triples to the dataset
         for triple in data:
             self.add_triple(sub=triple, **kwargs)
+        log.debug("Dataload completed in '%s'",
+                  (datetime.datetime.now() - start))
 
     def __group_data__(self, data, **kwargs):
         """ processes the data in to groups prior to loading into the
@@ -223,6 +233,7 @@ class RdfDataset(dict):
         self.subj_list = list([item[self.smap] for item in class_types])
         # get non defined classes
         self.non_defined = self._get_non_defined(data, class_types)
+        # pdb.set_trace()
         return class_types
 
     def triples(self, output=None):
@@ -274,7 +285,6 @@ class RdfDataset(dict):
                     add_class(key, item)
         rtn_obj = {}
         for key, value in self.items():
-            #pdb.set_trace()
             try:
                 add_class(key, value['rdf_type'])
             except KeyError:
@@ -299,6 +309,27 @@ class RdfDataset(dict):
             data.pop(i)
         return rtn_list
 
+    def add_rmap_item(self, subj, pred, obj):
+        """
+        adds a triple to the inverted  dataset index
+        """
+        def add_item(self, subj, pred, obj):
+            try:
+                self.rmap[obj][pred].append(subj)
+            except KeyError:
+                try:
+                    self.rmap[obj][pred] = [subj]
+                except KeyError:
+                    self.rmap[obj] = {pred: [subj]}
+            # except:
+            #     pdb.set_trace()
+
+        if isinstance(obj, list):
+            for item in obj:
+                add_item(self, subj, pred, item)
+        else:
+            add_item(self, subj, pred, obj)
+
     def _generate_classes(self, class_types, non_defined, **kwargs):
         """ creates the class for each class in the data set
 
@@ -306,16 +337,21 @@ class RdfDataset(dict):
                 class_types: list of class_types in the dataset
                 non_defined: list of subjects that have no defined class
         """
-        kwargs['dataset'] = self
+        # kwargs['dataset'] = self
         for class_type in class_types:
             self[class_type[self.smap]] = self._get_rdfclass(class_type,
                                                              **kwargs)\
                                                             (class_type,
+                                                             self,
                                                              **kwargs)
-            #setattr(self, class_type[self.smap], RdfBaseClass(class_type))
+
+            self.add_rmap_item(self[class_type[self.smap]],
+                               class_type[self.pmap],
+                               class_type[self.omap])
+
         for class_type in non_defined:
-            self[class_type] = RdfClassBase(class_type, **kwargs)
-            #setattr(self, class_type, RdfBaseClass(class_type))
+            self[class_type] = RdfClassBase(class_type, self, **kwargs)
+            self.add_rmap_item(self[class_type], __a__, None)
         self.__set_classes__
         try:
             self.base_class = self[self.base_uri]
@@ -351,17 +387,19 @@ class RdfDataset(dict):
                 if len(bases) == 1:
                     return bases[0]
                 else:
-                    new_class = type("_".join(class_type[self.omap]),
+                    name = "_".join(sorted(class_type[self.omap]))
+                    # if the the class has already been created return it
+                    if hasattr(MODULE.rdfclass, name):
+                        return getattr(MODULE.rdfclass, name)
+                    new_class = type(name,
                                      tuple(bases),
                                      {})
-                    # new_class = types.new_class("_".join(class_type[self.omap]),
-                    #                             tuple(bases),
-                    #                             {'multi_class': True})
                     new_class.hierarchy = list_hierarchy(class_type[self.omap][0],
                                                          bases)
-                    new_class.class_names = [base.__name__ \
+                    new_class.class_names = sorted([base.__name__ \
                             for base in bases \
-                            if base not in [RdfClassBase, dict]]
+                            if base not in [RdfClassBase, dict]])
+                    setattr(MODULE.rdfclass, name, new_class)
                     return new_class
         else:
             return select_class(class_type[self.omap])
@@ -379,13 +417,14 @@ class RdfDataset(dict):
         return list(obj.values())
 
     def _get_non_defined(self, data, class_types):
-        """ returns a list of URIs and blanknodes that are not defined within
-            the dataset. For example: schema:Person has an associated rdf:type
-            then it is considered defined.
+        """
+        returns a list of URIs and blanknodes that are not defined within
+        the dataset. For example: schema:Person has an associated rdf:type
+        then it is considered defined.
 
-            args:
-                data: a list of triples
-                class_types: list of subjects that are defined in the dataset
+        args:
+            data: a list of triples
+            class_types: list of subjects that are defined in the dataset
         """
         subj_set = set([item[self.smap] for item in class_types])
         non_def_set = set([item[self.smap] for item in data])

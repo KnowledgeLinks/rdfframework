@@ -1,6 +1,7 @@
 import os
 import inspect
 import time
+import copy
 import logging
 import requests
 # import tempfile
@@ -29,11 +30,11 @@ class DataFileManager():
     is_initialized = False
 
     def __init__(self, file_locations=[], conn=None, **kwargs):
-        self.__file_locations__ = file_locations
+        self.__file_locations__ = copy.copy(file_locations)
         self.log_level = kwargs.get('log_level', self.log_level)
         if conn:
             kwargs['conn'] = conn
-        self.conn = kwargs.get("conn", __CONNS__.datastore)
+        self.conn = conn
         self.__set_cache_dir__(**kwargs)
         self.__get_conn__(**kwargs)
         self.loaded = []
@@ -64,29 +65,6 @@ class DataFileManager():
 
     def loaded_files(self, **kwargs):
         """ returns a list of loaded definition files """
-        # conn = self.__get_conn__(**kwargs)
-        # # pdb.set_trace()
-        # if self.loaded and not kwargs.get('reset', False):
-        #     return self.loaded
-        # result = conn.query("""
-        #         SELECT ?file
-        #         {
-        #             {
-        #                 SELECT DISTINCT ?g
-        #                 {
-        #                     graph ?g {?s ?p ?o} .
-        #                     FILTER(?g!=<http://www.bigdata.com/rdf#nullGraph>
-        #                            && ?g!=kdr:load_times)
-        #                 }
-        #             }
-        #             bind(REPLACE(str(?g) ,
-        #                  "http://knowledgelinks.io/ns/data-resources/", "")
-        #                  as ?file)
-        #         }""")
-        # if result:
-        #     self.loaded = [val['file']['value'] for val in result]
-        # else:
-        #     self.loaded = result
         self.loaded = list(self.load_times(**kwargs))
         return self.loaded
 
@@ -144,9 +122,12 @@ class DataFileManager():
             pass
         cache_dir = None
         for directory in test_dirs:
-            if is_writable_dir(directory, mkdir=True):
-                cache_dir = directory
-                break
+            try:
+                if is_writable_dir(directory, mkdir=True):
+                    cache_dir = directory
+                    break
+            except TypeError:
+                pass
         self.cache_dir = cache_dir
 
     def load_file(self, filepath, **kwargs):

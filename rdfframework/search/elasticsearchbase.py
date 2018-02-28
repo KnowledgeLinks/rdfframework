@@ -10,6 +10,7 @@ import pdb
 import argparse
 import requests
 import json
+import pprint
 
 from elasticsearch import Elasticsearch, helpers
 from rdfframework.utilities import IsFirst, get2, Dot
@@ -63,7 +64,7 @@ class EsBase():
 
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
         lg.setLevel(self.log_level)
-
+        err_log = logging.getLogger("index.errors")
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
         reset_index = kwargs.get("reset_index",self.reset_index)
@@ -76,7 +77,22 @@ class EsBase():
                               chunk_size=400,
                               raise_on_error=False)
         lg.info("FINISHED sending to Elasticsearch")
-        lg.info("Results\n%s", result)
+        if result[1]:
+            lg.info("Formating Error results")
+            # action_keys = {item['_id']:i for i, item in enumerate(action_list)}
+            new_result = []
+            for item in result[1][:5]:
+                for action_item in action_list:
+                    if action_item['_id'] == item[list(item)[0]]['_id']:
+                        new_result.append((item, action_item,))
+                        break
+            err_log.info("Results for batch '%s'\n(%s,\n%s\n%s)",
+                         kwargs.get('batch', "No Batch Number provided"),
+                         result[0],
+                         json.dumps(new_result, indent=4),
+                         json.dumps(result[1]))
+            del new_result
+            lg.info("Finished Error logging")
         # for success, result in bulk_stream:
         #     lg.debug("\nsuccess: %s \nresult:\n%s", success, pp.pformat(result))
         return result

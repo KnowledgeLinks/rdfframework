@@ -24,7 +24,6 @@ import rdfframework.sparql
 import rdfframework.rml
 import rdfframework.datamanager
 import rdfframework.datasets
-import pdb
 import types
 import logging
 
@@ -49,6 +48,7 @@ def set_module_loggers(modules, method="dummy"):
         else:
             logger = logging.getLogger(module.__name__)
         setattr(module, "log", logger)
+        logger.disabled = False
 
 __modules__ = package_modules(rdfframework)
 
@@ -64,4 +64,4 @@ def configure_logging(modules, method="dummy"):
 configure_logging(__modules__, "active")
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.23'
+__version__ = '0.0.24'

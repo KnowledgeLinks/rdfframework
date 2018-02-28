@@ -145,6 +145,13 @@ class XsdBoolean(BaseRdfDataType):
             return False
         return self.value
 
+    def __hash__(self):
+        return self.value
+
+    @property
+    def to_json(self):
+        return json.dumps(self.value)
+
 class XsdDate(date, BaseRdfDataType):
     """ Datetime Date instacne of rdf xsd:date type value"""
 

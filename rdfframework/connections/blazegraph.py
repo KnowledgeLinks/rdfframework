@@ -15,6 +15,7 @@ from rdfframework.utilities import (list_files,
                                     format_multiline)
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import RdfNsManager
+from rdfframework.sparql import add_sparql_line_nums
 from .connmanager import RdfwConnections
 try:
     from lxml import etree
@@ -206,12 +207,13 @@ class Blazegraph(RdfwConnections):
             raise KeyError("rtn_format was '%s'. Allowed values are %s" % \
                            (rtn_format, self.qry_results_formats))
         url = self._make_url(namespace)
-        if not sparql.lower().startswith("prefix"):
+        if 'prefix' not in sparql.lower():
             sparql = "%s\n%s" % (NSM.prefix(), sparql)
 
 
         if mode == "get":
-            data = {"query": sparql, "format": rtn_format}
+
+            data = {"query": sparql} #, "format": rtn_format}
         elif mode == "update":
             data = {"update": sparql}
         else:
@@ -230,6 +232,7 @@ class Blazegraph(RdfwConnections):
                                     """mode='{mode}', namespace='{namespace}',
                                     rtn_format='{rtn_format}'""",
                                     "**** SPAQRL QUERY ****",
+                                    "",
                                     "{sparql}",
                                     "Query Time: {q_time}"],
                                    url=url,
@@ -248,6 +251,8 @@ class Blazegraph(RdfwConnections):
                 elif rtn_format == 'xml':
                     xml_doc = etree.XML(result.text)
                     bindings = xml_doc.findall("results/bindings")
+                else:
+                    bindings = result
                 log.debug("result count: %s", len(bindings))
                 return bindings
             except json.decoder.JSONDecodeError:
@@ -255,7 +260,9 @@ class Blazegraph(RdfwConnections):
                     return BeautifulSoup(result.text, 'lxml').get_text()
                 return result.text
         else:
-            raise SyntaxError(result.text)
+            raise SyntaxError("%s\n\n%s\n\n%s" % (sparql,
+                    add_sparql_line_nums(sparql),
+                    result.text[result.text.find("java."):]))
 
     def update_query(self, sparql, namespace=None, **kwargs):
         """ runs a sparql update query and returns the results

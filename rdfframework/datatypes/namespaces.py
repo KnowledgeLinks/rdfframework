@@ -28,6 +28,69 @@ MNAME = inspect.stack()[0][1]
 # class instanciation
 PERFORMANCE_ATTRS = ['sparql', 'sparql_uri', 'pyuri', 'clean_uri']
 
+def format_json(item, **kwargs):
+    """ formats a datatype object to a json value """
+    try:
+        json.dumps(item.value)
+        return item.value
+    except TypeError:
+        if 'time' in item.class_type.lower() \
+                or 'date' in item.class_type.lower():
+            return item.value.isoformat()
+        raise
+
+def format_sparql(item, dt_format='turtle', **kwargs):
+    """
+    Formats a datatype value to a SPARQL representation
+
+    args:
+        item: the datatype object
+        dt_format: the return format ['turtle', 'uri']
+    """
+    try:
+        rtn_val = json.dumps(item.value)
+        rtn_val = item.value
+    except:
+        if 'time' in item.class_type.lower() \
+                or 'date' in item.class_type.lower():
+            rtn_val = item.value.isoformat()
+        else:
+            rtn_val = str(item.value)
+    if hasattr(item, "datatype"):
+        if hasattr(item, "lang") and item.lang:
+            rtn_val = '%s@%s' % (json.dumps(rtn_val), item.lang)
+        else:
+            dt = item.datatype
+            if dt_format == "uri":
+                dt = item.datatype.sparql_uri
+            if item.datatype in ["xsd_string",
+                                 "xsd_dateTime",
+                                 "xsd_time",
+                                 "xsd_date"]:
+                rtn_val = json.dumps(rtn_val)
+            else:
+                rtn_val = '"%s"' % json.dumps(rtn_val)
+            rtn_val = '%s^^%s' % (rtn_val, dt.sparql)
+    return rtn_val
+
+def format_pyuri(item, **kwargs):
+    """
+    Formats the datatype into a python friendly repesentation
+
+    args:
+        item: the datatype object to convert
+    """
+    try:
+        return NSM.pyuri(item.value)
+    except AttributeError:
+        pass
+
+__FORMAT_OPTIONS__ = {
+    "sparql": format_sparql,
+    "json": format_json,
+    "pyuri": format_pyuri
+}
+
 class BaseRdfDataType(metaclass=RegInstanceMeta):
     """ Base for all rdf datatypes. Not designed to be used alone """
     __required_idx_attrs__ = {"class_type"}
@@ -46,44 +109,21 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
         self.value = value
 
     def _format(self, method="sparql", dt_format="turtle"):
-        """ formats the value """
+        """
+        Rormats the value in various formats
+
+        args:
+            method: ['sparql', 'json', 'pyuri']
+            dt_format: ['turtle','uri'] used in conjuction with the 'sparql'
+                       method
+
+        """
 
         try:
-            rtn_val = json.dumps(self.value)
-            rtn_val = self.value
-        except:
-            if 'time' in self.class_type.lower() \
-                    or 'date' in self.class_type.lower():
-                rtn_val = self.value.isoformat()
-            else:
-                rtn_val = str(self.value)
-        if method in ['json', 'sparql']:
-            if hasattr(self, "datatype"):
-                if hasattr(self, "lang") and self.lang:
-                    rtn_val = '%s@%s' % (json.dumps(rtn_val), self.lang)
-                else:
-                    dt = self.datatype
-                    if dt_format == "uri":
-                        dt = self.datatype.sparql_uri
-                    if method == "sparql":
-                        if self.datatype in ["xsd_string",
-                                             "xsd_dateTime",
-                                             "xsd_time",
-                                             "xsd_date"]:
-                            rtn_val = json.dumps(rtn_val)
-                        else:
-                            rtn_val = '"%s"' % json.dumps(rtn_val)
-                        rtn_val = '%s^^%s' % (rtn_val, dt.sparql)
-            elif method == "json":
-                pass
-            else:
-                rtn_val = '"%s"^^xsd:string' % rtn_val
-        elif method == "pyuri":
-            try:
-                rtn_val = NSM.pyuri(self.value)
-            except AttributeError:
-                pass
-        return rtn_val
+            return __FORMAT_OPTIONS__[method](self, dt_format=dt_format)
+        except KeyError:
+            raise NotImplementedError("'{}' is not a valid format method"
+                                      "".format(method))
 
     def __repr__(self):
         return self._format(method=self.default_method)
@@ -117,7 +157,7 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
         return rdflib.Literal(self.value, datatype=self.datatype.rdflib)
 
 
-@functools.lru_cache(maxsize=1000)
+@functools.lru_cache(maxsize=10000)
 class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
@@ -165,11 +205,6 @@ class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
             encapsulation
         """
         return uri_formatter(*self.value)
-
-    # @property
-    # def pyuri(self):
-    #     """ Returns the URI in a python friendly format """
-    #     return pyuri_formatter(*self.value)
 
     @property
     def to_json(self):

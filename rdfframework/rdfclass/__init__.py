@@ -15,7 +15,11 @@ vocabulary.
 
 from .rdfproperty import make_property, RdfPropertyMeta, properties, \
                          domain_props, link_property
-from .rdfclass import RdfClassBase, RdfClassMeta, remove_parents, list_hierarchy
+from .rdfclass import (RdfClassBase,
+                       RdfClassMeta,
+                       remove_parents,
+                       list_hierarchy,
+                       find)
 # from .rdfclassgenerator import RdfClassGenerator
 from .rdffactories import RdfClassFactory, RdfPropertyFactory
 
