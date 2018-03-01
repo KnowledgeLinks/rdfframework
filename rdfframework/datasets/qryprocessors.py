@@ -64,3 +64,18 @@ class MakeDistinct(JsonQryProcessor):
         for action in action_list:
             rtn_list.append(action)
         return rtn_list
+
+class NoLangTag(JsonQryProcessor):
+    """ Takes a list when called and removes dulplicates """
+    key = "no_lang_tag"
+
+    def __init__(self, active=True):
+        self.active = cbool(active)
+
+    def __call__(self, action_list):
+        if not self.active:
+            return action_list
+        rtn_list = []
+        for action in action_list:
+            rtn_list.append(XsdString(str(action)))
+        return rtn_list

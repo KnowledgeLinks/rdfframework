@@ -43,9 +43,16 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 class Processor(object):
-    """Base class for RDF Mapping Language Processors, child classes
+    """
+    Base class for RDF Mapping Language Processors, child classes
     encapsulate different types of Data sources
 
+    Attributes:
+        rml: Graph of RML rules
+        ext_conn: Triplestore connection used for querying and saving data
+        use_json_qry: If the RML mapping has the json mapping that will be
+            used instead of the full SPARQL query to the database
+        ds: RdfDataset used for json_qry of the data
 
     """
 
@@ -89,21 +96,42 @@ class Processor(object):
                 self.__predicate_object_map__(triple_map_iri)
 
     def __graph__(self):
-        """Method returns a new graph with all of the namespaces in
-        RML graph"""
-        #graph = rdflib.Graph(namespace_manager=self.rml.namespace_manager)
+        """
+        Method returns a new graph with all of the namespaces in
+        RML graph
+        """
+
         graph = rdflib.Graph()
         for prefix, name in self.rml.namespaces():
             graph.namespace_manager.bind(prefix, name)
         return graph
 
     def __setup_conn__(self, **kwargs):
-        """ sets the ext_conn based on the kwargs.
+        """
+        Sets the ext_conn based on the kwargs.
+
+        returns a triplestore conncection based on the kwargs.
+        Order of preceedence is as follows:
+            kwargs['conn']
+            kwargs['tstore_def']
+            kwargs['triplestore_url']
+            kwargs['rdflib']
+            RdfConfigManager.data_tstore
+            RdfConfigManager.TRIPLESTORE_URL
+
+        kwargs:
+            conn: established triplestore connection object
+            tstore_def: dictionary of paramaters specifying the connection as
+                    outlined in the config file
+            triplestore_url: url to a triplestore. A blazegraph connection
+                will be used if specified
+            rdflib: defintion for an rdflib connection
         """
         self.ext_conn = setup_conn(**kwargs)
 
     def __generate_delimited_objects__(self, **kwargs):
-        """Internal methods takes a subject, predicate, element, and a list
+        """
+        Internal methods takes a subject, predicate, element, and a list
         of delimiters that are applied to element's text and a triples
         for each value is created and associated with the subject.
 
@@ -135,9 +163,11 @@ class Processor(object):
                     new_subject = rdflib.BNode()
                     class_ = triple_map.subjectMap.class_
                     self.output.add((new_subject, NS_MGR.rdf.type.rdflib, class_))
-                    for parent_subject, parent_predicate in self.output.subject_predicates(
-                            object=subject):
-                        self.output.add((parent_subject, parent_predicate, new_subject))
+                    for parent_subject, parent_predicate in \
+                            self.output.subject_predicates(object=subject):
+                        self.output.add((parent_subject,
+                                         parent_predicate,
+                                         new_subject))
                 else:
                     new_subject = subject
                 subjects.append(new_subject)
@@ -846,15 +876,18 @@ class SPARQLProcessor(Processor):
         self.timer = datetime.datetime.now() - datetime.datetime.now()
         start = datetime.datetime.now()
         if self.use_json_qry:
-            if self.data_query:
-                sparql = PREFIX + self.data_query.format(**kwargs)
-                data = self.ext_conn.query(sparql)
+            if kwargs.get('dataset'):
+                self.ds = kwargs.pop('dataset')
             else:
-                data = get_all_item_data(item_uri=kwargs['instance'],
-                        conn=self.ext_conn,
-                        output='json',
-                        debug=False)
-            self.ds = RdfDataset(data)
+                if self.data_query:
+                    sparql = PREFIX + self.data_query.format(**kwargs)
+                    data = self.ext_conn.query(sparql)
+                else:
+                    data = get_all_item_data(item_uri=kwargs['instance'],
+                            conn=self.ext_conn,
+                            output='json',
+                            debug=False)
+                self.ds = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
         print("sparql_processor ran in %s: total qry time: %s" % \
               ((datetime.datetime.now() - start),
@@ -877,6 +910,7 @@ class SPARQLProcessor(Processor):
             **kwargs)
         start = datetime.datetime.now()
         key, json_query = None, None
+        # pdb.set_trace()
         if hasattr(triple_map.logicalSource, 'json_query') \
                 and self.use_json_qry:
             key = kwargs.get(str(triple_map.logicalSource.json_key))
@@ -884,6 +918,8 @@ class SPARQLProcessor(Processor):
                 key =[val for val in kwargs.values() \
                       if isinstance(val, rdflib.URIRef)][0]
             json_query = triple_map.logicalSource.json_query
+            if str(json_query) == "$.bf_itemOf.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value":
+                pdb.set_trace()
             bindings = self.ds.json_qry(json_query, {'$': key})
         else:
             bindings = self.__get_bindings__(sparql, output_format)
@@ -950,8 +986,8 @@ class SPARQLProcessor(Processor):
                 json_query = None
                 if pred_obj_map.json_query:
                     json_query = pred_obj_map.json_query
-                    # if json_query == "bf_itemOf.$":
-                    #     pdb.set_trace()
+                    if str(json_query) == "rdfs_label.bf_heldBy.*.bf_itemOf.$":
+                        pdb.set_trace()
                     start = datetime.datetime.now()
                     pre_obj_bindings = self.ds.json_qry(json_query, {'$': entity})
                     self.timer += (datetime.datetime.now() - start)

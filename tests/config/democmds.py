@@ -34,6 +34,37 @@ data3 = sp.get_all_item_data(data_uri,
                              conn,
                              rdfclass=rdfclass.bf_Work)
 work = RdfDataset(data3, data_uri)
+from rdfframework.rml.processor import SPARQLProcessor
+# SCHEMA_PROCESSOR = SPARQLProcessor(
+#     conn=cfg.conns.datastore,
+#     rml_rules=["bf-to-schema_rdfw.ttl"])
+from bibcat.rml.processor import SPARQLProcessor as SPARQLProcessorOrig
+
+instance_iri = "https://plains2peaks.org/98c01afe-83b7-11e7-83be-ac87a3129ce6"
+item_iri = "http://digitalcollections.uwyo.edu/luna/servlet" \
+           "/detail/uwydbuwy~96~96~3373447~294069"
+print("init processor")
+MAP4_PROCESSOR = SPARQLProcessor(
+    conn=cfg.conns.datastore,
+    rml_rules=["bf-to-map4.ttl"])
+ORIG4_PROCESSOR = SPARQLProcessorOrig(
+    triplestore_url='http://localhost:9999/blazegraph/namespace/plain2peak'
+                    '/sparql',
+    rml_rules=["bf-to-map4.ttl"])
+print("init completed")
+MAP4_PROCESSOR.run(dataset=work,
+                   instance_iri=instance_iri,
+                   item_iri=item_iri)
+out = MAP4_PROCESSOR.output
+MAP4_PROCESSOR.use_json_qry = False
+ORIG4_PROCESSOR.run(dataset=work,
+                   instance_iri=instance_iri,
+                   item_iri=item_iri)
+out2 = ORIG4_PROCESSOR.output
+print(out.serialize(format="json-ld",
+                    context=dict(cfg.nsm.namespaces)).decode())
+print(out2.serialize(format="json-ld",
+                     context=dict(cfg.nsm.namespaces)).decode())
 # print(colors.cyan(json.dumps(work[work.base_uri].es_json(), indent=8)))
 
 #
