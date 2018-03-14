@@ -218,6 +218,40 @@ class RdfConfigManager(metaclass=ConfigSingleton):
                                                       "value": False}
                                        }]
             }),
+        ("RML_MAPS", {"required": False,
+                         "type": list,
+                         "item_type": dict,
+                         "description": ['List of locations containing RML '
+                                        'mappings for registering within the '
+                                        'rdfframework.'],
+                         "item_dict": OrderedDict([
+                                ("location_type", {"type": str,
+                                                   "options": ['directory',
+                                                               'package_file',
+                                                               'package_all',
+                                                               'filepath'],
+                                                   "required": True,
+                                                   "description": [""" The
+                                                      method to look for the
+                                                      mapping files"""]}),
+                                ("location", {
+                                      "type": str,
+                                      "required": True,
+                                      "description": [
+                                          'use the below key based on the '
+                                          'selection in location type',
+                                          "    directory'   ->  '/directory/path'",
+                                          "    filepath     ->  '/path/to/a/file'",
+                                          "    package_all  ->  'name.of.a.package.with.defs'",
+                                          "    package_file ->  'name.of.package'"]
+                                      }),
+                                ("filename", {
+                                      "type": str,
+                                      "required": False,
+                                      "description": "filename for 'package_file"
+                                })
+                          ])
+        }),
         ("DIRECTORIES", {"required": True,
                          "type": list,
                          "item_type": dict,
@@ -317,8 +351,20 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         self.__load_namespaces__(**kwargs)
         log.info("Initializing Connections")
         self.__initialize_conns__(**kwargs)
-
+        log.info("Registering RML Mappings")
+        self.__register_mappings__(**kwargs)
         self.__run_defs__(**kwargs)
+
+
+    def __register_mappings__(self, **kwargs):
+      """
+      Registers the mappings as defined in the configuration file
+      """
+      from rdfframework import rml
+      rml_mgr = rml.RmlManager()
+      if getattr(self, "RML_MAPS"):
+          rml_mgr.register_defs(getattr(self, "RML_MAPS"))
+      self.rml = rml_mgr
 
     def __set_logging__(self, **kwargs):
         import rdfframework
@@ -338,7 +384,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
 
     def __load_namespaces__(self, **kwargs):
         ns_mgr = get_obj_frm_str("rdfframework.datatypes.RdfNsManager")
-        if not self.namespaces:
+        # pdb.set_trace()
+        if self.namespaces:
             self.__config__['nsm'] = ns_mgr(self.namespaces)
         else:
             self.__config__['nsm'] = ns_mgr()
@@ -1366,12 +1413,14 @@ def get_options_from_str(obj_str, **kwargs):
     Returns a list of options from a python object string
 
     args:
-        obj_str: python object path expamle
-                    "rdfframework.connections.ConnManager[{param1}]"
+        obj_str: python list of options or a python object path
+                  Example: "rdfframework.connections.ConnManager[{param1}]"
 
     kwargs:
         * kwargs used to format the 'obj_str'
     """
+    if isinstance(obj_str, list):
+        return obj_str
     try:
         obj = get_obj_frm_str(obj_str, **kwargs)
         if obj:

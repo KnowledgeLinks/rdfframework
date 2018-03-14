@@ -113,7 +113,6 @@ class RdfDataset(dict):
         pred = pyrdf(pred)
         obj = pyrdf(obj)
         sub = pyrdf(sub)
-
         # reference existing attr for bnodes and uris
         if obj.type in self.relate_obj_types :
             if strip_orphans and not self.get(obj):
@@ -208,8 +207,6 @@ class RdfDataset(dict):
         log.debug("Dataload stated")
         if isinstance(data, list):
             data = self._convert_results(data, **kwargs)
-        # if self.base_uri == "pyuri_aHR0cHM6Ly9wbGFpbnMycGVha3Mub3JnLw==_1f142250-0871-11e8-ad63-005056c00008":
-        #     pdb.set_trace()
         class_types = self.__group_data__(data, **kwargs)
 
         # generate classes and add attributes to the data
@@ -233,7 +230,6 @@ class RdfDataset(dict):
         self.subj_list = list([item[self.smap] for item in class_types])
         # get non defined classes
         self.non_defined = self._get_non_defined(data, class_types)
-        # pdb.set_trace()
         return class_types
 
     def triples(self, output=None):
@@ -321,8 +317,6 @@ class RdfDataset(dict):
                     self.rmap[obj][pred] = [subj]
                 except KeyError:
                     self.rmap[obj] = {pred: [subj]}
-            # except:
-            #     pdb.set_trace()
 
         if isinstance(obj, list):
             for item in obj:
@@ -436,11 +430,12 @@ class RdfDataset(dict):
             args:
                 data: a list of triples
         """
-        if kwargs.get('debug'):
-            for row in data:
-                for key, value in row.items():
-                    if value.get('value') =="2000-05-08T00:00:00.000Z":
-                        pyrdf(value)
+        # if kwargs.get('debug'):
+        # for row in data:
+        #     for key, value in row.items():
+        #         if value.get('value') =="http://id.loc.gov/vocabulary/relators/cre":
+        #             pdb.set_trace()
+        #             pyrdf(value)
         return [{key:pyrdf(value) for key, value in row.items()}
                 for row in data]
 

@@ -180,7 +180,7 @@ def get_es_value(obj, def_obj):
     if str(obj['value']).strip().endswith("/"):
         obj['value'] = str(obj['value']).strip()[:-1].strip()
     if not obj['value']:
-        obj['value'] = obj['uri']
+        obj['value'] = obj.get('uri', '')
     return obj
 
 def get_es_label(obj, def_obj):
@@ -215,25 +215,41 @@ def get_es_label(obj, def_obj):
 def get_es_ids(obj, def_obj):
     """
     Returns the object updated with the 'id' and 'uri' fields for the
-    elsaticsearch document
+    elasticsearch document
 
     args:
         obj: data object to update
         def_obj: the class instance that has defintion values
     """
+    try:
+        path = ""
+        for base in [def_obj.__class__] + list(def_obj.__class__.__bases__):
+
+            if hasattr(base, 'es_defs') and base.es_defs:
+                path = "%s/%s/" % (base.es_defs['kds_esIndex'][0],
+                                   base.es_defs['kds_esDocType'][0])
+                continue
+    except KeyError:
+        path = ""
     if def_obj.subject.type == 'uri':
         obj['uri'] = def_obj.subject.sparql_uri
-        try:
-            path = ""
-            for base in [def_obj.__class__] + list(def_obj.__class__.__bases__):
-
-                if hasattr(base, 'es_defs') and base.es_defs:
-                    path = "%s/%s/" % (base.es_defs['kds_esIndex'][0],
-                                       base.es_defs['kds_esDocType'][0])
-                    continue
-        except KeyError:
-            path = ""
-        obj['id'] = path + sha1(obj['uri'].encode()).hexdigest()
+        obj['id'] = path + make_es_id(obj['uri'])
+    elif def_obj.subject.type == 'bnode':
+        obj['id'] = path + def_obj.bnode_id()
+    else:
+        obj['id'] = path + make_es_id(str(obj['value']))
     return obj
 
+def make_es_id(uri):
+    """
+    Creates the id based off of the uri value
 
+    Args:
+    -----
+        uri: the uri to conver to an elasticsearch id
+    """
+    try:
+        uri = uri.clean_uri
+    except AttributeError:
+        pass
+    return sha1(uri.encode()).hexdigest()

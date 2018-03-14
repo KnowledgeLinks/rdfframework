@@ -136,9 +136,6 @@ class Blazegraph(RdfwConnections):
                 True if a connection can be made
                 False if the connection cannot me made
         """
-        # log = logging.getLogger("%s.%s" % (self.log_name,
-        #                                    inspect.stack()[0][3]))
-        # log.setLevel(self.log_level)
 
         def validate_namespace(self):
             if not self.has_namespace(self.namespace):
@@ -166,12 +163,6 @@ class Blazegraph(RdfwConnections):
             log.warning("Url '%s' not connecting. Using local_url '%s'" % \
                      (self.ext_url, self.local_url))
             self.url = self.local_url
-            # if not self.has_namespace(self.namespace):
-            #     log.warning(format_multiline(["",
-            #                                   """\tnamespace '{}' does not
-            #                                   exist. Creating namespace"""],
-            #                                   self.namespace))
-            #     self.create_namespace(self.namespace)
             validate_namespace(self)
             return True
         except requests.exceptions.ConnectionError:
@@ -187,16 +178,19 @@ class Blazegraph(RdfwConnections):
               namespace=None,
               rtn_format="json",
               **kwargs):
-        """ runs a sparql query and returns the results
+        """
+        Runs a sparql query and returns the results
 
-            args:
-                sparql: the sparql query to run
-                namespace: the namespace to run the sparql query against
-                mode: ['get'(default), 'update'] the type of sparql query
-                rtn_format: ['json'(default), 'xml'] format of query results
+        Args:
+        -----
+            sparql: the sparql query to run
+            namespace: the namespace to run the sparql query against
+            mode: ['get'(default), 'update'] the type of sparql query
+            rtn_format: ['json'(default), 'xml'] format of query results
 
-            kwargs:
-                debug(bool): If True sets logging level to debug
+        Kwargs:
+        -------
+            debug(bool): If True sets logging level to debug
         """
         namespace = pick(namespace, self.namespace)
         if kwargs.get("log_level"):
@@ -252,8 +246,11 @@ class Blazegraph(RdfwConnections):
                     xml_doc = etree.XML(result.text)
                     bindings = xml_doc.findall("results/bindings")
                 else:
-                    bindings = result
-                log.debug("result count: %s", len(bindings))
+                    bindings = result.text
+                try:
+                    log.debug("result count: %s", len(bindings))
+                except TypeError:
+                    pass
                 return bindings
             except json.decoder.JSONDecodeError:
                 if mode == 'update':
@@ -280,9 +277,11 @@ class Blazegraph(RdfwConnections):
                   graph=None,
                   is_file=False,
                   **kwargs):
-        """ loads data via file stream from python to triplestore
+        """
+        Loads data via file stream from python to triplestore
 
         Args:
+        -----
           data: The data or filepath to load
           datatype(['ttl', 'xml', 'rdf']): the type of data to load
           namespace: the namespace to use

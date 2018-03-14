@@ -13,6 +13,8 @@ SELECT DISTINCT ?s ?p ?o
         ?prop a owl:ObjectProperty .
       } UNION {
         ?prop rdfs:subPropertyOf ?ignore .
+      } UNION {
+        ?prop a owl:DatatypeProperty
       }
     }
   }

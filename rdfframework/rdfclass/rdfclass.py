@@ -1,7 +1,7 @@
 """ Module for generating RdfClasses. These classes are the base mode for
 dealing with RDF data, conversion, validation and CRUD operations """
 import pdb
-
+from hashlib import sha1
 
 # from rdfframework import rdfclass
 from rdfframework.utilities import (LABEL_FIELDS,
@@ -16,7 +16,8 @@ from rdfframework.rdfclass.esconversion import (get_es_value,
                                                 get_es_label,
                                                 get_prop_range_defs,
                                                 get_prop_range_def,
-                                                get_es_ids)
+                                                get_es_ids,
+                                                es_idx_types)
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -39,9 +40,12 @@ def find(value):
         rtn_dict = RegistryDictionary()
         for attr in dir(MODULE.rdfclass):
             if value in attr.lower():
-                item = getattr(MODULE.rdfclass, attr)
-                if issubclass(item, RdfClassBase):
-                    rtn_dict[attr] = item
+                try:
+                    item = getattr(MODULE.rdfclass, attr)
+                    if issubclass(item, RdfClassBase):
+                        rtn_dict[attr] = item
+                except TypeError:
+                    pass
         return rtn_dict
 
 class RegistryMeta(type):
@@ -97,6 +101,8 @@ class RdfClassMeta(Registry):
 
     @classmethod
     def __prepare__(mcs, name, bases, **kwargs):
+        # if name == 'bf_UsageAndAccessPolicy':
+        #     pdb.set_trace()
         try:
             cls_defs = kwargs.pop('cls_defs')
             props = get_properties(name) #cls_defs)
@@ -116,7 +122,7 @@ class RdfClassMeta(Registry):
             es_defs = es_get_class_defs(cls_defs, name)
             if hasattr(bases[0], 'es_defs'):
                 es_defs.update(bases[0].es_defs)
-            new_def['es_defs'] = es_defs
+            new_def['es_defs'] = get_rml_processors(es_defs)
             new_def['query_kwargs'] = get_query_kwargs(es_defs)
             new_def['uri'] = Uri(name).sparql_uri
             for prop, value in props.items():
@@ -174,6 +180,16 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         if self.subject == other:
             return True
         return False
+
+    def __lt__(self, other):
+        if hasattr(other, 'subject'):
+            if other.subject.type == 'bnode':
+                other = other.bnode_id()
+            else:
+                other = other.subject
+        if self.subject.type == 'bnode':
+            return self.bnode_id() < other
+        return self.subject < other
 
     def add_property(self, pred, obj):
         """ adds a property and its value to the class instance
@@ -277,13 +293,15 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         return rtn_val
 
     @classmethod
-    def es_mapping(cls, base_class, role='rdf_Class', **kwargs):
+    def es_mapping(cls, base_class=None, role='rdf_class', **kwargs):
         """ Returns the es mapping for the class
 
         args:
+        -----
+            base_class: The root class being indexed
             role: the role states how the class should be mapped depending
                   upon whether it is used as a subject of an object. options
-                  are es_Nested or rdf_Class
+                  are es_Nested or rdf_class
         """
 
         def _prop_filter(prop, value, **kwargs):
@@ -308,7 +326,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             if prop in nested_props and use_prop:
                 return True
             return False
-
+        if not base_class:
+            base_class = cls
         es_map = {}
         # pdb.set_trace()
         if kwargs.get("depth"): # and kwargs.get('class') == cls.__name__:
@@ -323,7 +342,7 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             parent_props = set(cls.properties)
         else:
             parent_props = set()
-        if role == 'rdf_Class':
+        if role == 'rdf_class':
             es_map = {}
             es_map = {prop: value.es_mapping(base_class) \
                       for prop, value in cls.properties.items()}
@@ -342,72 +361,259 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         ref_map = {
             "type" : "keyword"
         }
+        lower_map = {
+            "type": "text",
+            "fields": {
+                "lower": es_idx_types['es_Lower']['lower'],
+                'keyword': {'type': 'keyword'}
+            }
+        }
         ignore_map = {
             "index": False,
             "type": "text"
         }
         if cls == base_class:
             es_map['label'] = ref_map
-            es_map['value'] = ref_map
+            es_map['value'] = lower_map
 
-        if cls.cls_defs.get('kds_storageType') != "blanknode" \
+        if cls.cls_defs.get('kds_storageType',[None])[0] != "blanknode" \
                 and cls == base_class:
             es_map['id'] = ref_map
             es_map['uri'] = ref_map
-            if role == 'rdf_Class':
-                es_map['turtle'] = ignore_map
+        rml_procs = cls.es_defs.get("kds_esRmlProcessor", [])
+        rml_procs = [proc for proc in rml_procs
+                     if role == 'rdf_class' or
+                     proc['force']]
+        if rml_procs:
+            rml_maps = {}
+            for rml in rml_procs:
+                rml_maps[rml['name']] = ignore_map
+            if rml_maps:
+                es_map['rml_map'] = {"properties": rml_maps}
+                # es_map['turtle'] = ignore_map
         return es_map
 
+    @classmethod
+    def es_indexers(cls, base_class=None, role='rdf_class', **kwargs):
+        """ Returns the es mapping for the class
 
-    def es_json(self, role='rdf_Class', remove_empty=True, **kwargs):
+        args:
+        -----
+            base_class: The root class being indexed
+            role: the role states how the class should be mapped depending
+                  upon whether it is used as a subject of an object. options
+                  are es_Nested or rdf_class
+        """
+
+        def _prop_filter(prop, value, **kwargs):
+            """ filters out props that should not be used for es_mappings:
+            These include props that of the owl:inverseOf the parent_props.
+            Use of these props will cause a recursion depth error
+
+            Args:
+                prop: the name of the prop
+                value: the prop value(an instance of the prop's class)
+
+            Returns:
+                bool: whether the prop should be used
+            """
+
+            try:
+                use_prop = len(set(value.owl_inverseOf) - parent_props) > 0
+            except AttributeError:
+                use_prop = True
+            if prop in nested_props and use_prop:
+                return True
+            return False
+        if not base_class:
+            base_class = cls
+        rtn_list = []
+        # pdb.set_trace()
+        if kwargs.get("depth"): # and kwargs.get('class') == cls.__name__:
+            kwargs['depth'] += 1
+            initial = False
+        else:
+            initial = True
+            kwargs['depth'] = 1
+            kwargs['class'] = cls.__name__
+            kwargs['class_obj'] = cls
+        if kwargs.get('class_obj'):
+            parent_props = set(cls.properties)
+        else:
+            parent_props = set()
+        if role == 'rdf_class':
+            for value in cls.properties.values():
+                # pdb.set_trace()
+                rtn_list += value.es_indexers(base_class, **kwargs)
+
+        elif role == 'es_Nested':
+            if cls == base_class:
+                nested_props = LABEL_FIELDS
+            else:
+                nested_props = cls.es_defs.get('kds_esNestedProps',
+                                               list(cls.properties.keys()))
+            used_props = [value
+                          for prop, value in cls.properties.items() \
+                          if _prop_filter(prop, value, **kwargs)]
+            for value in cls.properties.values():
+                # pdb.set_trace()
+                rtn_list += value.es_indexers(base_class, **kwargs)
+
+        if cls.es_defs.get('kds_esIndex',[None])[0]:
+            rtn_list += [cls]
+        return list(set(rtn_list))
+
+    def bnode_id(self):
+        """
+        calculates the bnode id for the class
+        """
+        if self.subject.type != 'bnode':
+            return self.subject
+        rtn_list = []
+        for prop in sorted(self):
+            for value in sorted(self[prop]):
+                rtn_list.append("%s%s" % (prop, value))
+        return sha1("".join(rtn_list).encode()).hexdigest()
+
+
+    def es_json(self, role='rdf_class', remove_empty=True, **kwargs):
         """ Returns a JSON object of the class for insertion into es
 
         args:
             role: the role states how the class data should be returned
                   depending upon whether it is used as a subject of an object.
-                  options are kds_esNested or rdf_Class
+                  options are kds_esNested or rdf_class
             remove_empty: True removes empty items from es object
         """
+        def test_idx_status(cls_inst, **kwargs):
+            """
+            Return True if the class has already been indexed in elastisearch
+
+            Args:
+            -----
+                cls_inst: the rdfclass instance
+
+            Kwargs:
+            -------
+                force[boolean]: True will return false to force a reindex of the
+                        class
+            """
+            if kwargs.get("force") == True:
+                return False
+            idx_time = cls_inst.get("kds_esIndexTime", [None])[0]
+            mod_time = cls_inst.get("dcterm_modified", [None])[0]
+            error_msg = cls_inst.get("kds_esIndexError", [None])[0]
+            if (not idx_time) or \
+               error_msg or \
+               (idx_time and mod_time and idx_time < mod_time):
+               return False
+            return True
+
         # if self.__class__.__name__ == 'rdf_type':
         #     pdb.set_trace()
         rtn_obj = {}
-        # pdb.set_trace()
         if kwargs.get("depth"):
             kwargs['depth'] += 1
         else:
             kwargs['depth'] = 1
-        if role == 'rdf_Class':
+        if role == 'rdf_class':
+            if test_idx_status(self, **kwargs):
+                return None
             for prop, value in self.items():
                 new_val = value.es_json()
-                if (remove_empty and new_val) or not remove_empty:
+                rtn_method = get_attr(self[prop], 'kds_esObjectType', [])
+                if 'kdr_Array' in rtn_method:
+                    rtn_obj[prop] = new_val
+                elif (remove_empty and new_val) or not remove_empty:
                     if len(new_val) == 1:
                         rtn_obj[prop] = new_val[0]
                     else:
                         rtn_obj[prop] = new_val
+            nested_props = None
         else:
             try:
                 nested_props = self.es_defs.get('kds_esNestedProps',
-                                                list(self.keys()))
+                                                list(self.keys())).copy()
             except AttributeError:
                 nested_props = list(self.keys())
             for prop, value in self.items():
-                # if prop == 'rdfs_label' and 'bf_Organization' in self.class_names:
+                # if prop == 'bf_hasInstance':
                 #     pdb.set_trace()
-                if prop in nested_props:
-                    new_val = value.es_json(**kwargs)
-                    if (remove_empty and new_val) or not remove_empty:
-                        if len(new_val) == 1:
-                            rtn_obj[prop] = new_val[0] \
-                                    if not isinstance(new_val, dict) \
-                                    else new_val
-                        else:
-                            rtn_obj[prop] = new_val
+                new_val = value.es_json(**kwargs)
+                rtn_method = get_attr(self[prop], 'kds_esObjectType', [])
+                if 'kdr_Array' in rtn_method:
+                    rtn_obj[prop] = new_val
+                elif (remove_empty and new_val) or not remove_empty:
+                    if len(new_val) == 1:
+                        rtn_obj[prop] = new_val[0] \
+                                if not isinstance(new_val, dict) \
+                                else new_val
+                    else:
+                        rtn_obj[prop] = new_val
         # if 'bf_Work' in self.hierarchy:
         #     pdb.set_trace()
-        rtn_obj = get_es_ids(rtn_obj, self)
+
         rtn_obj = get_es_label(rtn_obj, self)
         rtn_obj = get_es_value(rtn_obj, self)
+        rtn_obj = get_es_ids(rtn_obj, self)
+        if nested_props:
+            nested_props += ['value', 'id', 'uri']
+            rtn_obj = {key: value
+                       for key, value in rtn_obj.items()
+                       if key in nested_props}
+        # rml_procs = self.es_defs.get("kds_esRmlProcessor", [])
+        # # if role == 'rdf_class':
+        # #     pdb.set_trace()
+        # rml_procs = [proc for proc in rml_procs
+        #              if role == 'rdf_class' or
+        #              proc['force']]
+        # if rml_procs:
+        #     rml_maps = {}
+        #     for rml in rml_procs:
+        #         proc_kwargs = {rml['subj']: self.subject,
+        #                        "dataset": self.dataset}
+        #         proc_kwargs.update(rml['proc_kwargs'])
+        #         rml_maps[rml['name']] = rml['processor'](**proc_kwargs)
+        #     if rml_maps:
+        #         rtn_obj['rml_map'] = rml_maps
+        rml_maps = self.get_all_rml(role=role)
+        if rml_maps:
+                rtn_obj['rml_map'] = rml_maps
         return rtn_obj
+
+    def get_rml(self, rml_def, **kwargs):
+        """
+        returns the rml mapping output for specified mapping
+
+        Args:
+        -----
+            rml_def: The name of the mapping or a dictionary definition
+        """
+        if isinstance(rml_def, str):
+            rml_procs = self.es_defs.get("kds_esRmlProcessor", [])
+            for item in rml_procs:
+                if item['name'] == rml_def:
+                    rml_def = item
+                    break
+        proc_kwargs = {rml_def['subj']: self.subject,
+                       "dataset": self.dataset}
+        proc_kwargs.update(rml_def['proc_kwargs'])
+        return rml_def['processor'](**proc_kwargs)
+
+    def get_all_rml(self, **kwargs):
+        """
+        Returns a dictionary with the output of all the rml procceor results
+        """
+        rml_procs = self.es_defs.get("kds_esRmlProcessor", [])
+        role = kwargs.get('role')
+        if role:
+            rml_procs = [proc for proc in rml_procs
+                         if role == 'rdf_class' or
+                         proc['force']]
+        rml_maps = {}
+        for rml in rml_procs:
+            rml_maps[rml['name']] = self.get_rml(rml, **kwargs)
+        return rml_maps
 
     def _set_subject(self, subject):
         """ sets the subject value for the class instance
@@ -487,9 +693,11 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
 
 
 def list_hierarchy(class_name, bases):
-    """ creates a list of the class hierarchy
+    """
+    Creates a list of the class hierarchy
 
-    args:
+    Args:
+    -----
         class_name: name of the current class
         bases: list/tuple of bases for the current class
     """
@@ -501,19 +709,48 @@ def list_hierarchy(class_name, bases):
     return list([i for i in set(class_list)])
 
 def es_get_class_defs(cls_def, cls_name):
-    """ reads through the class defs and gets the related es class
-        defintions
+    """
+    Reads through the class defs and gets the related es class
+    defintions
 
     Args:
+    -----
         class_defs: RdfDataset of class definitions
     """
-    # cls_def = cls_defs[cls_name]
     rtn_dict = {key: value for key, value in cls_def.items() \
                 if key.startswith("kds_es")}
     for key in rtn_dict:
         del cls_def[key]
     return rtn_dict
 
+def get_rml_processors(es_defs):
+    """
+    Returns the es_defs with the instaniated rml_processor
+
+    Args:
+    -----
+        es_defs: the rdf_class elacticsearch defnitions
+        cls_name: the name of the tied class
+    """
+    proc_defs = es_defs.get("kds_esRmlProcessor", [])
+    if proc_defs:
+        new_defs = []
+        for proc in proc_defs:
+            params = proc['kds_rmlProcessorParams'][0]
+            proc_kwargs = {}
+            if params.get("kds_rtn_format"):
+                proc_kwargs["rtn_format"] = params.get("kds_rtn_format")[0]
+            new_def = dict(name=proc['rdfs_label'][0],
+                           subj=params["kds_subjectKwarg"][0],
+                           proc_kwargs=proc_kwargs,
+                           force=proc.get('kds_forceNested',[False])[0],
+                           processor=CFG.rml.get_processor(\
+                                proc['rdfs_label'][0],
+                                proc['kds_esRmlMapping'],
+                                proc['rdf_type'][0]))
+            new_defs.append(new_def)
+        es_defs['kds_esRmlProcessor'] = new_defs
+    return es_defs
 
 def list_properties(cls):
     """ returns a dictionary of properties assigned to the class"""

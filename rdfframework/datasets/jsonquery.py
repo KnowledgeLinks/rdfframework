@@ -129,7 +129,9 @@ def get_json_qry_item(dataset, param, no_key=False):
             rtn_list = ds
             if key:
                 rtn_list = merge_list([reduce_list(reduce_list(elem)[key]) \
-                                   for elem in ds if reduce_list(elem).get(key)])
+                                   for elem in ds
+                                   if isinstance(reduce_list(elem), dict)
+                                   and reduce_list(elem).get(key)])
             if filter_tup:
                 return [elem for elem in rtn_list \
                         if test_elem(elem, filter_tup)]
@@ -277,7 +279,10 @@ def get_reverse_json_qry_item(dataset, param, no_key=False, initial_val=None):
                 if hasattr(ds, 'rmap') and initial_val:
                     # pdb.set_trace()
                     if key:
-                        return ds.rmap[initial_val][key]
+                        try:
+                            return ds.rmap[initial_val][key]
+                        except KeyError:
+                            return []
                     else:
                         return ds.rmap[initial_val]
                 data_list = UniqueList()
@@ -393,6 +398,8 @@ def json_qry(dataset, qry_str, params={}):
     dallor_val = params.get("$", dataset)
     if isinstance(dallor_val, rdflib.URIRef):
         dallor_val = Uri(dallor_val)
+    if qry_str.strip() == '$':
+        return dallor_val
     parsed_qry = parse_json_qry(qry_str)
     qry_parts = parsed_qry['qry_parts']
     post_actions = parsed_qry['params']

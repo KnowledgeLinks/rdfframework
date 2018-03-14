@@ -197,7 +197,7 @@ class DataFileManager():
         log.setLevel(kwargs.get("log_level", self.log_level))
         conn = self.__get_conn__(**kwargs)
         result = conn.update_query("DROP GRAPH %s" % \
-                                   getattr(__NSM__.kdr, filename),
+                                   getattr(__NSM__.kdr, filename).sparql,
                                    **kwargs)
         # Remove the load time from the triplestore
         conn.update_query("""

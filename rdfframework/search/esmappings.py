@@ -104,13 +104,19 @@ class EsMappings():
             "body" : {
                 "mappings": {},
                 "settings": {
-                    "analysis": {
-                        "analyzer": {
-                            "keylower": {
-                                "tokenizer": "keyword",
-                                "type": "custom",
-                                "filter": "lowercase",
-                                "ignore_above" : 256
+                    # "read_only_allow_delete": False,
+                    "index": {
+                        # "blocks" : {
+                        #     "read_only_allow_delete" : "false"
+                        # },
+                        "analysis": {
+                            "analyzer": {
+                                "keylower": {
+                                    "tokenizer": "keyword",
+                                    "type": "custom",
+                                    "filter": "lowercase",
+                                    "ignore_above" : 256
+                                }
                             }
                         }
                     }
@@ -183,7 +189,9 @@ class EsMappings():
             result = requests.post(url,
                     headers={'Content-Type':'application/json'},
                     data = json.dumps(data))
-            self.es.indices.delete_alias(index=idx_names['old'], name=alias)
+            self.es.indices.delete_alias(index=idx_names['old'],
+                                         name=alias,
+                                         ignore=[403])
             self.es.indices.delete(index=idx_names['old'], ignore=[400, 404])
         # add the alias to the new index
         self.es.indices.put_alias(index=idx_names['new'], name=alias)

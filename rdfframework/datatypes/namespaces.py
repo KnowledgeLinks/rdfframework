@@ -224,7 +224,8 @@ class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
         return http_formatter(*self.value)
 
     def __str__(self):
-        return self.sparql
+        return self.clean_uri
+        # return self.sparql
 
     def __repr__(self):
         return self.pyuri

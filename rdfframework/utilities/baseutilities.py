@@ -124,6 +124,8 @@ class memorize():
         self.__len += 1
 
     def __call__(self, *args, **kwargs):
+        # return self.__wrapped__(*args, **kwargs)
+        # pdb.set_trace()
         try:
             return self.memorized[args]
         except KeyError:

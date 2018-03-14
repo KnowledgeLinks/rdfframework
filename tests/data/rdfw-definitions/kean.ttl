@@ -64,7 +64,7 @@ rdf:type kds:initProcessor [
 	] ;
 	kds:esProcessor	[
 		kds:appliesToClass kdr:AllClasses ;
-		a kdr:AddClassHeirarchyProcessor
+		a kdr:AddClassHierarchyProcessor
 	] ;
 	kds:rangeDef [
 		kds:appliesToClass kdr:AllClasses ;

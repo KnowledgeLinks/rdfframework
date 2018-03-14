@@ -22,5 +22,6 @@ from .rdfclass import (RdfClassBase,
                        find)
 # from .rdfclassgenerator import RdfClassGenerator
 from .rdffactories import RdfClassFactory, RdfPropertyFactory
+from .esconversion import make_es_id
 
 __version__ = '0.0.1'

@@ -88,7 +88,8 @@ class KeyRegistryMeta(type):
                                       reg_cls,
                                       '__optional_idx_attrs__')
 
-        cls_attrs = set(cls.__dict__)
+        cls_attrs = set(dir(cls))
+        cls_attrs.add("__name__")
         if (req_attrs - cls_attrs):
             raise AttributeError("'%s' is missing these required class attributes %s" \
                     % (cls, req_attrs - cls_attrs))

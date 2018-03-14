@@ -3,7 +3,10 @@ import time
 import logging
 import requests
 
-from rdfframework.utilities import KeyRegistryMeta, pyfile_path, initialized
+from rdfframework.utilities import (KeyRegistryMeta,
+                                    pyfile_path,
+                                    initialized,
+                                    EmptyDot)
 from elasticsearch import Elasticsearch
 import pdb, pprint
 
@@ -302,12 +305,10 @@ def setup_conn(**kwargs):
     elif kwargs.get("rdflib"):
         conn = RdfwConnections['triplestore']['rdflib'](kwargs.get('rdflib'))
     elif RdfConfigManager().data_tstore and \
-            not isinstance(RdfConfigManager().data_tstore,
-                           rdfframework.utilities.EmptyDot):
+            not isinstance(RdfConfigManager().data_tstore, EmptyDot):
         conn = ConnManager().datastore
     elif RdfConfigManager().TRIPLESTORE_URL and \
-            not isinstance(RdfConfigManager().TRIPLESTORE_URL,
-                           rdfframework.utilities.EmptyDot):
+            not isinstance(RdfConfigManager().TRIPLESTORE_URL, EmptyDot):
         conn = RdfwConnections['triplestore']['blazegraph'](\
                 RdfConfigManager().TRIPLESTORE_URL)
     else:

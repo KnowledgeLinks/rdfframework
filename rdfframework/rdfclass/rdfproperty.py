@@ -14,7 +14,7 @@ from rdfframework.utilities import (find_values,
                                     print_doc)
 from rdfframework.datatypes import BaseRdfDataType, Uri, BlankNode, \
         RdfNsManager
-from rdfframework.processors import prop_processor_mapping
+from rdfframework.processors import PropertyProcessor
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.rdfclass.esconversion import (convert_value_to_es,
                                                 range_is_obj,
@@ -43,7 +43,8 @@ class RdfPropertyMeta(type):
     @classmethod
     def __prepare__(mcs, name, bases, **kwargs):
         # print('  RdfClassMeta.__prepare__(\n\t\t%s)' % (p_args(args, kwargs)))
-
+        # if name == 'bf_hasItem':
+        #     pdb.set_trace()
         prop_defs = kwargs.pop('prop_defs')
         prop_name = kwargs.pop('prop_name')
         cls_names = kwargs.pop('class_names')
@@ -69,7 +70,8 @@ class RdfPropertyMeta(type):
         new_def['_init_processors'] = get_processors('kds_initProcessor',
                                                      prop_defs)
         new_def['_es_processors'] = get_processors('kds_esProcessor',
-                                                   prop_defs)
+                                                   prop_defs,
+                                                   'es_values')
         # pdb.set_trace()
         return new_def
         # x = super().__prepare__(name, bases, **new_def)
@@ -159,15 +161,13 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
 
         es_map = {}
         ranges = cls.rdfs_range # pylint: disable=no-member
-
-        # rng_defs = [rng_def for rng_def in cls.kds_rangeDef # pylint: disable=no-member
-        #             if not isinstance(rng_def, BlankNode)
-        #             and (cls._cls_name in rng_def.get('kds_appliesToClass', []) # pylint: disable=no-member
-        #                  or 'kdr_AllClasses' in rng_def.get('kds_appliesToClass',
-        #                                                     []))]
         rng_defs = get_prop_range_defs(cls.class_names, cls.kds_rangeDef)
         rng_def = get_prop_range_def(rng_defs)
-
+        if rng_def.get("kds_esIndexClass"):
+            ranges = rng_def['kds_esIndexClass'].copy()
+        # pdb.set_trace()
+        # if cls._prop_name == "bf_partOf":
+        #     pdb.set_trace()
         idx_types = get_idx_types(rng_def, ranges)
         if 'es_Ignored' in idx_types:
             return {'type': 'text',
@@ -214,6 +214,30 @@ class RdfPropertyBase(list): #  metaclass=RdfPropertyMeta):
         except (KeyError, AttributeError):
             pass
         return es_map
+
+    @classmethod
+    def es_indexers(cls, base_class, **kwargs):
+        """ Returns the es mapping for the property
+        """
+        indexer_list = []
+        ranges = cls.rdfs_range # pylint: disable=no-member
+        rng_defs = get_prop_range_defs(cls.class_names, cls.kds_rangeDef)
+        rng_def = get_prop_range_def(rng_defs)
+        if rng_def.get("kds_esIndexClass"):
+            ranges = rng_def['kds_esIndexClass'].copy()
+        idx_types = get_idx_types(rng_def, ranges)
+        if 'es_Ignored' in idx_types:
+            return []
+        if 'es_Nested' in idx_types:
+            if (kwargs.get('depth', 0) >= 1 and \
+                    kwargs.get('class') == ranges[0]) or \
+                    kwargs.get('depth', 0) > 2:
+                return []
+            indexer_list = getattr(MODULE.rdfclass,
+                                   ranges[0]).es_indexers(base_class,
+                                                          'es_Nested',
+                                                          **kwargs)
+        return indexer_list
 
     def es_json(self, **kwargs):
         """ Returns a JSON object of the property for insertion into es
@@ -301,7 +325,7 @@ def make_property(prop_defs, prop_name, cls_names=[], hierarchy=[]):
     except ValueError:
         pass
     if cls_names:
-        new_name = "%s_%s" % (prop_name, "_".join(cls_names))
+        new_name = "%s_%s" % (prop_name.pyuri, "_".join(cls_names))
         prop_defs['kds_appliesToClass'] = cls_names
     elif not cls_names:
         cls_names = [Uri('kdr_AllClasses')]
@@ -439,15 +463,18 @@ def filter_prop_defs(prop_defs, hierarchy, cls_names):
     return new_dict
 
 def prepare_prop_defs(prop_defs, prop_name, cls_names):
-    """ Examines and adds any missing defs to the prop_defs dictionary for
-        use with the RdfPropertyMeta.__prepare__ method
+    """
+    Examines and adds any missing defs to the prop_defs dictionary for
+    use with the RdfPropertyMeta.__prepare__ method
 
-    args:
+    Args:
+    -----
         prop_defs: the defintions from the rdf vocabulary defintion
         prop_name: the property name
         cls_names: the name of the associated classes
 
-    returns:
+    Returns:
+    --------
         prop_defs
     """
     def get_def(prop_defs, def_fields, default_val=None):
@@ -552,7 +579,8 @@ def tie_prop_to_class(prop, cls_name):
     new_def['_init_processors'] = get_processors('kds_initProcessor',
                                                  prop_defs)
     new_def['_es_processors'] = get_processors('kds_esProcessor',
-                                               prop_defs)
+                                               prop_defs,
+                                               'es_values')
     # pdb.set_trace()
     return new_def
 
@@ -570,12 +598,13 @@ def unique_append(self, value):
             else:
                 raise err
 
-def get_processors(processor_cat, prop_defs):
+def get_processors(processor_cat, prop_defs, data_attr=None):
     """ reads the prop defs and adds applicable processors for the property
 
     Args:
         processor_cat(str): The category of processors to retreive
         prop_defs: property defintions as defined by the rdf defintions
+        data_attr: the attr to manipulate during processing.
 
     Returns:
         list: a list of processors
@@ -583,8 +612,9 @@ def get_processors(processor_cat, prop_defs):
     processor_defs = prop_defs.get(processor_cat,[])
     processor_list = []
     for processor in processor_defs:
-        proc_class = prop_processor_mapping[processor['rdf_type'][0]]
-        processor_list.append(proc_class(processor.get('kds_params')))
+        proc_class = PropertyProcessor[processor['rdf_type'][0]]
+        processor_list.append(proc_class(processor.get('kds_params', [{}]),
+                                         data_attr))
     return processor_list
 
 

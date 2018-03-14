@@ -14,7 +14,7 @@ import os
 import sys
 from types import SimpleNamespace
 import pdb, pprint
-
+import logging
 # 3rd party modules
 import rdflib
 import requests
@@ -23,12 +23,13 @@ import jsonpath_ng
 import bibcat
 from bibcat.maps import get_map
 
-from rdfframework.datatypes import RdfNsManager, BaseRdfDataType
+from rdfframework.datatypes import RdfNsManager, BaseRdfDataType, Uri
 from rdfframework.connections import setup_conn, Blazegraph, RdflibConn, \
         make_tstore_conn
 from rdfframework.sparql import get_all_item_data
 from rdfframework.datasets import RdfDataset
-from rdfframework.utilities import pick
+from rdfframework.utilities import pick, KeyRegistryMeta
+from rdfframework.datatypes import Uri
 
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
@@ -42,7 +43,9 @@ try:
 except ImportError:
     import xml.etree.ElementTree as etree
 
-class Processor(object):
+class Processor(object, metaclass=KeyRegistryMeta):
+    __required_idx_attrs__ = {'rdf_name', '__name__'}
+
     """
     Base class for RDF Mapping Language Processors, child classes
     encapsulate different types of Data sources
@@ -57,6 +60,7 @@ class Processor(object):
     """
 
     def __init__(self, rml_rules, **kwargs):
+        # log.setLevel(logging.DEBUG)
         self.__setup_conn__(**kwargs)
         self.use_json_qry = False
         self.rml = rdflib.Graph()
@@ -80,7 +84,7 @@ class Processor(object):
         # Populate Namespaces Manager
         for prefix, namespace in self.rml.namespaces():
             NS_MGR.bind(prefix, namespace, ignore_errors=True)
-        self.output, self.source, self.triplestore_url = None, None, None
+        self.source, self.triplestore_url = None, None
         self.parents = set()
         self.constants = dict(version=__version__)
         self.triple_maps = dict()
@@ -94,6 +98,7 @@ class Processor(object):
                 self.__subject_map__(triple_map_iri)
             self.triple_maps[map_key].predicateObjectMap = \
                 self.__predicate_object_map__(triple_map_iri)
+        self.set_context()
 
     def __graph__(self):
         """
@@ -129,7 +134,7 @@ class Processor(object):
         """
         self.ext_conn = setup_conn(**kwargs)
 
-    def __generate_delimited_objects__(self, **kwargs):
+    def __generate_delimited_objects__(self, output, **kwargs):
         """
         Internal methods takes a subject, predicate, element, and a list
         of delimiters that are applied to element's text and a triples
@@ -162,16 +167,16 @@ class Processor(object):
                 if isinstance(subject, rdflib.BNode):
                     new_subject = rdflib.BNode()
                     class_ = triple_map.subjectMap.class_
-                    self.output.add((new_subject, NS_MGR.rdf.type.rdflib, class_))
+                    output.add((new_subject, NS_MGR.rdf.type.rdflib, class_))
                     for parent_subject, parent_predicate in \
-                            self.output.subject_predicates(object=subject):
-                        self.output.add((parent_subject,
+                            output.subject_predicates(object=subject):
+                        output.add((parent_subject,
                                          parent_predicate,
                                          new_subject))
                 else:
                     new_subject = subject
                 subjects.append(new_subject)
-                self.output.add((new_subject, predicate, obj_))
+                output.add((new_subject, predicate, obj_))
         return subjects
 
     def __generate_reference__(self, triple_map, **kwargs):
@@ -206,7 +211,7 @@ class Processor(object):
             term = rdflib.Literal(value)
         return term
 
-    def __handle_parents__(self, **kwargs):
+    def __handle_parents__(self, output, **kwargs):
         """Internal method handles parentTriplesMaps
 
         Keyword args:
@@ -222,13 +227,14 @@ class Processor(object):
         predicate = kwargs.pop('predicate')
         parent_objects = self.execute(
             self.triple_maps[str(parent_map)],
+            output,
             **kwargs)
         for parent_obj in parent_objects:
             if isinstance(parent_obj, BaseRdfDataType):
                 parent_obj = parent_obj.rdflib
             if parent_obj == subject:
                 continue
-            self.output.add((
+            output.add((
                 subject,
                 predicate,
                 parent_obj))
@@ -381,10 +387,10 @@ class Processor(object):
             pred_obj_maps.append(pred_obj_map)
         return pred_obj_maps
 
-    def add_to_triplestore(self):
+    def add_to_triplestore(self, output):
         """Method attempts to add output to Blazegraph RDF Triplestore"""
-        if len(self.output) > 0:
-            result = self.ext_conn.load_data(data=self.output.serialize(),
+        if len(output) > 0:
+            result = self.ext_conn.load_data(data=output.serialize(),
                                              datatype='rdf')
 
     def generate_term(self, **kwargs):
@@ -423,12 +429,45 @@ class Processor(object):
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
         if 'version' not in kwargs:
             kwargs['version'] = bibcat.__version__
+        # log.debug("kwargs: %s", pprint.pformat({k:v for k, v in kwargs.items()
+        #                                         if k != "dataset"}))
+        # log.debug("parents: %s", self.parents)
         for map_key, triple_map in self.triple_maps.items():
             if map_key not in self.parents:
                 self.execute(triple_map, **kwargs)
 
+    def set_context(self):
+        """
+        Reads throught the namespaces in the RML and generates a context for
+        json+ld output when compared to the RdfNsManager namespaces
+        """
+        results = self.rml.query("""
+                SELECT ?o {
+                    {
+                        ?s rr:class ?o
+                    } UNION {
+                        ?s rr:predicate ?o
+                    }
+                }""")
+        namespaces = [Uri(row[0]).value[0]
+                      for row in results
+                      if isinstance(row[0], rdflib.URIRef)]
+        self.context = {ns[0]: ns[1] for ns in namespaces if ns[0]}
+
+    def __call__(self, **kwargs):
+        output = self.run(**kwargs)
+        rtn_format = kwargs.get("rtn_format")
+        if rtn_format:
+            if rtn_format == "json-ld":
+                return output.serialize(format='json-ld',
+                                             context=self.context).decode()
+            else:
+                return output.serialize(format=rtn_format).decode()
+        return output
+
 class CSVProcessor(Processor):
     """CSV RDF Mapping Processor"""
+    rdf_name = Uri("kds:RmlCSVPRocessor")
 
     def __init__(self, **kwargs):
         if "fields" in kwargs:
@@ -462,6 +501,7 @@ class CSVProcessor(Processor):
 class CSVRowProcessor(Processor):
     """RML Processor for CSV/TSV or other delimited file supported by the
     python standard library module csv"""
+    rdf_name = Uri("kdr:RmlCSVRowProcessor")
 
     def __init__(self, **kwargs):
         if "rml_rules" in kwargs:
@@ -490,7 +530,7 @@ class CSVRowProcessor(Processor):
             output = rdflib.Literal(raw_value)
         return output
 
-    def execute(self, triple_map, **kwargs):
+    def execute(self, triple_map, output, **kwargs):
         """Method executes mapping between CSV source and
         output RDF
 
@@ -499,14 +539,14 @@ class CSVRowProcessor(Processor):
         """
         subject = self.generate_term(term_map=triple_map.subjectMap,
                                      **kwargs)
-        start_size = len(self.output)
+        start_size = len(output)
         all_subjects = []
         for pred_obj_map in triple_map.predicateObjectMap:
             predicate = pred_obj_map.predicate
             if pred_obj_map.template is not None:
                 object_ = self.generate_term(term_map=pred_obj_map, **kwargs)
                 if len(str(object)) > 0:
-                    self.output.add((
+                    output.add((
                         subject,
                         predicate,
                         object_))
@@ -521,12 +561,12 @@ class CSVRowProcessor(Processor):
                 object_ = self.generate_term(term_map=pred_obj_map,
                                              **kwargs)
                 if object_ and len(str(object_)) > 0:
-                    self.output.add((subject, predicate, object_))
+                    output.add((subject, predicate, object_))
             if pred_obj_map.constant is not None:
-                self.output.add((subject, predicate, pred_obj_map.constant))
-        finish_size = len(self.output)
+                output.add((subject, predicate, pred_obj_map.constant))
+        finish_size = len(output)
         if finish_size > start_size:
-            self.output.add((subject,
+            output.add((subject,
                              NS_MGR.rdf.type.rdflib,
                              triple_map.subjectMap.class_))
             all_subjects.append(subject)
@@ -543,11 +583,13 @@ class CSVRowProcessor(Processor):
             row(Dict, List): Row from CSV Reader
         """
         self.source = row
-        self.output = self.__graph__()
+        kwargs['output'] = self.__graph__()
         super(CSVRowProcessor, self).run(**kwargs)
+        return kwargs['output']
 
 class JSONProcessor(Processor):
     """JSON RDF Mapping Processor"""
+    rdf_name = Uri("kdr:RmlJSONProcessor")
 
     def __init__(self, **kwargs):
         try:
@@ -564,7 +606,7 @@ class JSONProcessor(Processor):
             if rdflib.term._is_valid_uri(row):
                 return rdflib.URIRef(row)
 
-    def __reference_handler__(self, **kwargs):
+    def __reference_handler__(self, output, **kwargs):
         """Internal method for handling rr:reference in triples map
 
         Keyword Args:
@@ -584,10 +626,10 @@ class JSONProcessor(Processor):
         ref_exp = jsonpath_ng.parse(str(pred_obj_map.refernce))
         found_objects = [r.value for r in ref_exp(obj)]
         for row in found_objects:
-            self.output.add((subject, predicate, rdflib.Literal(row)))
+            output.add((subject, predicate, rdflib.Literal(row)))
 
 
-    def execute(self, triple_map, **kwargs):
+    def execute(self, triple_map, output, **kwargs):
         """Method executes mapping between JSON source and
         output RDF
 
@@ -611,13 +653,14 @@ class JSONProcessor(Processor):
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
                 if pred_obj_map.template is not None:
-                    self.output.add((
+                    output.add((
                         subject,
                         predicate,
                         self.generate_term(term_map=pred_obj_map, **kwargs)))
 
                 if pred_obj_map.parentTriplesMap is not None:
                     self.__handle_parents__(
+                        output,
                         parent_map=pred_obj_map.parentTriplesMap,
                         subject=subject,
                         predicate=predicate,
@@ -631,9 +674,9 @@ class JSONProcessor(Processor):
                             rdf_obj = rdflib.URIRef(str(obj))
                         else:
                             rdf_obj = rdflib.Literal(str(obj))
-                        self.output.add((subject, predicate, rdf_obj))
+                        output.add((subject, predicate, rdf_obj))
                 if pred_obj_map.constant is not None:
-                    self.output.add((subject,
+                    output.add((subject,
                                      predicate,
                                      pred_obj_map.constant))
             subjects.append(subject)
@@ -648,15 +691,19 @@ class JSONProcessor(Processor):
         ----
             source: str, dict
         """
-        self.output = self.__graph__()
+        kwargs['output'] = self.__graph__()
         if isinstance(source, str):
             import json
             source = json.loads(source)
         self.source = source
         super(JSONProcessor, self).run(**kwargs)
+        self.output = kwargs['output']
+        return output
+
 
 class XMLProcessor(Processor):
     """XML RDF Mapping Processor"""
+    rdf_name = Uri("kdr:RmlXMLProcessor")
 
     def __init__(self, **kwargs):
         if "rml_rules" in kwargs:
@@ -689,7 +736,7 @@ class XMLProcessor(Processor):
             return rdflib.URIRef(raw_text)
 
 
-    def __reference_handler__(self, **kwargs):
+    def __reference_handler__(self, output, **kwargs):
         """Internal method for handling rr:reference in triples map
 
         Keyword Args:
@@ -718,18 +765,19 @@ class XMLProcessor(Processor):
                 datatype = pred_obj_map.datatype
             if isinstance(found_elem, str): # Handle xpath attributes
                 object_ = self.__generate_object_term__(datatype, found_elem)
-                self.output.add((subject, predicate, object_))
+                output.add((subject, predicate, object_))
                 continue
             if found_elem.text is None or len(found_elem.text) < 1:
                 continue
             if pred_obj_map.constant is not None:
-                self.output.add((subject,
+                output.add((subject,
                                  predicate,
                                  pred_obj_map.constant))
                 continue
             if pred_obj_map.delimiters != []:
                 subjects.extend(
                     self.__generate_delimited_objects__(
+                        output,
                         triple_map=pred_obj_map,
                         subject=subject,
                         predicate=predicate,
@@ -738,11 +786,11 @@ class XMLProcessor(Processor):
                         datatype=datatype))
             else:
                 object_ = self.__generate_object_term__(datatype, found_elem.text)
-                self.output.add((subject, predicate, object_))
+                output.add((subject, predicate, object_))
         return subjects
 
 
-    def execute(self, triple_map, **kwargs):
+    def execute(self, triple_map, output, **kwargs):
         """Method executes mapping between source
 
         Args:
@@ -759,35 +807,32 @@ class XMLProcessor(Processor):
             subject = self.generate_term(term_map=triple_map.subjectMap,
                                          element=element,
                                          **kwargs)
-            start = len(self.output)
+            start = len(output)
             for row in triple_map.predicateObjectMap:
                 predicate = row.predicate
                 if row.template is not None:
                     obj_ = self.generate_term(term_map=row, **kwargs)
-                    self.output.add((
-                        subject,
-                        predicate,
-                        obj_))
+                    output.add((subject, predicate, obj_))
                 if row.parentTriplesMap is not None:
                     self.__handle_parents__(
+                        output,
                         parent_map=row.parentTriplesMap,
                         subject=subject,
                         predicate=predicate,
                         **kwargs)
                 new_subjects = self.__reference_handler__(
+                    output,
                     predicate_obj_map=row,
                     element=element,
                     subject=subject)
                 subjects.extend(new_subjects)
                 if row.constant is not None:
-                    self.output.add((subject,
-                                     predicate,
-                                     row.constant))
-            if start < len(self.output):
+                    output.add((subject, predicate, row.constant))
+            if start < len(output):
                 if triple_map.subjectMap.class_ is not None:
-                    self.output.add((subject,
-                                     NS_MGR.rdf.type.rdflib,
-                                     triple_map.subjectMap.class_))
+                    output.add((subject,
+                                NS_MGR.rdf.type.rdflib,
+                                triple_map.subjectMap.class_))
                 subjects.append(subject)
         return subjects
 
@@ -800,7 +845,7 @@ class XMLProcessor(Processor):
         Args:
             xml(etree.ElementTree or text
         """
-        self.output = self.__graph__()
+        kwargs['output'] = self.__graph__()
         if isinstance(xml, str):
             try:
                 self.source = etree.XML(xml)
@@ -812,6 +857,8 @@ class XMLProcessor(Processor):
         else:
             self.source = xml
         super(XMLProcessor, self).run(**kwargs)
+        self.output = kwargs['output']
+        return kwargs['output']
 
 def __get_object__(binding):
     """Method takes a binding extracts value and returns rdflib
@@ -839,10 +886,11 @@ def __get_object__(binding):
 
 class SPARQLProcessor(Processor):
     """SPARQLProcessor provides a RML Processor for external SPARQL endpoints"""
+    rdf_name = Uri("kdr:RmlSPARQLProcessor")
 
-    def __init__(self, **kwargs):
-        if "rml_rules" in kwargs:
-            rml_rules = kwargs.pop("rml_rules")
+    def __init__(self, rml_rules, **kwargs):
+        # if "rml_rules" in kwargs:
+        #     rml_rules = kwargs.pop("rml_rules")
         super(SPARQLProcessor, self).__init__(rml_rules, **kwargs)
         __set_prefix__()
         #! self.triplestore = kwargs.get("triplestore", self.__graph__())
@@ -867,18 +915,16 @@ class SPARQLProcessor(Processor):
                                    rtn_format=output_format,
                                    debug=False)
 
+
     def run(self, **kwargs):
-        self.output = self.__graph__()
+        kwargs['output'] = self.__graph__()
         if "limit" in kwargs:
             self.limit = kwargs.get('limit')
         if "offset" in kwargs:
             self.offset = kwargs.get('offset')
-        self.timer = datetime.datetime.now() - datetime.datetime.now()
         start = datetime.datetime.now()
         if self.use_json_qry:
-            if kwargs.get('dataset'):
-                self.ds = kwargs.pop('dataset')
-            else:
+            if not kwargs.get('dataset'):
                 if self.data_query:
                     sparql = PREFIX + self.data_query.format(**kwargs)
                     data = self.ext_conn.query(sparql)
@@ -887,13 +933,14 @@ class SPARQLProcessor(Processor):
                             conn=self.ext_conn,
                             output='json',
                             debug=False)
-                self.ds = RdfDataset(data)
+                kwargs['dataset'] = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
-        print("sparql_processor ran in %s: total qry time: %s" % \
-              ((datetime.datetime.now() - start),
-              self.timer))
+        # log.debug("sparql_processor ran in %s:",
+        #           (datetime.datetime.now() - start))
+        self.output = kwargs['output']
+        return kwargs['output']
 
-    def execute(self, triple_map, **kwargs):
+    def execute(self, triple_map, output, **kwargs):
         """Execute """
         subjects = []
         if NS_MGR.ql.JSON.rdflib in \
@@ -905,9 +952,9 @@ class SPARQLProcessor(Processor):
             kwargs['limit'] = self.limit
         if 'offset' not in kwargs:
             kwargs['offset'] = self.offset
+        # log.debug("triple_map.logicalSource: \n%s",
+                  # pprint.pformat(triple_map.logicalSource.__dict__))
         iterator = str(triple_map.logicalSource.iterator)
-        sparql = PREFIX + triple_map.logicalSource.query.format(
-            **kwargs)
         start = datetime.datetime.now()
         key, json_query = None, None
         # pdb.set_trace()
@@ -918,12 +965,10 @@ class SPARQLProcessor(Processor):
                 key =[val for val in kwargs.values() \
                       if isinstance(val, rdflib.URIRef)][0]
             json_query = triple_map.logicalSource.json_query
-            if str(json_query) == "$.bf_itemOf.bf_instanceOf.bf_subject[rdf_type=bf_Topic].rdf_value":
-                pdb.set_trace()
-            bindings = self.ds.json_qry(json_query, {'$': key})
+            bindings = kwargs['dataset'].json_qry(json_query, {'$': key})
         else:
+            sparql = PREFIX + triple_map.logicalSource.query.format(**kwargs)
             bindings = self.__get_bindings__(sparql, output_format)
-        self.timer += datetime.datetime.now() - start
         for binding in bindings:
             if key:
                 try:
@@ -939,14 +984,14 @@ class SPARQLProcessor(Processor):
             else:
                 raw_value = entity_raw.get('value')
                 if entity_raw.get('type').startswith('bnode'):
-                    entity = rdflib.BNode(raw_value)
+                    entity = BlankNode(raw_value)
                 else:
-                    entity = rdflib.URIRef(raw_value)
+                    entity = Uri(raw_value)
             if triple_map.subjectMap.class_ is not None:
                 sub = entity
                 if isinstance(entity, BaseRdfDataType):
                     sub = entity.rdflib
-                self.output.add((sub,
+                output.add((sub,
                                  NS_MGR.rdf.type.rdflib,
                                  triple_map.subjectMap.class_))
             # pdb.set_trace()
@@ -956,6 +1001,7 @@ class SPARQLProcessor(Processor):
 
                 if pred_obj_map.parentTriplesMap is not None:
                     self.__handle_parents__(
+                            output=output,
                             parent_map=pred_obj_map.parentTriplesMap,
                             subject=entity,
                             predicate=predicate,
@@ -968,7 +1014,7 @@ class SPARQLProcessor(Processor):
                         # pdb.set_trace()
                         if ref_key in binding:
                             for item in binding[ref_key]:
-                                self.output.add((entity,
+                                output.add((entity,
                                                  predicate,
                                                  item.rdflib))
                             continue
@@ -976,21 +1022,21 @@ class SPARQLProcessor(Processor):
                         if ref_key in binding:
                             object_ = __get_object__(
                                 binding[ref_key])
-                            self.output.add((entity, predicate, object_))
+                            output.add((entity, predicate, object_))
                         continue
                 if pred_obj_map.constant is not None:
-                    self.output.add(
+                    if isinstance(entity, BaseRdfDataType):
+                        entity = entity.rdflib
+                    output.add(
                         (entity, predicate, pred_obj_map.constant))
                     continue
 
                 json_query = None
                 if pred_obj_map.json_query:
                     json_query = pred_obj_map.json_query
-                    if str(json_query) == "rdfs_label.bf_heldBy.*.bf_itemOf.$":
-                        pdb.set_trace()
                     start = datetime.datetime.now()
-                    pre_obj_bindings = self.ds.json_qry(json_query, {'$': entity})
-                    self.timer += (datetime.datetime.now() - start)
+                    pre_obj_bindings = kwargs['dataset'].json_qry(json_query,
+                                                                  {'$': entity})
                 else:
                     sparql_query = PREFIX + pred_obj_map.query.format(**kwargs)
                     pre_obj_bindings = self.__get_bindings__(sparql_query,
@@ -998,12 +1044,14 @@ class SPARQLProcessor(Processor):
 
                 for row in pre_obj_bindings:
                     if json_query:
-                        self.output.add((entity, predicate, row.rdflib))
+                        if isinstance(entity, BaseRdfDataType):
+                            entity = entity.rdflib
+                        output.add((entity, predicate, row.rdflib))
                     else:
                         object_ = __get_object__(row)
                         if object_ is None:
                             continue
-                        self.output.add((entity, predicate, object_))
+                        output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects
 
@@ -1011,6 +1059,8 @@ class SPARQLBatchProcessor(Processor):
     """Class batches all triple_maps queries into a single SPARQL query
     in an attempt to reduce the time spent in the triplestore/network
     bottleneck"""
+
+    rdf_name = Uri("kdr:RmlSPARQLBatchProcessor")
 
     def __init__(self, rml_rules, triplestore_url=None, triplestore=None):
         super(SPARQLBatchProcessor, self).__init__(rml_rules, **kwargs)
@@ -1061,10 +1111,12 @@ WHERE {{"""
         return select_clause + where_clause + "}}"
 
     def run(self, **kwargs):
-        self.output = self.__graph__()
+        kwargs['output'] = self.__graph__()
         super(SPARQLBatchProcessor, self).run(**kwargs)
+        self.output = kwargs['output']
+        return kwargs['output']
 
-    def execute(self, triple_map, **kwargs):
+    def execute(self, triple_map, output, **kwargs):
         """Method iterates through triple map's predicate object maps
         and processes query.
 
@@ -1086,7 +1138,7 @@ WHERE {{"""
                 else:
                     entity = rdflib.URIRef(raw_value)
             if triple_map.subjectMap.class_ is not None:
-                self.output.add(
+                output.add(
                     (entity,
                      rdflib.RDF.type,
                      triple_map.subjectMap.class_))
@@ -1097,7 +1149,7 @@ WHERE {{"""
             for pred_obj_map in triple_map.predicateObjectMap:
                 predicate = pred_obj_map.predicate
                 if pred_obj_map.constant is not None:
-                    self.output.add(
+                    output.add(
                         (entity, predicate, pred_obj_map.constant))
                     continue
                 if "#" in str(predicate):
@@ -1109,7 +1161,7 @@ WHERE {{"""
                     if key in property_.keys():
                         info = {"about": property_.get(key)}
                         object_ = __get_object__(info)
-                        self.output.add((entity, predicate, object_))
+                        output.add((entity, predicate, object_))
 
 
 def __set_prefix__():

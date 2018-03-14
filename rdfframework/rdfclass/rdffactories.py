@@ -184,7 +184,10 @@ class RdfClassFactory(RdfBaseFactory):
         start = datetime.datetime.now()
         log.info(" # of classes to create: %s" % len(self.class_dict))
         log.debug(" creating classes that are not subclassed")
+
         for name, cls_defs in self.class_dict.items():
+            # if name in ['bf_Organization', 'bf_Agent']:
+            #     pdb.set_trace()
             if not self.class_dict[name].get('rdfs_subClassOf'):
                 created.append(name)
                 setattr(MODULE.rdfclass,
@@ -203,15 +206,20 @@ class RdfClassFactory(RdfBaseFactory):
         while left > 0:
             new = []
             for name, cls_defs in self.class_dict.items():
+                # if name in ['bf_Organization', 'bf_Agent']:
+                    # pdb.set_trace()
                 parents = self.class_dict[name].get('rdfs_subClassOf')
-                for parent in make_list(parents):
-                    bases = tuple()
-                    if parent in created or parent in classes:
-                        if parent in classes:
-                            bases += (RdfClassBase, )
-                        else:
-                            base = getattr(MODULE.rdfclass, parent)
-                            bases += (base,) + base.__bases__
+                if not parents:
+                    bases += (RdfClassBase, )
+                else:
+                    for parent in make_list(parents):
+                        bases = tuple()
+                        if parent in created or parent in classes:
+                            if parent in classes:
+                                bases += (RdfClassBase, )
+                            else:
+                                base = getattr(MODULE.rdfclass, parent)
+                                bases += (base,) + base.__bases__
                 if len(bases) > 0:
                     created.append(name)
                     setattr(MODULE.rdfclass,
@@ -226,16 +234,31 @@ class RdfClassFactory(RdfBaseFactory):
                 except KeyError:
                     pass
             if left == len(self.class_dict):
-                c_list = [self.class_dict[name].get('rdfs_subClassOf') \
-                          for name in self.class_dict]
-                classess = []
-                for cl in c_list:
-                    for item in cl:
-                        classes.append(item)
+                # c_list = [self.class_dict[name].get('rdfs_subClassOf') \
+                #           for name in self.class_dict]
+                missing_parents = []
+                for name in self.class_dict:
+                    missing_parents += \
+                            self.class_dict[name].get('rdfs_subClassOf', [])
+                missing_parents = set(missing_parents)
+                still_valid = set([name for name in self.class_dict
+                                   if name not in missing_parents])
+                classes = list(missing_parents.difference(\
+                            set(self.class_dict.keys())))
+                # classess = []
+                # for cl in c_list:
+                #     for item in cl:
+                #         classes.append(item)
 
                 for name in self.class_dict:
                     if name in classes:
                         classes.remove(name)
+                    for p_name in self.class_dict[name].get('rdfs_subClassOf',
+                                                            []).copy():
+                        if p_name in classes:
+                            self.class_dict[name]['rdfs_subClassOf'].remove(\
+                                    p_name)
+                # pdb.set_trace()
             left = len(self.class_dict)
         # self.tie_properties(created)
         log.info(" created all classes in %s",
@@ -248,6 +271,8 @@ class RdfClassFactory(RdfBaseFactory):
         self.class_dict = {}
         for name, cls_defs in self.defs.items():
             def_type = set(cls_defs.get(self.rdf_type, []))
+            if name.type == 'bnode':
+                continue
             # a class can be determined by checking to see if it is of an
             # rdf_type listed in the classes_key or has a property that is
             # listed in the inferred_key

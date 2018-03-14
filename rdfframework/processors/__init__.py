@@ -8,7 +8,8 @@ Processors are used to manipulate rdf date within the framework.
 :license: To be determined, see LICENSE.txt for details.
 """
 
-from .propertyprocessors import prop_processor_mapping
+from .propertyprocessors import PropertyProcessor
+
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 __version__ = '0.0.1'
