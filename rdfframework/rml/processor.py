@@ -932,7 +932,8 @@ class SPARQLProcessor(Processor):
                     data = get_all_item_data(items=kwargs['instance'],
                                              conn=self.ext_conn,
                                              output='json',
-                                             debug=False)
+                                             debug=False,
+                                             **kwargs)
                 kwargs['dataset'] = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
         # log.debug("sparql_processor ran in %s:",

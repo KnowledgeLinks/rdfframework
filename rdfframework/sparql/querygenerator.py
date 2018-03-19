@@ -37,6 +37,8 @@ def get_all_item_data(items, conn, graph=None, output='json', **kwargs):
         template_kwargs['uri_list'] = items
     else:
         template_kwargs['item_uri'] = Uri(items).sparql
+    if kwargs.get("special_union"):
+        template_kwargs['special_union'] = kwargs.get("special_union")
     if kwargs.get('rdfclass'):
         # pdb.set_trace()
         template_kwargs.update(kwargs['rdfclass'].query_kwargs)
