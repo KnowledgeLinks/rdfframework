@@ -929,10 +929,10 @@ class SPARQLProcessor(Processor):
                     sparql = PREFIX + self.data_query.format(**kwargs)
                     data = self.ext_conn.query(sparql)
                 else:
-                    data = get_all_item_data(item_uri=kwargs['instance'],
-                            conn=self.ext_conn,
-                            output='json',
-                            debug=False)
+                    data = get_all_item_data(items=kwargs['instance'],
+                                             conn=self.ext_conn,
+                                             output='json',
+                                             debug=False)
                 kwargs['dataset'] = RdfDataset(data)
         super(SPARQLProcessor, self).run(**kwargs)
         # log.debug("sparql_processor ran in %s:",
