@@ -18,6 +18,7 @@ x = RdfDataset()
 x[tutt.subject] = tutt
 conn = cfg.conns.datastore
 import rdfframework.sparql as sp
+import datetime
 # # # print(colors.white.blue("  Instance Example                                                                                   "))
 # # # data = sp.get_all_item_data('<https://plains2peaks.org/20497be2-732c-11e7-b6f2-005056c00008>', conn)
 # # # item = RdfDataset(data, "<https://plains2peaks.org/20497be2-732c-11e7-b6f2-005056c00008>")
@@ -35,44 +36,55 @@ import rdfframework.sparql as sp
 #                              conn,
 #                              rdfclass=rdfclass.bf_Work)
 # work = RdfDataset(data3, data_uri)
-# from rdfframework.rml.processor import SPARQLProcessor
+from rdfframework.rml.processor import SPARQLProcessor
 # # # SCHEMA_PROCESSOR = SPARQLProcessor(
 # # #     conn=cfg.conns.datastore,
 # # #     rml_rules=["bf-to-schema_rdfw.ttl"])
-# # from bibcat.rml.processor import SPARQLProcessor as SPARQLProcessorOrig
+from bibcat.rml.processor import SPARQLProcessor as SPARQLProcessorOrig
 # # pprint.pprint(rdfclass.bf_Item.es_mapping())
 # # pdb.set_trace()
-# # instance_iri = "https://plains2peaks.org/98c01afe-83b7-11e7-83be-ac87a3129ce6"
-# item_iri = "http://digitalcollections.uwyo.edu/luna/servlet" \
-#            "/detail/uwydbuwy~96~96~3373447~294069"
+instance_iri = "https://plains2peaks.org/98c01afe-83b7-11e7-83be-ac87a3129ce6"
+item_iri = "http://digitalcollections.uwyo.edu/luna/servlet" \
+           "/detail/uwydbuwy~96~96~3373447~294069"
 # # result = work[Uri(item_iri)].es_json()
 # # item = work[Uri(item_iri)]
-# # pprint.pprint(result)
-# # print(result['rml_map']['map4_json_ld'])
-# # print("init processor")
-# MAP4_PROCESSOR = SPARQLProcessor(
-#     conn=cfg.conns.datastore,
-#     rml_rules=["bf-to-map4.ttl"])
-# # ORIG4_PROCESSOR = SPARQLProcessorOrig(
-# #     triplestore_url='http://localhost:9999/blazegraph/namespace/plain2peak'
-# #                     '/sparql',
-# #     rml_rules=["bf-to-map4.ttl"])
-# # print("init completed")
-# # # pdb.set_trace()
-# jsonld = MAP4_PROCESSOR(dataset=work,
-#                         item_iri=item_iri,
-#                         rtn_format="json-ld")
-# # print(jsonld)
-# # out = MAP4_PROCESSOR.output
-# # # MAP4_PROCESSOR.use_json_qry = False
-# # ORIG4_PROCESSOR.run(dataset=work,
-# #                    instance_iri=instance_iri,
-# #                    item_iri=item_iri)
-# # out2 = ORIG4_PROCESSOR.output
-# # print(out.serialize(format="json-ld",
-# #                     context=dict(cfg.nsm.namespaces)).decode())
-# # print(out2.serialize(format="json-ld",
-# #                      context=dict(cfg.nsm.namespaces)).decode())
+
+##### Processor Testing
+MAP4_PROCESSOR = SPARQLProcessor(
+    conn=cfg.conns.datastore,
+    rml_rules=["bf-to-map4.ttl"])
+ORIG4_PROCESSOR = SPARQLProcessorOrig(
+    triplestore_url='http://localhost:9999/blazegraph/namespace/plain2peak'
+                    '/sparql',
+    rml_rules=["bf-to-map4.ttl"])
+start = datetime.datetime.now()
+ORIG4_PROCESSOR.run(instance_iri=instance_iri,
+                    item_iri=item_iri)
+out2 = ORIG4_PROCESSOR.output
+print(out2.serialize(format="json-ld",
+                     context=MAP4_PROCESSOR.context).decode())
+print("time to run: ", (datetime.datetime.now() - start))
+start = datetime.datetime.now()
+jsonld = MAP4_PROCESSOR(#dataset=work,
+                        no_json=True,
+                        iri_key="item_iri",
+                        item_iri=item_iri,
+                        instance_iri=instance_iri,
+                        rtn_format="json-ld")
+print(jsonld)
+print("time to run: ", (datetime.datetime.now() - start))
+start = datetime.datetime.now()
+jsonld = MAP4_PROCESSOR(#dataset=work,
+                        #no_json=True,
+                        iri_key="item_iri",
+                        item_iri=item_iri,
+                        instance_iri=instance_iri,
+                        rtn_format="json-ld")
+print(jsonld)
+print("time to run: ", (datetime.datetime.now() - start))
+#### Processor Testing End
+
+
 # # # cProfile.runctx('MAP4_PROCESSOR.run(dataset=work,instance_iri=instance_iri,item_iri=item_iri)', globals(),locals())
 # # start = datetime.datetime.now()
 # # # x = json.dumps(work[Uri(instance_iri)].es_json())
@@ -85,10 +97,11 @@ mp = search.EsMappings()
 mp.initialize_indices()
 # # ref = mp.mapping_ref(mp.get_es_mappings())['catalog/work']
 # # pprint.pprint(ref)
-s = search.EsRdfBulkLoader(rdfclass.bf_Work,
-                           cfg.conns.datastore,
-                           cfg.conns.search,
-                           no_threading=False)
+# s = search.EsRdfBulkLoader(rdfclass.bf_Item,
+#                            cfg.conns.datastore,
+#                            cfg.conns.search,
+#                            no_threading=False,
+#                            idx_only_base=True)
 # # s.batch_data = {}
 # # s.batch_data[0] = []
 # # uri_list = s._get_uri_list()[:1000]

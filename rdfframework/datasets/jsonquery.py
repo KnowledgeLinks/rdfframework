@@ -399,7 +399,7 @@ def json_qry(dataset, qry_str, params={}):
     if isinstance(dallor_val, rdflib.URIRef):
         dallor_val = Uri(dallor_val)
     if qry_str.strip() == '$':
-        return dallor_val
+        return [dallor_val]
     parsed_qry = parse_json_qry(qry_str)
     qry_parts = parsed_qry['qry_parts']
     post_actions = parsed_qry['params']

@@ -15,6 +15,7 @@ import sys
 from types import SimpleNamespace
 import pdb, pprint
 import logging
+import json
 # 3rd party modules
 import rdflib
 import requests
@@ -63,6 +64,7 @@ class Processor(object, metaclass=KeyRegistryMeta):
         # log.setLevel(logging.DEBUG)
         self.__setup_conn__(**kwargs)
         self.use_json_qry = False
+        self.default_use_json_qry = False
         self.rml = rdflib.Graph()
         if isinstance(rml_rules, list):
             for rule in rml_rules:
@@ -99,6 +101,7 @@ class Processor(object, metaclass=KeyRegistryMeta):
             self.triple_maps[map_key].predicateObjectMap = \
                 self.__predicate_object_map__(triple_map_iri)
         self.set_context()
+        self.set_list_predicates()
 
     def __graph__(self):
         """
@@ -276,6 +279,7 @@ class Processor(object, metaclass=KeyRegistryMeta):
             logical_source.query = query
         if json_query is not None:
             self.use_json_qry = True
+            self.default_use_json_qry = True
             logical_source.json_query = json_query
             logical_source.json_key = json_key
         return logical_source
@@ -454,16 +458,56 @@ class Processor(object, metaclass=KeyRegistryMeta):
                       if isinstance(row[0], rdflib.URIRef)]
         self.context = {ns[0]: ns[1] for ns in namespaces if ns[0]}
 
+    def set_list_predicates(self):
+        """
+        Reads through the rml mappings and determines all fields that should
+        map to a list/array with a json output
+        """
+        results = self.rml.query("""
+                SELECT DISTINCT ?subj_class ?list_field
+                {
+                    ?bn rr:datatype rdf:List .
+                    ?bn rr:predicate ?list_field .
+                    ?s ?p ?bn .
+                    ?s rr:subjectMap ?sm_bn .
+                    ?sm_bn rr:class ?subj_class .
+                }""")
+        list_preds = [(Uri(row[0]).sparql, Uri(row[1]).sparql)
+                      for row in results]
+        array_fields = {}
+        for tup in list_preds:
+            try:
+                array_fields[tup[0]].append(tup[1])
+            except KeyError:
+                array_fields[tup[0]] = [tup[1]]
+        self.array_fields = array_fields
+
     def __call__(self, **kwargs):
         output = self.run(**kwargs)
         rtn_format = kwargs.get("rtn_format")
         if rtn_format:
             if rtn_format == "json-ld":
-                return output.serialize(format='json-ld',
-                                             context=self.context).decode()
+                return self.json_ld(output, **kwargs)
             else:
                 return output.serialize(format=rtn_format).decode()
         return output
+
+    def json_ld(self, output, **kwargs):
+        """
+        Returns the json-ld formated result
+        """
+        raw_json_ld = output.serialize(format='json-ld',
+                                       context=self.context).decode()
+        if not self.array_fields:
+            return raw_json_ld
+        json_data = json.loads(raw_json_ld)
+        for i, item in enumerate(json_data['@graph']):
+            if item.get("@type") in self.array_fields:
+                test_flds = self.array_fields[item['@type']]
+                for key, val in item.items():
+                    if key in test_flds and not isinstance(val, list):
+                        json_data['@graph'][i][key] = [val]
+        return json.dumps(json_data, indent=4)
 
 class CSVProcessor(Processor):
     """CSV RDF Mapping Processor"""
@@ -923,21 +967,34 @@ class SPARQLProcessor(Processor):
         if "offset" in kwargs:
             self.offset = kwargs.get('offset')
         start = datetime.datetime.now()
+        if kwargs.get("no_json"):
+            self.use_json_qry = False
+        else:
+            self.use_json_qry = self.default_use_json_qry
         if self.use_json_qry:
             if not kwargs.get('dataset'):
                 if self.data_query:
                     sparql = PREFIX + self.data_query.format(**kwargs)
                     data = self.ext_conn.query(sparql)
                 else:
-                    data = get_all_item_data(items=kwargs['instance'],
-                                             conn=self.ext_conn,
-                                             output='json',
-                                             debug=False,
-                                             **kwargs)
+                    try:
+                        data = get_all_item_data(
+                                items=kwargs[kwargs['iri_key']],
+                                conn=self.ext_conn,
+                                output='json',
+                                debug=False)
+                        log.debug("data triple count: %s", len(data))
+                    except KeyError:
+                        raise KeyError("missing kwarg['iri_key'] defining which"
+                                       " kwarg to use that contians the subject"
+                                       " uri used to query for data. Example: "
+                                       "iri_key='instance_iri, instance_iri="
+                                       "<http://some.iri>")
                 kwargs['dataset'] = RdfDataset(data)
+                # pdb.set_trace()
+        # start = datetime.datetime.now()
         super(SPARQLProcessor, self).run(**kwargs)
-        # log.debug("sparql_processor ran in %s:",
-        #           (datetime.datetime.now() - start))
+        # print("query time: ", (datetime.datetime.now() - start))
         self.output = kwargs['output']
         return kwargs['output']
 
@@ -1033,7 +1090,7 @@ class SPARQLProcessor(Processor):
                     continue
 
                 json_query = None
-                if pred_obj_map.json_query:
+                if pred_obj_map.json_query and self.use_json_qry:
                     json_query = pred_obj_map.json_query
                     start = datetime.datetime.now()
                     pre_obj_bindings = kwargs['dataset'].json_qry(json_query,
@@ -1044,7 +1101,7 @@ class SPARQLProcessor(Processor):
                                                              output_format)
 
                 for row in pre_obj_bindings:
-                    if json_query:
+                    if json_query and self.use_json_qry:
                         if isinstance(entity, BaseRdfDataType):
                             entity = entity.rdflib
                         output.add((entity, predicate, row.rdflib))
@@ -1052,6 +1109,8 @@ class SPARQLProcessor(Processor):
                         object_ = __get_object__(row)
                         if object_ is None:
                             continue
+                        if isinstance(entity, BaseRdfDataType):
+                            entity = entity.rdflib
                         output.add((entity, predicate, object_))
             subjects.append(entity)
         return subjects

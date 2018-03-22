@@ -66,22 +66,37 @@ class EsRdfBulkLoader(object):
         self.es_index = rdf_class.es_defs.get('kds_esIndex')[0]
         self.es_doc_type = rdf_class.es_defs.get('kds_esDocType')[0]
         self.rdf_class = rdf_class
-        self._set_es_workers()
+        self._set_es_workers(**kwargs)
         # add all of the sublcasses for a rdf_class
         rdf_types = [rdf_class.uri] + [item.uri
                                        for item in rdf_class.subclasses]
         self.query = self.items_query_template.format("\n\t\t".join(rdf_types))
         EsMappings().initialize_indices()
         self.count = 0
-        self._index_group_with_subgroup(**kwargs)
+        uri_list = self._get_uri_list()
+        while len(uri_list) > 0:
+            kwargs['uri_list'] = uri_list
+            self._index_group_with_subgroup(**kwargs)
+            uri_list = self._get_uri_list()
 
     def _set_es_workers(self, **kwargs):
         """
-        Creates index woorker instances for each class to index
+        Creates index worker instances for each class to index
+
+        kwargs:
+        -------
+            idx_only_base[bool]: True will only index the base class
         """
         def make_es_worker(search_conn, es_index, es_doc_type, class_name):
             """
             Returns a new es_worker instance
+
+            args:
+            -----
+                search_conn: the connection to elasticsearch
+                es_index: the name of the elasticsearch index
+                es_doc_type: the name of the elasticsearch doctype
+                class_name: name of the rdf class that is being indexed
             """
             new_esbase = copy.copy(search_conn)
             new_esbase.es_index = es_index
@@ -105,74 +120,77 @@ class EsRdfBulkLoader(object):
                                         self.es_index,
                                         self.es_doc_type,
                                         self.rdf_class.__name__)
-        self.other_indexers = {item.__name__: make_es_worker(
-                                        self.search_conn,
-                                        item.es_defs.get('kds_esIndex')[0],
-                                        item.es_defs.get('kds_esDocType')[0],
-                                        item.__name__)
-                               for item in additional_indexers(self.rdf_class)}
-        # self.other_indexers = {}
-    def _index_item(self, uri, num, batch_num):
-        """ queries the triplestore for an item sends it to elasticsearch """
-
-        data = RdfDataset(get_all_item_data(uri, self.tstore_conn),
-                          uri).base_class.es_json()
-        self.batch_data[batch_num].append(data)
-        self.count += 1
-
-
-    def _index_group(self):
-        """ indexes all the URIs defined by the query into Elasticsearch """
-
-        log.setLevel(self.log_level)
-        # get a list of all the uri to index
-        results = self.tstore_conn.query(sparql=self.query)
-        # results = results[:100]
-        # Start processing through uri
-        self.time_start = datetime.datetime.now()
-        batch_size = 12000
-        if len(results) > batch_size:
-            batch_end = batch_size
+        if not kwargs.get("idx_only_base"):
+            self.other_indexers = {item.__name__: make_es_worker(
+                        self.search_conn,
+                        item.es_defs.get('kds_esIndex')[0],
+                        item.es_defs.get('kds_esDocType')[0],
+                        item.__name__)
+                    for item in additional_indexers(self.rdf_class)}
         else:
-            batch_end = len(results)
-        batch_start = 0
-        batch_num = 1
-        self.batch_data = {}
-        self.batch_data[batch_num] = []
-        end = False
-        last = False
-        while not end:
-            log.debug("batch %s: %s-%s", batch_num, batch_start, batch_end)
-            for i, subj in enumerate(results[batch_start:batch_end]):
-                th = threading.Thread(name=batch_start + i + 1,
-                                      target=self._index_item,
-                                      args=(MSN.iri(subj['s']['value']),
-                                            i+1,batch_num,))
-                th.start()
-            log.debug(datetime.datetime.now() - self.time_start)
-            main_thread = threading.main_thread()
-            for t in threading.enumerate():
-                if t is main_thread:
-                    continue
-                t.join()
-            action_list = \
-                    self.es_worker.make_action_list(self.batch_data[batch_num])
-            self.es_worker.bulk_save(action_list)
-            del self.batch_data[batch_num]
-            batch_end += batch_size
-            batch_start += batch_size
-            if last:
-                end = True
-            if len(results) <= batch_end:
-                batch_end = len(results)
-                last = True
-            batch_num += 1
-            self.batch_data[batch_num] = []
-            log.debug(datetime.datetime.now() - self.time_start)
+            self.other_indexers = {}
+
+    # def _index_item(self, uri, num, batch_num):
+    #     """ queries the triplestore for an item sends it to elasticsearch """
+
+    #     data = RdfDataset(get_all_item_data(uri, self.tstore_conn),
+    #                       uri).base_class.es_json()
+    #     self.batch_data[batch_num].append(data)
+    #     self.count += 1
+
+
+    # def _index_group(self):
+    #     """ indexes all the URIs defined by the query into Elasticsearch """
+
+    #     log.setLevel(self.log_level)
+    #     # get a list of all the uri to index
+    #     results = self.tstore_conn.query(sparql=self.query)
+    #     # results = results[:100]
+    #     # Start processing through uri
+    #     self.time_start = datetime.datetime.now()
+    #     batch_size = 12000
+    #     if len(results) > batch_size:
+    #         batch_end = batch_size
+    #     else:
+    #         batch_end = len(results)
+    #     batch_start = 0
+    #     batch_num = 1
+    #     self.batch_data = {}
+    #     self.batch_data[batch_num] = []
+    #     end = False
+    #     last = False
+    #     while not end:
+    #         log.debug("batch %s: %s-%s", batch_num, batch_start, batch_end)
+    #         for i, subj in enumerate(results[batch_start:batch_end]):
+    #             th = threading.Thread(name=batch_start + i + 1,
+    #                                   target=self._index_item,
+    #                                   args=(MSN.iri(subj['s']['value']),
+    #                                         i+1,batch_num,))
+    #             th.start()
+    #         log.debug(datetime.datetime.now() - self.time_start)
+    #         main_thread = threading.main_thread()
+    #         for t in threading.enumerate():
+    #             if t is main_thread:
+    #                 continue
+    #             t.join()
+    #         action_list = \
+    #                 self.es_worker.make_action_list(self.batch_data[batch_num])
+    #         self.es_worker.bulk_save(action_list)
+    #         del self.batch_data[batch_num]
+    #         batch_end += batch_size
+    #         batch_start += batch_size
+    #         if last:
+    #             end = True
+    #         if len(results) <= batch_end:
+    #             batch_end = len(results)
+    #             last = True
+    #         batch_num += 1
+    #         self.batch_data[batch_num] = []
+    #         log.debug(datetime.datetime.now() - self.time_start)
 
     def _index_sub(self, uri_list, num, batch_num):
         """
-        Converts a list of uris to eslasticsearch json objects
+        Converts a list of uris to elasticsearch json objects
 
         args:
             uri_list: list of uris to convert
@@ -228,7 +246,7 @@ class EsRdfBulkLoader(object):
 
         log.setLevel(self.log_level)
         # get a list of all the uri to index
-        uri_list = self._get_uri_list()
+        uri_list = kwargs.get('uri_list', self._get_uri_list())
         if not uri_list:
             log.info("0 items to index")
             return
@@ -330,8 +348,6 @@ class EsRdfBulkLoader(object):
             self.batch_data[batch_num]['main'] = []
             for name, indexer in self.other_indexers.items():
                 self.batch_data[batch_num][name] = []
-            # log.debug("waiting 10 secs")
-            # time.sleep(10)
             log.debug(datetime.datetime.now() - self.time_start)
         with open(batch_file, 'rb+') as fo:
             fo.seek(-2, os.SEEK_END)
@@ -344,7 +360,7 @@ class EsRdfBulkLoader(object):
             # fo.write("}".encode())
     def _update_triplestore(self, es_result, action_list, **kwargs):
         """
-        updates the triplestore with succes of saves and failues of indexing
+        updates the triplestore with success of saves and failues of indexing
 
         Args:
         -----
@@ -359,7 +375,6 @@ class EsRdfBulkLoader(object):
                 uri_keys[item['_id']] = item['_source']["uri"]
             except KeyError:
                 bnode_keys[item['_id']] = item['_id']
-        # uri_keys = {make_es_id(item): item for item in uri_list}
         error_dict = {}
         error_bnodes = {}
         if es_result[1]:
@@ -369,7 +384,7 @@ class EsRdfBulkLoader(object):
                     error_dict[uri_keys.pop(err_item['_id'])] = \
                             XsdString(err_item['error']['reason'])
                 except KeyError:
-                    error_bnodes[bonode_keys.pop(err_item['_id'])] = \
+                    error_bnodes[bnode_keys.pop(err_item['_id'])] = \
                             XsdString(err_item['error']['reason'])
 
         sparql_good = """
@@ -398,6 +413,7 @@ class EsRdfBulkLoader(object):
         # Process any errors that were found.
         if not error_dict:
             return
+        # Delete all indexing triples related to the error subjects
         sparql_error = """
             DELETE
             {{
@@ -417,6 +433,8 @@ class EsRdfBulkLoader(object):
             """.format(subj_list= "\n".join(error_dict.keys()))
         self.tstore_conn.update_query(sparql_error)
         del sparql_error
+        # Create a turtle data stream of the new errors to upload into the
+        # triplestore
         error_template = """
             {uri} kds:esIndexTime {idx_time} ;
                 kds:esIndexError {reason} .
@@ -427,3 +445,38 @@ class EsRdfBulkLoader(object):
                                                    reason = value.sparql)
                              for key, value in error_dict.items()])
         self.tstore_conn.load_data(data=error_ttl, datatype='ttl')
+
+    def delete_idx_status(self, rdf_class):
+        """
+        Removes all of the index status triples from the datastore
+
+        Args:
+        -----
+            rdf_class: The class of items to remove the status from
+        """
+
+        sparql_template = """
+            DELETE
+            {{
+                ?s kds:esIndexTime ?esTime .
+                ?s kds:esIndexError ?esError .
+            }}
+            WHERE
+            {{
+
+                VALUES ?rdftypes {{\n\t\t{} }} .
+                ?s a ?rdftypes .
+                OPTIONAL {{
+                    ?s kds:esIndexTime ?esTime
+                }}
+                OPTIONAL {{
+                    ?s kds:esIndexError ?esError
+                }}
+                FILTER(bound(?esTime)||bound(?esError))
+            }}
+            """
+        rdf_types = [rdf_class.uri] + [item.uri
+                                       for item in rdf_class.subclasses]
+        sparql = sparql_template.format("\n\t\t".join(rdf_types))
+        return self.tstore_conn.update_query(sparql)
+
