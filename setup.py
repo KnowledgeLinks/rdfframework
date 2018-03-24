@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "GPLv3"
-__version__ = "0.0.24"
+__version__ = "0.0.25"
 
 from setuptools import find_packages, setup
 
@@ -39,7 +39,8 @@ setup(
         'dateutils',
         'beautifulsoup4',
         'cssselect',
-        'colorama'
+        'colorama',
+        'jsonpath_ng'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
