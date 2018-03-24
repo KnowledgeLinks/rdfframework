@@ -134,7 +134,7 @@ def range_is_obj(rng, rdfclass):
             return True
     return False
 
-__IGN_KEYS__ = ['uri', 'id', 'value', 'label', 'rdf_type']
+__IGN_KEYS__ = ['uri', 'id', 'value', 'label', 'rdf_type', 'kds_esIndexTime']
 __COMBINED__ = VALUE_FIELDS + LABEL_FIELDS
 __ALL_IGN__ = set(__COMBINED__ + __IGN_KEYS__)
 
@@ -232,7 +232,7 @@ def get_es_ids(obj, def_obj):
     except KeyError:
         path = ""
     if def_obj.subject.type == 'uri':
-        obj['uri'] = def_obj.subject.sparql_uri
+        obj['uri'] = def_obj.subject.clean_uri
         obj['id'] = path + make_es_id(obj['uri'])
     elif def_obj.subject.type == 'bnode':
         obj['id'] = path + def_obj.bnode_id()

@@ -8,7 +8,7 @@ class TestBlazegraphDefaultInit(unittest.TestCase):
         pass
 
     def test_no_params(self):
-        blazegraph.Blazegraph.log_level = logging.CRITICAL
+        blazegraph.log.setLevel(logging.CRITICAL)
         self.assertTrue(blazegraph.Blazegraph().ext_url is not None)
 
     def tearDown(self):

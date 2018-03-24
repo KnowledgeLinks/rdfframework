@@ -51,12 +51,15 @@ class EsRdfBulkLoader(object):
     items_query_template = """
         SELECT DISTINCT ?s
         {{
-            VALUES ?rdftypes {{\n\t\t{} }} .
+            VALUES ?rdftypes {{\n\t\t{rdf_types} }} .
             ?s a ?rdftypes .
             optional {{ ?s dcterm:modified ?modTime }} .
             optional {{ ?s kds:esIndexTime ?time }} .
             optional {{ ?s kds:esIndexError ?error }}
-            filter (!(bound(?time))||(?time<?modTime)||bound(?error))
+            filter (
+                !(bound(?time)) ||
+                ?time<?modTime  ||
+                (bound(?error) && ?time < {idx_start_time}))
         }} """
 
     def __init__(self, rdf_class, tstore_conn, search_conn, **kwargs):
@@ -70,8 +73,12 @@ class EsRdfBulkLoader(object):
         # add all of the sublcasses for a rdf_class
         rdf_types = [rdf_class.uri] + [item.uri
                                        for item in rdf_class.subclasses]
-        self.query = self.items_query_template.format("\n\t\t".join(rdf_types))
+        self.query = self.items_query_template.format(
+                rdf_types="\n\t\t".join(rdf_types),
+                idx_start_time=XsdDatetime(datetime.datetime.utcnow()).sparql)
         EsMappings().initialize_indices()
+        if kwargs.get("reset_idx"):
+            self.delete_idx_status(self.rdf_class)
         self.count = 0
         uri_list = self._get_uri_list()
         while len(uri_list) > 0:
@@ -129,64 +136,6 @@ class EsRdfBulkLoader(object):
                     for item in additional_indexers(self.rdf_class)}
         else:
             self.other_indexers = {}
-
-    # def _index_item(self, uri, num, batch_num):
-    #     """ queries the triplestore for an item sends it to elasticsearch """
-
-    #     data = RdfDataset(get_all_item_data(uri, self.tstore_conn),
-    #                       uri).base_class.es_json()
-    #     self.batch_data[batch_num].append(data)
-    #     self.count += 1
-
-
-    # def _index_group(self):
-    #     """ indexes all the URIs defined by the query into Elasticsearch """
-
-    #     log.setLevel(self.log_level)
-    #     # get a list of all the uri to index
-    #     results = self.tstore_conn.query(sparql=self.query)
-    #     # results = results[:100]
-    #     # Start processing through uri
-    #     self.time_start = datetime.datetime.now()
-    #     batch_size = 12000
-    #     if len(results) > batch_size:
-    #         batch_end = batch_size
-    #     else:
-    #         batch_end = len(results)
-    #     batch_start = 0
-    #     batch_num = 1
-    #     self.batch_data = {}
-    #     self.batch_data[batch_num] = []
-    #     end = False
-    #     last = False
-    #     while not end:
-    #         log.debug("batch %s: %s-%s", batch_num, batch_start, batch_end)
-    #         for i, subj in enumerate(results[batch_start:batch_end]):
-    #             th = threading.Thread(name=batch_start + i + 1,
-    #                                   target=self._index_item,
-    #                                   args=(MSN.iri(subj['s']['value']),
-    #                                         i+1,batch_num,))
-    #             th.start()
-    #         log.debug(datetime.datetime.now() - self.time_start)
-    #         main_thread = threading.main_thread()
-    #         for t in threading.enumerate():
-    #             if t is main_thread:
-    #                 continue
-    #             t.join()
-    #         action_list = \
-    #                 self.es_worker.make_action_list(self.batch_data[batch_num])
-    #         self.es_worker.bulk_save(action_list)
-    #         del self.batch_data[batch_num]
-    #         batch_end += batch_size
-    #         batch_start += batch_size
-    #         if last:
-    #             end = True
-    #         if len(results) <= batch_end:
-    #             batch_end = len(results)
-    #             last = True
-    #         batch_num += 1
-    #         self.batch_data[batch_num] = []
-    #         log.debug(datetime.datetime.now() - self.time_start)
 
     def _index_sub(self, uri_list, num, batch_num):
         """
@@ -354,10 +303,7 @@ class EsRdfBulkLoader(object):
             fo.truncate()
             # fo.close()
             fo.write("}".encode())
-        # with open(batch_file, "a"):
-        #     pass
-        # with open(batch_file, "a"):
-            # fo.write("}".encode())
+
     def _update_triplestore(self, es_result, action_list, **kwargs):
         """
         updates the triplestore with success of saves and failues of indexing
@@ -365,7 +311,7 @@ class EsRdfBulkLoader(object):
         Args:
         -----
             es_result: the elasticsearch result list
-            uri_list: the uri's that were indexed
+            action_list: list of elasticsearch action items that were indexed
         """
         idx_time = XsdDatetime(datetime.datetime.utcnow())
         uri_keys = {}
@@ -386,30 +332,36 @@ class EsRdfBulkLoader(object):
                 except KeyError:
                     error_bnodes[bnode_keys.pop(err_item['_id'])] = \
                             XsdString(err_item['error']['reason'])
-
-        sparql_good = """
-            DELETE
-            {{
-                ?s kds:esIndexTime ?esTime .
-                ?s kds:esIndexError ?esError .
-            }}
-            INSERT
-            {{
-                ?s kds:esIndexTime {idx_time} .
-            }}
-            WHERE
-            {{
-                VALUES ?s {{ {subj_list} }} .
-                OPTIONAL {{
-                    ?s kds:esIndexTime ?esTime
+        if uri_keys:
+            sparql_good = """
+                DELETE
+                {{
+                    ?s kds:esIndexTime ?esTime .
+                    ?s kds:esIndexError ?esError .
                 }}
-                OPTIONAL {{
-                    ?s kds:esIndexError ?esError
+                INSERT
+                {{
+                    GRAPH ?g {{ ?s kds:esIndexTime {idx_time} }}.
                 }}
-            }}
-            """.format(idx_time=idx_time.sparql,
-                       subj_list= "\n".join(uri_keys.values()))
-        self.tstore_conn.update_query(sparql_good)
+                WHERE
+                {{
+                    VALUES ?s {{ {subj_list} }} .
+                    {{
+                        SELECT DISTINCT ?g ?s ?esTime ?esError
+                        {{
+                            GRAPH ?g {{ ?s ?p ?o }} .
+                            OPTIONAL {{
+                                ?s kds:esIndexTime ?esTime
+                            }}
+                            OPTIONAL {{
+                                ?s kds:esIndexError ?esError
+                            }}
+                        }}
+                    }}
+                }}
+                """.format(idx_time=idx_time.sparql,
+                           subj_list="<%s>" % ">\n<".join(uri_keys.values()))
+            self.tstore_conn.update_query(sparql_good)
         # Process any errors that were found.
         if not error_dict:
             return
@@ -430,21 +382,36 @@ class EsRdfBulkLoader(object):
                     ?s kds:esIndexError ?esError
                 }}
             }}
-            """.format(subj_list= "\n".join(error_dict.keys()))
+            """.format(subj_list="<%s>" % ">\n<".join(error_dict.keys()))
         self.tstore_conn.update_query(sparql_error)
         del sparql_error
+        sparql_update = """
+            INSERT
+            {{
+                GRAPH ?g {{
+                    ?s kds:esIndexTime {idx_time} .
+                    ?s kds:esIndexError ?esError .
+                }}
+            }}
+            WHERE
+            {{
+                VALUES (?s ?esError) {{ {error_list} }} .
+                {{
+                    SELECT DISTINCT ?g ?s
+                    {{
+                        graph ?g {{?s ?p ?o}}
+                    }}
+                }}
+            }}""".format(
+                    idx_time=idx_time.sparql,
+                    error_list="\n".join(["(<%s> %s)" % (key, val.sparql)
+                                          for key, val in error_dict.items()]))
+
         # Create a turtle data stream of the new errors to upload into the
         # triplestore
-        error_template = """
-            {uri} kds:esIndexTime {idx_time} ;
-                kds:esIndexError {reason} .
-            """
-        error_ttl = NSM.prefix("turtle") + \
-                    "".join([error_template.format(idx_time=idx_time.sparql,
-                                                   uri=key.sparql,
-                                                   reason = value.sparql)
-                             for key, value in error_dict.items()])
-        self.tstore_conn.load_data(data=error_ttl, datatype='ttl')
+        self.tstore_conn.update_query(sparql_update)
+        del sparql_update
+
 
     def delete_idx_status(self, rdf_class):
         """
@@ -478,5 +445,6 @@ class EsRdfBulkLoader(object):
         rdf_types = [rdf_class.uri] + [item.uri
                                        for item in rdf_class.subclasses]
         sparql = sparql_template.format("\n\t\t".join(rdf_types))
+        log.warn("Deleting index status for %s", rdf_class.uri)
         return self.tstore_conn.update_query(sparql)
 

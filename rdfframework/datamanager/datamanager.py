@@ -222,17 +222,20 @@ class DataFileManager():
         """ get the load times for the all of the definition files"""
         log.setLevel(kwargs.get("log_level", self.log_level))
         conn = self.__get_conn__(**kwargs)
-        result = conn.query("""
-                SELECT ?file ?time
-                {
-                    graph kdr:load_times {?s ?p ?time} .
-                    bind(REPLACE(str(?s),
-                                 "http://knowledgelinks.io/ns/data-resources/",
-                                 "")
-                         as ?file)
-                }""", **kwargs)
-        return {item['file']['value']: XsdDatetime(item['time']['value'])
-                for item in result}
+        try:
+            result = conn.query("""
+                    SELECT ?file ?time
+                    {
+                        graph kdr:load_times {?s ?p ?time} .
+                        bind(REPLACE(str(?s),
+                            "http://knowledgelinks.io/ns/data-resources/",
+                            "")
+                             as ?file)
+                    }""", **kwargs)
+            return {item['file']['value']: XsdDatetime(item['time']['value'])
+                    for item in result}
+        except requests.exceptions.ConnectionError:
+            return {}
 
     def load_directory(self, directory, **kwargs):
         """ loads all rdf files in a directory

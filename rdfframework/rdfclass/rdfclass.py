@@ -520,6 +520,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             if test_idx_status(self, **kwargs):
                 return None
             for prop, value in self.items():
+                if prop in ['kds_esIndexTime', 'kds_esIndexError']:
+                    continue
                 new_val = value.es_json()
                 rtn_method = get_attr(self[prop], 'kds_esObjectType', [])
                 if 'kdr_Array' in rtn_method:
@@ -539,6 +541,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             for prop, value in self.items():
                 # if prop == 'bf_hasInstance':
                 #     pdb.set_trace()
+                if prop in ['kds_esIndexTime', 'kds_esIndexError']:
+                    continue
                 new_val = value.es_json(**kwargs)
                 rtn_method = get_attr(self[prop], 'kds_esObjectType', [])
                 if 'kdr_Array' in rtn_method:

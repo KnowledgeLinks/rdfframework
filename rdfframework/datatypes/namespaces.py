@@ -209,7 +209,7 @@ class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
     @property
     def to_json(self):
         """ Returns the json formatting """
-        return self.sparql_uri
+        return self.clean_uri
 
     @property
     def rdflib(self):

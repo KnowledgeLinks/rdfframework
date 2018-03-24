@@ -171,7 +171,6 @@ class Blazegraph(RdfwConnections):
                                                                self.local_url]))
             return False
 
-
     def query(self,
               sparql,
               mode="get",
