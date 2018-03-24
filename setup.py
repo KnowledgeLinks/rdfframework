@@ -40,7 +40,8 @@ setup(
         'beautifulsoup4',
         'cssselect',
         'colorama',
-        'jsonpath_ng'
+        'jsonpath_ng',
+        'bibcat'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

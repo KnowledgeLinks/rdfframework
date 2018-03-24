@@ -498,6 +498,8 @@ class Processor(object, metaclass=KeyRegistryMeta):
         """
         raw_json_ld = output.serialize(format='json-ld',
                                        context=self.context).decode()
+        # if there are fields that should be returned as arrays convert all
+        # non-array fields to an array
         if not self.array_fields:
             return raw_json_ld
         json_data = json.loads(raw_json_ld)
