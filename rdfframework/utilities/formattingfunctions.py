@@ -109,7 +109,7 @@ def make_doc_string(name, cls_def, bases=[], props={}):
                                   subdivider="\n")
     if len(description) > 0:
         doc_items.append(description)
-    parents = [("", base.__name__.sparql) for base in bases[:-1] if
+    parents = [("", base.__name__.pyuri) for base in bases[:-1] if
                base.__name__ not in ['RdfPropertyBase', 'RdfClassBase']]
     if len(parents) > 0:
         # pdb.set_trace()
@@ -127,12 +127,12 @@ def make_doc_string(name, cls_def, bases=[], props={}):
                         base.__doc__.find(\
                         "Properties"):].replace(\
                         "Properties:", "Inherited from %s:" \
-                                % base.__name__).replace(footer_text,""))
+                                % base.__name__.pyuri).replace(footer_text,""))
         except TypeError:
             pass
 
     try:
-        prop_notes = [(prop, " ".join([item[1] for item in \
+        prop_notes = [(prop.pyuri, " ".join([item[1] for item in \
                       find_values(description_fields,
                                   prop_def,
                                   method='dict')])) \

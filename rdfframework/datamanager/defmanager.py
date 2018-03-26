@@ -3,6 +3,7 @@ import logging
 import requests
 import urllib
 import datetime
+import pdb
 
 from dateutil.parser import parse as date_parse
 
@@ -28,12 +29,14 @@ class DefManagerMeta(type):
                                         cls).__call__(*args, **kwargs)
         else:
             values = None
+            if kwargs.get("conn"):
+                cls._instances[cls].conn = kwargs['conn']
             if args:
                 values = args[0]
             elif 'rdf_defs' in kwargs:
                 values = kwargs['vocabularies']
             if values:
-                cls._instances[cls].load(values)
+                cls._instances[cls].load(values, **kwargs)
         return cls._instances[cls]
 
     def __init__(self, *args, **kwargs):
@@ -118,16 +121,26 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
     }
 
     def __init__(self, file_locations=[], conn=None, **kwargs):
-        if not conn:
-            conn = kwargs.get("conn", __CONNS__.active_defs)
-        super(DefinitionManager, self).__init__(file_locations, conn, **kwargs)
         # add all namespaces to the RdfNsManager to ensure that there are no
         # conflicts with the config file
         [__NSM__.bind(prefix, val['namespace'], override=False, calc=False)
          for prefix, val in self.vocab_map.items()]
-        if self.__file_locations__:
-            self.load(self.__file_locations__, **kwargs)
+        self.conn = None
+        if not conn:
+            conn = kwargs.get("conn", __CONNS__.active_defs)
+        if conn:
+            super(DefinitionManager, self).__init__(file_locations,
+                                                    conn,
+                                                    **kwargs)
+            if self.__file_locations__:
+                self.load(self.__file_locations__, **kwargs)
+        else:
+            self.add_file_locations(file_locations)
 
+    def __get_conn__(self, **kwargs):
+        if not self.conn:
+            self.conn = kwargs.get("conn", __CONNS__.active_defs)
+        return kwargs.get("conn", self.conn)
 
     def load(self, file_locations=[], **kwargs):
         """ Loads the file_locations into the triplestores
@@ -141,6 +154,9 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
                      ('package_file','name.of.package', 'filename')]
             custom: list of custom definitions to load
         """
+        self.__set_cache_dir__(**kwargs)
+        self.__get_conn__(**kwargs)
+        self.set_load_state(**kwargs)
         super(DefinitionManager, self).load(file_locations, **kwargs)
         if not file_locations:
             file_locations = self.__file_locations__

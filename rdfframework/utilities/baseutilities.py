@@ -740,6 +740,9 @@ class EmptyDot():
     def __nonzero__(self):
         return False
 
+    def __bool__(self):
+        return False
+
     def __call__(self, *args, **kwargs):
         raise RuntimeWarning("class called before initialization by\n\t%s" %
                 inspect.getframeinfo(inspect.stack()[1][0]).__repr__())

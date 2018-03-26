@@ -7,6 +7,8 @@ from rdfframework.datasets import RdfDataset
 from rdfframework import search
 from rdfframework.sparql import get_all_item_data
 import rdfframework, datetime
+# import bibcat
+# pdb.set_trace()
 # rdfframework.configure_logging(rdfframework.__modules__, "dummy")
 # import cProfile
 cfg = RdfConfigManager(config.__dict__) #, turn_on_vocab=False)
@@ -49,40 +51,40 @@ item_iri = "http://digitalcollections.uwyo.edu/luna/servlet" \
 # # result = work[Uri(item_iri)].es_json()
 # # item = work[Uri(item_iri)]
 
-##### Processor Testing
-# MAP4_PROCESSOR = SPARQLProcessor(
-#     conn=cfg.conns.datastore,
-#     rml_rules=["bf-to-map4.ttl"])
-# ORIG4_PROCESSOR = SPARQLProcessorOrig(
-#     triplestore_url='http://localhost:9999/blazegraph/namespace/plain2peak'
-#                     '/sparql',
-#     rml_rules=["bf-to-map4.ttl"])
-# start = datetime.datetime.now()
-# ORIG4_PROCESSOR.run(instance_iri=instance_iri,
-#                     item_iri=item_iri)
-# out2 = ORIG4_PROCESSOR.output
-# print(out2.serialize(format="json-ld",
-#                      context=MAP4_PROCESSOR.context).decode())
-# print("time to run: ", (datetime.datetime.now() - start))
-# start = datetime.datetime.now()
-# jsonld = MAP4_PROCESSOR(#dataset=work,
-#                         no_json=True,
-#                         iri_key="item_iri",
-#                         item_iri=item_iri,
-#                         instance_iri=instance_iri,
-#                         rtn_format="json-ld")
-# print(jsonld)
-# print("time to run: ", (datetime.datetime.now() - start))
-# start = datetime.datetime.now()
-# jsonld = MAP4_PROCESSOR(#dataset=work,
-#                         #no_json=True,
-#                         iri_key="item_iri",
-#                         item_iri=item_iri,
-#                         instance_iri=instance_iri,
-#                         rtn_format="json-ld")
-# print(jsonld)
-# print("time to run: ", (datetime.datetime.now() - start))
-#### Processor Testing End
+#### Processor Testing
+MAP4_PROCESSOR = SPARQLProcessor(
+    conn=cfg.conns.datastore,
+    rml_rules=["bf-to-map4.ttl", "map4.ttl"])
+ORIG4_PROCESSOR = SPARQLProcessorOrig(
+    triplestore_url='http://localhost:9999/blazegraph/namespace/plain2peak'
+                    '/sparql',
+    rml_rules=["bf-to-map4.ttl"])
+start = datetime.datetime.now()
+ORIG4_PROCESSOR.run(instance_iri=instance_iri,
+                    item_iri=item_iri)
+out2 = ORIG4_PROCESSOR.output
+print(out2.serialize(format="json-ld",
+                     context=MAP4_PROCESSOR.context).decode())
+print("time to run: ", (datetime.datetime.now() - start))
+start = datetime.datetime.now()
+jsonld = MAP4_PROCESSOR(#dataset=work,
+                        no_json=True,
+                        iri_key="item_iri",
+                        item_iri=item_iri,
+                        instance_iri=instance_iri,
+                        rtn_format="json-ld")
+print(jsonld)
+print("time to run: ", (datetime.datetime.now() - start))
+start = datetime.datetime.now()
+jsonld = MAP4_PROCESSOR(#dataset=work,
+                        #no_json=True,
+                        iri_key="item_iri",
+                        item_iri=item_iri,
+                        instance_iri=instance_iri,
+                        rtn_format="json-ld")
+print(jsonld)
+print("time to run: ", (datetime.datetime.now() - start))
+### Processor Testing End
 
 
 # # # cProfile.runctx('MAP4_PROCESSOR.run(dataset=work,instance_iri=instance_iri,item_iri=item_iri)', globals(),locals())

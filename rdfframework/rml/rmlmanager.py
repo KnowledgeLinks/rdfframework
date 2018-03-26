@@ -12,7 +12,7 @@ from rdfframework.utilities import pyfile_path, pick, list_files
 from rdfframework.sparql import get_graph
 from rdfframework.datasets import RdfDataset
 from rdfframework.datatypes import RdfNsManager
-from .processor import Processor
+
 
 __author__ = "Mike Stabile, Jeremy Nelson"
 
@@ -140,6 +140,7 @@ class RmlManager(metaclass=RmlSingleton):
             mappings: the list RML mapping definitions to use
             processor_type: the name of the RML processor to use
         """
+        from .processor import Processor
         if self.processors.get(name):
             raise LookupError("processor has already been created")
         if isinstance(mappings, list):
@@ -167,41 +168,46 @@ class RmlManager(metaclass=RmlSingleton):
                                         **kwargs)
 
 
-    def load_rml(self, rml_name):
-        """ loads an rml mapping into memory
+    # def load_rml(self, rml_name):
+    #     """ loads an rml mapping into memory
 
-        args:
-            rml_name(str): the name of the rml file
-        """
-        conn = self.conn
-        cache_path = os.path.join(self.cache_dir, rml_name)
-        if not os.path.exists(cache_path):
-            results = get_graph(NSM.uri(getattr(NSM.kdr, rml_name), False),
-                                conn)
-            if not results:
-                raise AttributeError("There is no mapping data for '%s'" % \
-                                     rml_name)
-            with open(cache_path, "w") as file_obj:
-                file_obj.write(json.dumps(results, indent=4))
-        else:
-            results = json.loads(open(cache_path).read())
+    #     args:
+    #         rml_name(str): the name of the rml file
+    #     """
+    #     conn = self.conn
+    #     cache_path = os.path.join(self.cache_dir, rml_name)
+    #     if not os.path.exists(cache_path):
+    #         results = get_graph(NSM.uri(getattr(NSM.kdr, rml_name), False),
+    #                             conn)
+    #         if not results:
+    #             raise AttributeError("There is no mapping data for '%s'" % \
+    #                                  rml_name)
+    #         with open(cache_path, "w") as file_obj:
+    #             file_obj.write(json.dumps(results, indent=4))
+    #     else:
+    #         results = json.loads(open(cache_path).read())
 
-        self[rml_name] = RdfDataset(results)
-        return self[rml_name]
+    #     self[rml_name] = RdfDataset(results)
+    #     return self[rml_name]
 
-    def get_rml(self, rml_name):
+    def get_rml(self, rml_name, rtn_format="filepath"):
         """ returns the rml mapping filepath
 
         rml_name(str): Name of the rml mapping to retrieve
+        rtn_format: ['filepath', 'data']
         """
 
         try:
-            return self.rml_maps[rml_name]
+            rml_path = self.rml_maps[rml_name]
         except KeyError:
             if rml_name in self.rml_maps.values() or os.path.exists(rml_name):
-                return rml_name
+                rml_path = rml_name
             else:
                 raise LookupError("rml_name '%s' is not registered" % rml_name)
+        if rtn_format == "data":
+            with open(rml_path, "rb") as fo:
+                return fo.read()
+        return rml_path
 
     def del_rml(self, rml_name):
         """ deletes an rml mapping from memory"""
@@ -213,6 +219,7 @@ class RmlManager(metaclass=RmlSingleton):
     def __getitem__(self, key):
         return self.get_rml(key)
 
+    @property
     def list_maps(self):
         """ Returns a list of loaded rml mappings """
         return list(self.rml_maps)

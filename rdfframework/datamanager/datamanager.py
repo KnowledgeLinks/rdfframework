@@ -30,18 +30,34 @@ class DataFileManager():
     is_initialized = False
 
     def __init__(self, file_locations=[], conn=None, **kwargs):
-        self.__file_locations__ = copy.copy(file_locations)
+        self.add_file_locations(file_locations)
         self.log_level = kwargs.get('log_level', self.log_level)
         if conn:
             kwargs['conn'] = conn
         self.conn = conn
         self.__set_cache_dir__(**kwargs)
         self.__get_conn__(**kwargs)
-        self.loaded = []
-        self.loaded_files(**kwargs)
-        self.loaded_times = self.load_times(**kwargs)
+        self.set_load_state(**kwargs)
         if self.__file_locations__:
             self.load(self.__file_locations__, **kwargs)
+
+    def set_load_state(self, **kwargs):
+        self.loaded = []
+        self.loaded_files(reset=True)
+        self.loaded_times = self.load_times(**kwargs)
+
+    def add_file_locations(self, file_locations=[]):
+        """
+        Adds a list of file locations to the current list
+
+        Args:
+            file_locations: list of file location tuples
+        """
+        if not hasattr(self, '__file_locations__'):
+            self.__file_locations__ = copy.copy(file_locations)
+        else:
+            self.__file_locations__ += copy.copy(file_locations)
+
 
     def reset(self, **kwargs):
         """ Reset the triplestore with all of the data
@@ -80,6 +96,7 @@ class DataFileManager():
                      ('package_file','name.of.package', 'filename')]
             custom: list of custom definitions to load
         """
+        self.set_load_state(**kwargs)
         if file_locations:
             self.__file_locations__ += file_locations
         else:
@@ -189,7 +206,7 @@ class DataFileManager():
 
 
     def drop_file(self, filename, **kwargs):
-        """ removes the passed in file from the definition triplestore
+        """ removes the passed in file from the connected triplestore
 
         args:
             filename: the filename to remove

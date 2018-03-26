@@ -48,8 +48,8 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
             self.mgr = dm.DefinitionManager(conn=self, **kwargs)
         else:
             self.mgr = dm.DataFileManager(conn=self, **kwargs)
-        if self.mgr and kwargs.get('data_upload'):
-            self.mgr.__file_locations__ += kwargs['data_upload']
+        if self.mgr: # and kwargs.get('data_upload'):
+            self.mgr.add_file_locations(kwargs.get('data_upload',[]))
             if kwargs.get("delay_check"):
                 self.delay_check = kwargs
             else:

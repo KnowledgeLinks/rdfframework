@@ -66,8 +66,13 @@ class EsRdfBulkLoader(object):
         log.setLevel(self.log_level)
         self.tstore_conn = tstore_conn
         self.search_conn = search_conn
-        self.es_index = rdf_class.es_defs.get('kds_esIndex')[0]
-        self.es_doc_type = rdf_class.es_defs.get('kds_esDocType')[0]
+        try:
+            self.es_index = rdf_class.es_defs.get('kds_esIndex')[0]
+            self.es_doc_type = rdf_class.es_defs.get('kds_esDocType')[0]
+        except TypeError:
+            log.warn("'%s' is NOT cofigured for indexing to elasticsearch",
+                     rdf_class)
+            return
         self.rdf_class = rdf_class
         self._set_es_workers(**kwargs)
         # add all of the sublcasses for a rdf_class

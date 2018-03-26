@@ -21,8 +21,8 @@ import rdflib
 import requests
 
 import jsonpath_ng
-import bibcat
-from bibcat.maps import get_map
+# import bibcat
+# from bibcat.maps import get_map
 
 from rdfframework.datatypes import RdfNsManager, BaseRdfDataType, Uri
 from rdfframework.connections import setup_conn, Blazegraph, RdflibConn, \
@@ -31,13 +31,15 @@ from rdfframework.sparql import get_all_item_data
 from rdfframework.datasets import RdfDataset
 from rdfframework.utilities import pick, KeyRegistryMeta
 from rdfframework.datatypes import Uri
+from .rmlmanager import RmlManager
 
 BIBCAT_BASE = os.path.abspath(
     os.path.split(
         os.path.dirname(__file__))[0])
 NS_MGR = RdfNsManager()
+RML_MGR = RmlManager()
 PREFIX = None
-__version__ = bibcat.__version__
+# __version__ = bibcat.__version__
 
 try:
     from lxml import etree
@@ -74,7 +76,7 @@ class Processor(object, metaclass=KeyRegistryMeta):
                     with open(rule) as file_obj:
                         raw_rule = file_obj.read()
                 else:
-                    raw_rule = get_map(rule).decode()
+                    raw_rule = RML_MGR.get_rml(rule, 'data').decode()
                 self.rml.parse(data=raw_rule,
                                format='turtle')
         elif isinstance(rml_rules, (rdflib.Graph, rdflib.ConjunctiveGraph)):
@@ -82,13 +84,14 @@ class Processor(object, metaclass=KeyRegistryMeta):
         elif os.path.exists(rml_rules):
             self.rml.parse(rml_rules, format='turtle')
         else:
-            self.rml.parse(data=get_map(rml_rules).decode(), format='turtle')
+            self.rml.parse(data=RML_MGR.get_rml(rml_rules).decode(),
+                           format='turtle')
         # Populate Namespaces Manager
         for prefix, namespace in self.rml.namespaces():
             NS_MGR.bind(prefix, namespace, ignore_errors=True)
         self.source, self.triplestore_url = None, None
         self.parents = set()
-        self.constants = dict(version=__version__)
+        self.constants = dict(version=kwargs.get("version", "Not Defined"))
         self.triple_maps = dict()
         for row in self.rml.query(GET_TRIPLE_MAPS):
             triple_map_iri = row[0]
@@ -432,7 +435,7 @@ class Processor(object, metaclass=KeyRegistryMeta):
         if 'timestamp' not in kwargs:
             kwargs['timestamp'] = datetime.datetime.utcnow().isoformat()
         if 'version' not in kwargs:
-            kwargs['version'] = bibcat.__version__
+            kwargs['version'] = "Not Defined" #bibcat.__version__
         # log.debug("kwargs: %s", pprint.pformat({k:v for k, v in kwargs.items()
         #                                         if k != "dataset"}))
         # log.debug("parents: %s", self.parents)

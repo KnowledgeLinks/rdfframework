@@ -10,11 +10,7 @@ vocabulary.
 :copyright: Copyright (c) 2016 by Michael Stabile and Jeremy Nelson.
 :license: To be determined, see LICENSE.txt for details.
 """
-
-# import rdfframework.rdfclass
-# from .rdfdatasets import RdfDataset
 from .framework import RdfFramework
-
 import rdfframework.utilities
 import rdfframework.connections
 import rdfframework.datamergers
@@ -27,7 +23,8 @@ import rdfframework.datasets
 import types
 import logging
 
-
+__author__ = "Mike Stabile, Jeremy Nelson"
+__version__ = '0.0.26'
 
 def package_modules(parent_module, registered=[]):
     parent_name = parent_module.__name__
@@ -62,6 +59,3 @@ def configure_logging(modules, method="dummy"):
     set_module_loggers(modules, method)
 
 configure_logging(__modules__, "active")
-
-__author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.25'

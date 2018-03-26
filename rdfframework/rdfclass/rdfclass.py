@@ -663,6 +663,9 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             for prop in self.es_props:
                 self[prop] = self.properties[prop](self, self.dataset)
                 setattr(self, prop, self[prop])
+
+            self[__a__] = self.properties[__a__](self, self.dataset)
+            setattr(self, __a__, self[__a__])
             # for prop, prop_class in self.properties.items():
             #     # passing in the current dataset tie
             #     self[prop] = prop_class(self, self.dataset)
