@@ -107,7 +107,7 @@ class DataFileManager():
                 self.load_directory(item[1], **kwargs)
             elif item[0] == 'filepath':
                 kwargs['is_file'] = True
-                conn.load_data(item[1],**kwargs)
+                self.load_file(item[1],**kwargs)
             elif item[0].startswith('package'):
                 pkg_path = \
                         importlib.util.find_spec(\
@@ -268,3 +268,5 @@ class DataFileManager():
                                include_root=True)
         for file in file_list:
             self.load_file(file[1], **kwargs)
+
+

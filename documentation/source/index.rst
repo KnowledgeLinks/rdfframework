@@ -23,7 +23,7 @@ RDF Namespaces
 
 Introduction
 ============
-The versitility of RDF allows a simple means for describing anything. Using our developed vocabulary for describing a web application we are building a framework for a highly customizable, secure and a fully RDF/bigdata integrated web application. 
+The versitility of RDF allows a simple means for describing anything. Using our developed vocabulary for describing a web application we are building a framework for a highly customizable, secure and a fully RDF/bigdata integrated web application.
 
 Since RDF databases do not have inherent forced data structures like SQL Databases (i.e. table defs, primary keys, etc) they have great flexibility. However, with the increased flexibility comes other challenges:
 
@@ -32,17 +32,17 @@ Since RDF databases do not have inherent forced data structures like SQL Databas
 - Data consistancy
 - Consistancy between modules reading and saving data
 
-To solve this problem the kds vocabulary completely integrates with the any other RDF vocabulary (i.e. schema, FOAF, etc.) by augmenting those vocabularies with how they are to be used in the specific application. 
+To solve this problem the kds vocabulary completely integrates with the any other RDF vocabulary (i.e. schema, FOAF, etc.) by augmenting those vocabularies with how they are to be used in the specific application.
 
 Contents
 ========
 .. toctree::
    :maxdepth: 1
-   
+
    keyconcepts
    rdfdatasetup
    rdfframework
-   rdfframework.apit
+   rdfframework.api
    rdfframework.forms
    rdfframework.forms.widgets
    rdfframework.processors
