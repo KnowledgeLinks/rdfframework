@@ -85,11 +85,11 @@ class EsRdfBulkLoader(object):
         if kwargs.get("reset_idx"):
             self.delete_idx_status(self.rdf_class)
         self.count = 0
-        uri_list = self._get_uri_list()
-        while len(uri_list) > 0:
-            kwargs['uri_list'] = uri_list
+        kwargs['uri_list'] = self._get_uri_list()
+        # self._index_group_with_subgroup(**kwargs)
+        while len(kwargs['uri_list']) > 0:
             self._index_group_with_subgroup(**kwargs)
-            uri_list = self._get_uri_list()
+            kwargs['uri_list'] = self._get_uri_list()
 
     def _set_es_workers(self, **kwargs):
         """
@@ -161,11 +161,11 @@ class EsRdfBulkLoader(object):
                   batch_num,
                   num,
                   len(qry_data))
-        path = os.path.join(CFG.dirs.cache, "index_pre")
-        if not os.path.exists(path):
-            os.makedirs(path)
-        with open(os.path.join(path, bname + ".json"), "w") as fo:
-            fo.write(json.dumps(qry_data))
+        # path = os.path.join(CFG.dirs.cache, "index_pre")
+        # if not os.path.exists(path):
+        #     os.makedirs(path)
+        # with open(os.path.join(path, bname + ".json"), "w") as fo:
+        #     fo.write(json.dumps(qry_data))
         data = RdfDataset(qry_data)
         del qry_data
         log.debug("batch_num '%s-%s' RdfDataset Loaded", batch_num, num)
@@ -193,7 +193,7 @@ class EsRdfBulkLoader(object):
         """
         results = [Uri(item['s']['value'])
                    for item in self.tstore_conn.query(sparql=self.query)]
-        return results
+        return results #[:100]
 
     def _index_group_with_subgroup(self, **kwargs):
         """ indexes all the URIs defined by the query into Elasticsearch """
@@ -211,7 +211,7 @@ class EsRdfBulkLoader(object):
             fo.write("{")
         log.info("'%s' items to index", len(uri_list))
         self.time_start = datetime.datetime.now()
-        batch_size = 12000
+        batch_size = kwargs.get("batch_size", 12000)
         if len(uri_list) > batch_size:
             batch_end = batch_size
         else:
@@ -235,7 +235,7 @@ class EsRdfBulkLoader(object):
             j = 0
             for i in range(batch_start, batch_end):
             # for i, subj in enumerate(uri_list[batch_start:batch_end]):
-                qry_size = 1000
+                qry_size = kwargs.get("qry_size", 1000)
                 if j < qry_size:
                     try:
                         sub_batch.append(uri_list.pop()) #subj)

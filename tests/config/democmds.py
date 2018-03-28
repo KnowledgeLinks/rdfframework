@@ -7,10 +7,10 @@ from rdfframework.datasets import RdfDataset
 from rdfframework import search
 from rdfframework.sparql import get_all_item_data
 import rdfframework, datetime
-# import bibcat
+import bibcat
 # pdb.set_trace()
 # rdfframework.configure_logging(rdfframework.__modules__, "dummy")
-# import cProfile
+import cProfile
 cfg = RdfConfigManager(config.__dict__) #, turn_on_vocab=False)
 from rdfframework.datatypes import XsdString
 # tutt = rdfclass.schema_Organization("http://tutt.edu/")
@@ -103,13 +103,15 @@ s = search.EsRdfBulkLoader(rdfclass.bf_Work,
                            cfg.conns.datastore,
                            cfg.conns.search,
                            # reset_idx=True,
-                           no_threading=False,
+                           # batch_size=1000,
+                           # qry_size=500,
+                           no_threading=True,
                            idx_only_base=True)
 # # s.batch_data = {}
 # # s.batch_data[0] = []
-# # uri_list = s._get_uri_list()[:1000]
-# # # qdata = s.run_query(uri_list)
-# # cProfile.runctx('data = s._index_sub(uri_list, 0, 0)', globals(), locals())
+# uri_list = s._get_uri_list()[:1000]
+#qdata = s.run_query(uri_list)
+# cProfile.runctx('data = s._index_sub(uri_list, 0, 0)', globals(), locals())
 # def run():
 #     with open("/home/stabiledev/rdfw_base/logs/batch_list.txt", "rb") as fo:
 #         data = json.loads(fo.read().decode())

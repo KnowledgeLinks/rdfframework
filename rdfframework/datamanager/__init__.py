@@ -19,7 +19,7 @@
 #         is_writable_dir
 from .defmanager import DefinitionManager
 from .datamanager import DataFileManager
-
+from .datastoremanager import DatastoreManager
 
 # __CONNS__ = ConnManager()
 # __CFG__ = RdfConfigManager()

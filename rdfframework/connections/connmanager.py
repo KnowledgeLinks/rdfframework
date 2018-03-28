@@ -46,6 +46,8 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
             self.mgr = mgr
         elif mgr == 'active_defs':
             self.mgr = dm.DefinitionManager(conn=self, **kwargs)
+        elif mgr == 'datastore':
+            self.mgr = dm.DatastoreManager(conn=self, **kwargs)
         else:
             self.mgr = dm.DataFileManager(conn=self, **kwargs)
         if self.mgr: # and kwargs.get('data_upload'):
