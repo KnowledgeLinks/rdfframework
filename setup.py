@@ -4,13 +4,19 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "GPLv3"
-__version__ = "0.0.27"
+__version__ = "0.0.28"
 
 from setuptools import find_packages, setup
 
 def readme():
-    with open('README.md') as rm_fo:
-        return rm_fo.read()
+    readme = ''
+    try:
+        with open('README.md') as rm_fo:
+            readme = rm_fo.read()
+    except FileNotFoundError:
+        readme = "Not set"
+    return readme
+    
 
 setup(
     name='rdfframework',
