@@ -109,9 +109,16 @@ class DataFileManager():
                 kwargs['is_file'] = True
                 self.load_file(item[1],**kwargs)
             elif item[0].startswith('package'):
-                pkg_path = \
-                        importlib.util.find_spec(\
-                                item[1]).submodule_search_locations[0]
+                log.info("package: %s\nspec: %s",
+                         item[1],
+                         importlib.util.find_spec(item[1]))
+                try:
+                    pkg_path = \
+                            importlib.util.find_spec(\
+                                    item[1]).submodule_search_locations[0]
+                except TypeError:
+                    pkg_path = importlib.util.find_spec(item[1]).origin
+                    pkg_path = os.path.split(pkg_path)[0]
                 if item[0].endswith('_all'):
                     self.load_directory(pkg_path, **kwargs)
                 elif item[0].endswith('_file'):
