@@ -4,13 +4,11 @@ import logging
 import requests
 
 from rdfframework.utilities import (KeyRegistryMeta,
-                                    pyfile_path,
                                     initialized,
                                     EmptyDot)
 from elasticsearch import Elasticsearch
 import pdb, pprint
 
-__MNAME__ = pyfile_path(inspect.stack()[0][1])
 __LOG_LEVEL__ = logging.INFO
 
 class RdfwConnections(metaclass=KeyRegistryMeta):
@@ -57,6 +55,7 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
                 self.delay_check = kwargs
             else:
                 if self.check_status:
+                    kwargs['log_level'] = logging.DEBUG
                     self.mgr.load(**kwargs)
                 else:
                     log.warn("conn '%s' check_status failed",
@@ -94,7 +93,6 @@ class ConnManagerMeta(type):
 
 class ConnManager(metaclass=ConnManagerMeta):
     """ class for managing database connections """
-    log = "%s:RdfConnManager" % __MNAME__
     log_level = logging.INFO
     conn_mapping = RdfwConnections
     __is_initialized__ = False
@@ -270,8 +268,6 @@ def make_tstore_conn(params, **kwargs):
         kwargs:
             log_level: logging level to use
     """
-    log = logging.getLogger("%s-%s" % (__MNAME__,
-                                       inspect.stack()[0][3]))
     log.setLevel(params.get('log_level', __LOG_LEVEL__))
     log.debug("\n%s", params)
     params.update(kwargs)

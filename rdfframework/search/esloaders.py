@@ -153,7 +153,7 @@ class EsRdfBulkLoader(object):
             try:
 
                 self.batch_data[batch_num]['main'].append(\
-                        data[value].es_json())
+                        data[value[0]].es_json())
                 self.count += 1
             except KeyError:
                 pass
@@ -206,7 +206,7 @@ class EsRdfBulkLoader(object):
 
         log.setLevel(self.log_level)
         # get a list of all the uri to index
-        uri_list = kwargs.get('uri_list', self._get_uri_list())
+        uri_list = kwargs.get('uri_list', self.get_uri_list())
         if not uri_list:
             log.info("0 items to index")
             return
@@ -254,7 +254,7 @@ class EsRdfBulkLoader(object):
                         pass
                     with open(batch_file, "a") as fo:
                         fo.write(json.dumps({str('%s-%s' % (batch_num, i+1)):
-                                             [item.sparql
+                                             [item[0].sparql
                                               for item in sub_batch]})[1:-1]+",\n")
                     if not kwargs.get("no_threading", False):
                         th = threading.Thread(name=batch_start + i + 1,

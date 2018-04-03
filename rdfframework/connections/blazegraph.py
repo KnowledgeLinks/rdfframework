@@ -111,6 +111,7 @@ class Blazegraph(RdfwConnections):
         self.local_directory = pick(local_directory, CFG.dirs.data)
         self.ext_url = pick(url, self.default_url)
         self.local_url = pick(kwargs.get('local_url'), self.default_url)
+        self.log_level = log.level
         log.setLevel(kwargs.get("log_level", log.level))
         self.namespace = pick(namespace, self.default_ns)
         self.namespace_params = namespace_params
@@ -289,6 +290,7 @@ class Blazegraph(RdfwConnections):
               filepath, determine the datatype from the file extension,
               read the file and send it to blazegraph as a datastream
         """
+        log.setLevel(kwargs.get("log_level", self.log_level))
         time_start = datetime.datetime.now()
         datatype_map = {
             'ttl': 'text/turtle',
@@ -310,7 +312,7 @@ class Blazegraph(RdfwConnections):
         try:
             content_type = datatype_map[datatype]
         except KeyError:
-            raise NotImplementedError("'%s' is not an implemented data fromat",
+            raise NotImplementedError("'%s' is not an implemented data format",
                                       datatype)
         context_uri = pick(graph, self.graph)
         result = requests.post(url=self._make_url(namespace),
@@ -324,6 +326,7 @@ class Blazegraph(RdfwConnections):
                           self.format_response(result.text))
             else:
                 log.info(" loaded data - %s", self.format_response(result.text))
+            log.setLevel(self.log_level)
             return result
         else:
             raise SyntaxError(result.text)

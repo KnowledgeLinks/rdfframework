@@ -42,9 +42,10 @@ class DataFileManager():
             self.load(self.__file_locations__, **kwargs)
 
     def set_load_state(self, **kwargs):
-        self.loaded = []
-        self.loaded_files(reset=True)
-        self.loaded_times = self.load_times(**kwargs)
+        """
+        Reads database to get loaded file times
+        """
+        self.load_times(**kwargs)
 
     def add_file_locations(self, file_locations=[]):
         """
@@ -81,7 +82,7 @@ class DataFileManager():
 
     def loaded_files(self, **kwargs):
         """ returns a list of loaded definition files """
-        self.loaded = list(self.load_times(**kwargs))
+        # self.loaded = list(self.load_times(**kwargs))
         return self.loaded
 
     def load(self, file_locations=[], **kwargs):
@@ -102,7 +103,10 @@ class DataFileManager():
         else:
             file_locations = self.__file_locations__
         conn = self.__get_conn__(**kwargs)
+        if file_locations:
+            log.info("Uploading files to conn '%s'", conn)
         for item in file_locations:
+            log.info("loading '%s", item)
             if item[0] == 'directory':
                 self.load_directory(item[1], **kwargs)
             elif item[0] == 'filepath':
@@ -139,6 +143,8 @@ class DataFileManager():
                     permissions is selected.
         """
         # add a path for a subfolder 'vocabularies'
+        log.setLevel(kwargs.get("log_level", self.log_level))
+        log.debug("setting cache_dir")
         test_dirs = cache_dirs
         try:
             test_dirs += [__CFG__.dirs.data]
@@ -153,6 +159,8 @@ class DataFileManager():
             except TypeError:
                 pass
         self.cache_dir = cache_dir
+        log.debug("cache dir set as: '%s'", cache_dir)
+        log.setLevel(self.log_level)
 
     def load_file(self, filepath, **kwargs):
         """ loads a file into the defintion triplestore
@@ -173,7 +181,7 @@ class DataFileManager():
         conn.load_data(graph=getattr(__NSM__.kdr, filename).clean_uri,
                        data=filepath,
                        is_file=True,
-                       log_level=logging.WARNING)
+                       log_level=logging.DEBUG)
         self.__update_time__(filename, **kwargs)
         log.warning("\n\tfile: '%s' loaded\n\tconn: '%s'\n\tpath: %s",
                     filename,
@@ -256,9 +264,16 @@ class DataFileManager():
                             "")
                              as ?file)
                     }""", **kwargs)
-            return {item['file']['value']: XsdDatetime(item['time']['value'])
-                    for item in result}
+            loaded = {item['file']['value']: XsdDatetime(item['time']['value'])
+                      for item in result}
+            self.loaded = list(loaded)
+            self.loaded_times = loaded
+            log.setLevel(self.log_level)
+            return loaded
         except requests.exceptions.ConnectionError:
+            log.warning("connection error with '%s'", conn)
+            log.setLevel(self.log_level)
+            self.loaded = []
             return {}
 
     def load_directory(self, directory, **kwargs):
@@ -267,6 +282,7 @@ class DataFileManager():
         args:
             directory: full path to the directory
         """
+        log.setLevel(kwargs.get("log_level", self.log_level))
         conn = self.__get_conn__(**kwargs)
         file_extensions = kwargs.get('file_extensions', conn.rdf_formats)
         file_list = list_files(directory,
@@ -275,5 +291,6 @@ class DataFileManager():
                                include_root=True)
         for file in file_list:
             self.load_file(file[1], **kwargs)
+        log.setLevel(self.log_level)
 
 
