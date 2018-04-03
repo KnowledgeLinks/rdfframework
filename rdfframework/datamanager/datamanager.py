@@ -180,8 +180,8 @@ class DataFileManager():
         conn = self.__get_conn__(**kwargs)
         conn.load_data(graph=getattr(__NSM__.kdr, filename).clean_uri,
                        data=filepath,
-                       is_file=True,
-                       log_level=logging.DEBUG)
+                       # log_level=logging.DEBUG,
+                       is_file=True)
         self.__update_time__(filename, **kwargs)
         log.warning("\n\tfile: '%s' loaded\n\tconn: '%s'\n\tpath: %s",
                     filename,

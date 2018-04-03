@@ -55,7 +55,7 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
                 self.delay_check = kwargs
             else:
                 if self.check_status:
-                    kwargs['log_level'] = logging.DEBUG
+                    # kwargs['log_level'] = logging.DEBUG
                     self.mgr.load(**kwargs)
                 else:
                     log.warn("conn '%s' check_status failed",
