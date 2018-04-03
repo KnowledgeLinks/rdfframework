@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "GPLv3"
-__version__ = "0.0.29"
+__version__ = "0.0.30"
 
 from setuptools import find_packages, setup
 
@@ -16,7 +16,7 @@ def readme():
     except FileNotFoundError:
         readme = "Not set"
     return readme
-    
+
 
 setup(
     name='rdfframework',
@@ -33,7 +33,7 @@ setup(
         'urllib3<1.22,>=1.21.1',
         'click',
         'elasticsearch>5.4.0,<6',
-        'elasticsearch-dsl',
+        'elasticsearch_dsl',
         'Flask',
         'Flask-WTF',
         'isodate',
