@@ -55,7 +55,10 @@ class EsBase():
             doc_type = "unk"
         id_field = kwargs.get("id_field")
         for item in item_list:
-            action = get_es_action_item(item, action_settings, doc_type, id_field)
+            action = get_es_action_item(item,
+                                        action_settings,
+                                        doc_type,
+                                        id_field)
             action_list.append(action)
         return action_list
 

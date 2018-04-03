@@ -9,9 +9,10 @@ import datetime
 import functools
 import pprint, pdb
 import logging
+import multiprocessing as mp
 
 # from rdfframework import rdfclass
-from rdfframework.utilities import DictClass, make_list
+from rdfframework.utilities import DictClass, make_list, SimpleMapReduce
 from rdfframework.configuration import RdfConfigManager
 from rdfframework.datatypes import pyrdf, BaseRdfDataType, Uri
 from rdfframework.rdfclass import RdfClassBase, remove_parents, list_hierarchy
@@ -20,8 +21,26 @@ from .jsonquery import json_qry
 MODULE = __import__(__name__)
 # import rdfframework.rdfclass as rdfclass
 CFG = RdfConfigManager()
-
+pool_size = mp.cpu_count() - 1 or 1
 __a__ = Uri("rdf:type")
+
+def convert_row_main(val, i, key, output):
+    # rtn_obj = {}
+    # rtn_tup = (pyrdf(row['s']), pyrdf(row['p']), pyrdf(row['o']))
+    # return pyrdf(row['s']) #rtn_tup
+    # for key, value in row.items():
+    #     # try:
+    #     # print("convert_row_main: ", value)
+    #     # if value.get("datatype") == 'http://www.w3.org/2001/XMLSchema#dateTime':
+    #     #     pdb.set_trace()
+    #     rtn_obj[key] = pyrdf(value)
+    #     # print(rtn_obj)
+    #     # except:
+    #     #     pdb.set_trace()
+    # return rtn_obj
+    output.put((i, key, pyrdf(val),))
+    # output.put({key:pyrdf(value) for key, value in row.items()})
+
 class RdfDataset(dict):
     """ A container for holding rdf data """
     log_level = logging.INFO
@@ -430,14 +449,44 @@ class RdfDataset(dict):
             args:
                 data: a list of triples
         """
-        # if kwargs.get('debug'):
-        # for row in data:
-        #     for key, value in row.items():
-        #         if value.get('value') =="http://id.loc.gov/vocabulary/relators/cre":
-        #             pdb.set_trace()
-        #             pyrdf(value)
-        return [{key:pyrdf(value) for key, value in row.items()}
-                for row in data]
+
+        if kwargs.get("multiprocessing", False):
+            m = mp.Manager()
+            output = m.Queue()
+            pdb.set_trace()
+            # processes = [mp.Process(target=convert_row_main,
+            #                         args=(row, output,))
+            #              for row in data]
+            # # Run processes
+            # for p in processes:
+            #     p.start()
+
+            # # Exit the completed processes
+            # for p in processes:
+            #     p.join()
+            # # Get process results from the output queue
+            # return [output.get() for p in processes]
+
+            pool = mp.Pool(processes=pool_size)
+            for i, row in enumerate(data):
+                for key, val in row.items():
+                    try:
+                        pool.apply(convert_row_main, args=(val, i, key, output,))
+                    except:
+                        pass #
+            # run = [pool.apply(convert_row_main, args=(row, i, output))
+            #        for i, row in enumerate(data)]
+            for item in output:
+                pdb.set_trace()
+            return output
+            # with multiprocessing.Pool(processes=pool_size) as pool:
+            #     results = [convert_row_main, (row,))
+            #                for row in data]
+            #     converted = [r.get() for r in results]
+            # return converted #pool_outputs
+        else:
+            return [{key:pyrdf(value) for key, value in row.items()}
+                    for row in data]
 
     # def json_qry(self, qry_str, params):
     def json_qry(*args):

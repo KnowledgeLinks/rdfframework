@@ -156,8 +156,11 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
     def rdflib(self):
         return rdflib.Literal(self.value, datatype=self.datatype.rdflib)
 
+    def __call__(self):
+        return
 
-@functools.lru_cache(maxsize=10000)
+
+# @functools.lru_cache(maxsize=10000)
 class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
     """ URI/IRI class for working with RDF data """
     class_type = "Uri"
@@ -186,6 +189,9 @@ class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
                     setattr(self, attr, str(getattr(self, "__%s__" % attr)))
         self.hash_val = hash(self.pyuri)
 
+    # def __call__(self):
+    #     return
+    # __wrapped__ = Uri
     # def __eq__(self, value):
     #     if not isinstance(value, Uri.__wrapped__):
     #         # pdb.set_trace()

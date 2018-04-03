@@ -155,11 +155,13 @@ class DefinitionManager(DataFileManager, metaclass=DefManagerMeta):
             custom: list of custom definitions to load
         """
         self.__set_cache_dir__(**kwargs)
-        self.__get_conn__(**kwargs)
+        conn = self.__get_conn__(**kwargs)
         self.set_load_state(**kwargs)
         super(DefinitionManager, self).load(file_locations, **kwargs)
         if not file_locations:
             file_locations = self.__file_locations__
+        if file_locations:
+            log.info("loading vocabs into conn '%s'", conn)
         for item in file_locations:
             if item[0] == 'vocabularies':
                 vocabs = item[1]

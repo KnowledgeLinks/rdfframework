@@ -631,7 +631,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
             """ test to see if the value is a uri or bnode
 
             Returns: Uri or Bnode """
-            if not isinstance(value, (Uri.__wrapped__, BlankNode)):
+            # .__wrapped__
+            if not isinstance(value, (Uri, BlankNode)):
                 try:
                     if value.startswith("_:"):
                         return BlankNode(value)

@@ -5,29 +5,19 @@ import inspect
 import logging
 import gc
 import os
-# import os
-# import rdflib
-# import requests
-# import sys
-# import uuid
 import pdb
-# import urllib
 import time
-# import queue
 import threading
-# import json
-# import socket
 import copy
 import json
 
-try:
-    MNAME = inspect.stack()[0][1]
-except:
-    MNAME = "esloaders"
-MLOG_LVL = logging.DEBUG
-logging.basicConfig(level=logging.DEBUG)
-lg_r = logging.getLogger("requests")
-lg_r.setLevel(logging.CRITICAL)
+from elasticsearch_dsl import Search
+
+# logging.basicConfig(level=logging.DEBUG)
+# lg_r = logging.getLogger("requests")
+# lg_r.setLevel(logging.CRITICAL)
+
+from elasticsearch_dsl import Search
 
 from rdfframework.utilities import DataStatus, pp, render_without_request
 from rdfframework.configuration import RdfConfigManager
@@ -48,24 +38,12 @@ class EsRdfBulkLoader(object):
     """ Bulk loads data from the triplestore to elasticsearch """
 
     log_level = logging.DEBUG
-    items_query_template = """
-        SELECT DISTINCT ?s
-        {{
-            VALUES ?rdftypes {{\n\t\t{rdf_types} }} .
-            ?s a ?rdftypes .
-            optional {{ ?s dcterm:modified ?modTime }} .
-            optional {{ ?s kds:esIndexTime ?time }} .
-            optional {{ ?s kds:esIndexError ?error }}
-            filter (
-                !(bound(?time)) ||
-                ?time<?modTime  ||
-                (bound(?error) && ?time < {idx_start_time}))
-        }} """
 
     def __init__(self, rdf_class, tstore_conn, search_conn, **kwargs):
         log.setLevel(self.log_level)
         self.tstore_conn = tstore_conn
         self.search_conn = search_conn
+
         try:
             self.es_index = rdf_class.es_defs.get('kds_esIndex')[0]
             self.es_doc_type = rdf_class.es_defs.get('kds_esDocType')[0]
@@ -73,23 +51,25 @@ class EsRdfBulkLoader(object):
             log.warn("'%s' is NOT cofigured for indexing to elasticsearch",
                      rdf_class)
             return
+        self.search = Search(using=search_conn.es).index(self.es_index)
         self.rdf_class = rdf_class
         self._set_es_workers(**kwargs)
+        self.idx_start_time = XsdDatetime(datetime.datetime.utcnow())
         # add all of the sublcasses for a rdf_class
-        rdf_types = [rdf_class.uri] + [item.uri
-                                       for item in rdf_class.subclasses]
-        self.query = self.items_query_template.format(
-                rdf_types="\n\t\t".join(rdf_types),
-                idx_start_time=XsdDatetime(datetime.datetime.utcnow()).sparql)
+        self.rdf_types = [rdf_class.uri] + [item.uri
+                                            for item in rdf_class.subclasses]
+        # self.query = self.items_query_template.format(
+        #         rdf_types="\n\t\t".join(rdf_types),
+        #         idx_start_time=XsdDatetime(datetime.datetime.utcnow()).sparql)
         EsMappings().initialize_indices()
         if kwargs.get("reset_idx"):
             self.delete_idx_status(self.rdf_class)
         self.count = 0
-        kwargs['uri_list'] = self._get_uri_list()
+        kwargs['uri_list'] = self.get_uri_list()
         # self._index_group_with_subgroup(**kwargs)
         while len(kwargs['uri_list']) > 0:
             self._index_group_with_subgroup(**kwargs)
-            kwargs['uri_list'] = self._get_uri_list()
+            kwargs['uri_list'] = self.get_uri_list()
 
     def _set_es_workers(self, **kwargs):
         """
@@ -114,7 +94,7 @@ class EsRdfBulkLoader(object):
             new_esbase.es_index = es_index
             new_esbase.doc_type = es_doc_type
             log.info("Indexing '%s' into ES index '%s' doctype '%s'",
-                     class_name,
+                     class_name.pyuri,
                      es_index,
                      es_doc_type)
             return new_esbase
@@ -154,7 +134,7 @@ class EsRdfBulkLoader(object):
         bname = '%s-%s' % (batch_num, num)
         log.debug("batch_num '%s' starting es_json conversion",
                   bname)
-        qry_data = get_all_item_data(uri_list,
+        qry_data = get_all_item_data([item[0] for item in uri_list],
                                      self.tstore_conn,
                                      rdfclass=self.rdf_class)
         log.debug("batch_num '%s-%s' query_complete | count: %s",
@@ -187,12 +167,38 @@ class EsRdfBulkLoader(object):
         del uri_list
         log.debug("batch_num '%s-%s' converted to es_json", batch_num, num)
 
-    def _get_uri_list(self):
+    def get_uri_list(self, **kwargs):
         """
         Returns a list of Uris to index
         """
-        results = [Uri(item['s']['value'])
-                   for item in self.tstore_conn.query(sparql=self.query)]
+        index_status_filter = """
+                optional {{ ?s dcterm:modified ?modTime }} .
+                optional {{ ?s kds:esIndexTime ?time }} .
+                optional {{ ?s kds:esIndexError ?error }}
+                filter (
+                    !(bound(?time)) ||
+                    ?time<?modTime  ||
+                    (bound(?error) && ?time < {idx_start_time}))
+                """.format(idx_start_time=self.idx_start_time.sparql)
+        items_query_template = """
+            SELECT DISTINCT ?s ?es_id
+            {{
+                VALUES ?rdftypes {{\n\t\t{rdf_types} }} .
+                ?s a ?rdftypes .
+                BIND(SHA1(STR(?s)) as ?es_id) .
+                {status_filter}
+            }}
+            {order_by}
+            """
+        status_filter = index_status_filter \
+                        if not kwargs.get("no_status") else ""
+        order_by = kwargs.get("order_by", "")
+        sparql = items_query_template.format(
+                rdf_types="\n\t\t".join(self.rdf_types),
+                status_filter=status_filter,
+                order_by=order_by)
+        results = [(Uri(item['s']['value']), item['es_id']['value'],)
+                   for item in self.tstore_conn.query(sparql=sparql)]
         return results #[:100]
 
     def _index_group_with_subgroup(self, **kwargs):
@@ -284,8 +290,11 @@ class EsRdfBulkLoader(object):
             del action_list
             del self.batch_uris[batch_num]
             del self.batch_data[batch_num]
-            del pyrdf.memorized
-            pyrdf.memorized = {}
+            try:
+                del pyrdf.memorized
+                pyrdf.memorized = {}
+            except AttributeError:
+                pass
             while gc.collect() > 0:
                 pass
             # pdb.set_trace()
@@ -452,4 +461,29 @@ class EsRdfBulkLoader(object):
         sparql = sparql_template.format("\n\t\t".join(rdf_types))
         log.warn("Deleting index status for %s", rdf_class.uri)
         return self.tstore_conn.update_query(sparql)
+
+    def get_es_ids(self):
+        """
+        reads all the elasticssearch ids for an index
+        """
+        search = self.search.source(['uri']).sort(['uri'])
+        es_ids = [item.meta.id for item in search.scan()]
+        return es_ids
+
+    def validate_index(self, rdf_class):
+        """
+        Will compare the triplestore and elasticsearch index to ensure that
+        that elasticsearch and triplestore items match. elasticsearch records
+        that are not in the triplestore will be deleteed
+        """
+        es_ids = set(self.get_es_ids())
+        tstore_ids = set([item[1]
+                          for item in self.get_uri_list(no_status=True)])
+        diff = es_ids - tstore_ids
+        if diff:
+            pdb.set_trace()
+            action_list = self.es_worker.make_action_list(diff,
+                                                          action_type="delete")
+            results = self.es_worker.bulk_save(action_list)
+
 

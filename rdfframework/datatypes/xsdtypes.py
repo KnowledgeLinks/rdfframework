@@ -171,7 +171,11 @@ class XsdDate(date, BaseRdfDataType):
             dd = yy.day
             mm = yy.month
             yy = yy.year
-        return date.__new__(cls, yy, mm, dd, **kwargs)
+        try:
+            return date.__new__(cls, yy, mm, dd, **kwargs)
+        except:
+            vals = tuple([1900, 1, 1])
+            return date.__new__(cls, *vals)
 
     def __init__(self, *args, **kwargs):
         self.value = self
@@ -186,6 +190,7 @@ class XsdDatetime(datetime, BaseRdfDataType):
     es_format = "strict_date_optional_time||epoch_millis"
 
     def __new__(cls, *args, **kwargs):
+        # print("args: ", args)
         yy = args[0]
         mm = args[1:2][0] if args[1:2] else 0
         dd = args[2:3][0] if args[2:3] else 0
@@ -207,7 +212,11 @@ class XsdDatetime(datetime, BaseRdfDataType):
             mm = yy.month
             yy = yy.year
         vals = tuple([yy, mm, dd, hh, mi, ss, ms, tz])
-        return datetime.__new__(cls, *vals, **kwargs)
+        try:
+            return datetime.__new__(cls, *vals, **kwargs)
+        except:
+            vals = tuple([1900, 1, 1, 0, 0, 0, 0])
+            return datetime.__new__(cls, *vals)
 
     def __init__(self, *args, **kwargs):
         self.value = self
@@ -403,7 +412,7 @@ __DT_LOOKUP__ = BaseRdfDataType.__registry__
 #         DT_LOOKUP[xsd_class.datatype] = xsd_class
 #     DT_LOOKUP[xsd_class] = xsd_class
 
-@memorize
+# @memorize
 def pyrdf2(value, class_type=None, datatype=None, lang=None, **kwargs):
     """ Coverts an input to one of the rdfdatatypes classes
 
@@ -451,7 +460,7 @@ __TYPE_MATCH__ = {"bnode": 'BlankNode',
                   # 'xsd_string' as the default
                   "literal": 'xsd_string'}
 
-@memorize
+# @memorize
 def pyrdf(value, class_type=None, datatype=None, **kwargs):
     """ Coverts an input to one of the rdfdatatypes classes
 
@@ -465,6 +474,7 @@ def pyrdf(value, class_type=None, datatype=None, **kwargs):
     if isinstance(value, BaseRdfDataType):
         return value
     if isinstance(value, dict):
+        value = value.copy()
         class_type = value.pop('type')
         try:
             datatype = value.pop('datatype')
@@ -477,6 +487,7 @@ def pyrdf(value, class_type=None, datatype=None, **kwargs):
     if not datatype:
         datatype = type(value)
     try:
+        # print("pyrdf: ", value, " class_type: ", class_type, " datatype: ", datatype)
         return __DT_LOOKUP__[class_type][datatype](value, **kwargs)
     except KeyError:
         rtn_val = BaseRdfDataType(value)

@@ -41,6 +41,7 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
         self.mgr = None
         # if kwargs.get("data_upload"):
         import rdfframework.datamanager as dm
+        log.info("Setting Data Manager for conn '%s'", kwargs.get('name'))
         mgr = kwargs.get('data_file_manager', kwargs.get("name", True))
         if isinstance(mgr, dm.DataFileManager):
             self.mgr = mgr
@@ -57,6 +58,9 @@ class RdfwConnections(metaclass=KeyRegistryMeta):
             else:
                 if self.check_status:
                     self.mgr.load(**kwargs)
+                else:
+                    log.warn("conn '%s' check_status failed",
+                             kwargs.get('name'))
 
     def delay_check_pass(self):
         if self.delay_check:
