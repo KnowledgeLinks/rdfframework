@@ -863,7 +863,8 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         if not self.__config__.get("CONNECTIONS"):
             return
         conn_mgr = get_obj_frm_str("rdfframework.connections.ConnManager")
-        self.__config__['conns'] = conn_mgr(self.__config__['CONNECTIONS'])
+        self.__config__['conns'] = conn_mgr(self.__config__['CONNECTIONS'],
+                                            **kwargs)
         # RdfPropertyFactory(CFG.def_tstore, reset=reset)
         # RdfClassFactory(CFG.def_tstore, reset=reset)
 

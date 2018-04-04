@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "GPLv3"
-__version__ = "0.0.32"
+__version__ = "0.0.33"
 
 from setuptools import find_packages, setup
 
@@ -57,7 +57,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.4',
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: GPLv3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Topic :: Database",
         "Topic :: Text Processing :: General",
         "Topic :: Text Processing :: Indexing",

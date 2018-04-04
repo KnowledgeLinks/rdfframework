@@ -213,8 +213,8 @@ class EsRdfBulkLoader(object):
         # results = results[:100]
         # Start processing through uri
         batch_file = os.path.join(CFG.dirs.logs, "batch_list.txt")
-        with open(batch_file, "w") as fo:
-            fo.write("{")
+        # with open(batch_file, "w") as fo:
+        #     fo.write("{")
         log.info("'%s' items to index", len(uri_list))
         self.time_start = datetime.datetime.now()
         batch_size = kwargs.get("batch_size", 12000)
@@ -252,10 +252,10 @@ class EsRdfBulkLoader(object):
                         sub_batch.append(uri_list.pop()) #subj)
                     except IndexError:
                         pass
-                    with open(batch_file, "a") as fo:
-                        fo.write(json.dumps({str('%s-%s' % (batch_num, i+1)):
-                                             [item[0].sparql
-                                              for item in sub_batch]})[1:-1]+",\n")
+                    # with open(batch_file, "a") as fo:
+                    #     fo.write(json.dumps({str('%s-%s' % (batch_num, i+1)):
+                    #                          [item[0].sparql
+                    #                           for item in sub_batch]})[1:-1]+",\n")
                     if not kwargs.get("no_threading", False):
                         th = threading.Thread(name=batch_start + i + 1,
                                               target=self._index_sub,
@@ -312,11 +312,11 @@ class EsRdfBulkLoader(object):
             for name, indexer in self.other_indexers.items():
                 self.batch_data[batch_num][name] = []
             log.debug(datetime.datetime.now() - self.time_start)
-        with open(batch_file, 'rb+') as fo:
-            fo.seek(-2, os.SEEK_END)
-            fo.truncate()
-            # fo.close()
-            fo.write("}".encode())
+        # with open(batch_file, 'rb+') as fo:
+        #     fo.seek(-2, os.SEEK_END)
+        #     fo.truncate()
+        #     # fo.close()
+        #     fo.write("}".encode())
 
     def _update_triplestore(self, es_result, action_list, **kwargs):
         """

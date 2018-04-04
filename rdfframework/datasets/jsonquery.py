@@ -104,7 +104,10 @@ def get_json_qry_item(dataset, param, no_key=False):
                         rtn_list += item
                     else:
                         rtn_list.append(item)
-                return list(set(rtn_list))
+                try:
+                    return list(set(rtn_list))
+                except TypeError:
+                    return rtn_list
             return value
 
         def test_elem(elem, filter_tup):
