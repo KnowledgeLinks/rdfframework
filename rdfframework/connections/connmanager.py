@@ -157,6 +157,11 @@ class ConnManager(metaclass=ConnManagerMeta):
         for conn in conn_list:
             conn['delay_check'] = kwargs.get('delay_check', False)
             self.set_conn(**conn)
+        if kwargs.get('delay_check'):
+            test = self.wait_for_conns(**kwargs)
+            if not test:
+                log.critical("\n\nEXITING:Unable to establish connections \n"
+                             "%s", test)
 
     @property
     def failing(self):
@@ -184,7 +189,6 @@ class ConnManager(metaclass=ConnManagerMeta):
                 start_delay: number of seconds to wait before checking status
                 interval: number of seconds to wait between checks
         '''
-        log = logging.getLogger("%s.%s" % (self.log, inspect.stack()[0][3]))
         log.setLevel(kwargs.get('log_level',self.log_level))
         timestamp = time.time()
         last_check = time.time() + start_delay - interval

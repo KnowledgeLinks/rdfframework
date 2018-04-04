@@ -66,7 +66,7 @@ class MakeDistinct(JsonQryProcessor):
         return rtn_list
 
 class NoLangTag(JsonQryProcessor):
-    """ Takes a list when called and removes dulplicates """
+    """ Removes language tags from string items """
     key = "no_lang_tag"
 
     def __init__(self, active=True):
@@ -79,3 +79,18 @@ class NoLangTag(JsonQryProcessor):
         for action in action_list:
             rtn_list.append(XsdString(str(action)))
         return rtn_list
+
+class First(JsonQryProcessor):
+    """ Returns first item or None. Removes list enclosure """
+    key = "first"
+
+    def __init__(self, active=True):
+        self.active = cbool(active)
+
+    def __call__(self, action_list):
+        if not self.active:
+            return action_list
+        if action_list:
+            return action_list[0]
+        else:
+            return None
