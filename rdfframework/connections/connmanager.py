@@ -180,7 +180,7 @@ class ConnManager(metaclass=ConnManagerMeta):
             self.conns[key].log_level = level
         return failing_conns
 
-    def wait_for_conns(self, timeout=10, start_delay=0, interval=5, **kwargs):
+    def wait_for_conns(self, timeout=60, start_delay=0, interval=5, **kwargs):
         ''' delays unitil all connections are working
 
             args:
