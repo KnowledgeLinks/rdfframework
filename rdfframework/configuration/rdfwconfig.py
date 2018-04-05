@@ -882,6 +882,11 @@ class RdfConfigManager(metaclass=ConfigSingleton):
         for name, args in auto.items():
             if name not in dirs:
                 dirs[name] = os.path.join(dirs.get(args[0], args[0]), args[1])
+        for name, path in dirs.items():
+            path_parts = [item for item in path.split(os.path.sep) if item]
+            if path_parts and path_parts[0] in dirs:
+                new_parts = [dirs[path_parts[0]]] + path_parts[1:]
+                dirs[name] = os.path.join(*new_parts)
         paths = sorted(dirs.values())
         for path in paths:
             if not os.path.exists(path):

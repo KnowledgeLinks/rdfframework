@@ -4,7 +4,7 @@ __author_email__ = ','.join(['knowledgelinks.io@gmail.com',
                              'mstabile75@gmail.com'
                             ])
 __license__ = "GPLv3"
-__version__ = "0.0.35"
+__version__ = "0.0.36"
 
 from setuptools import find_packages, setup
 
