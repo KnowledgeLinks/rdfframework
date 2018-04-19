@@ -13,7 +13,7 @@ from rdfframework.utilities import cbool, is_not_null, DictClass, new_id, \
 from .datatypeerrors import NsPrefixExistsError, NsUriExistsError, \
         NsUriBadEndingError
 from .uriformatters import http_formatter, uri_formatter, ttl_formatter, \
-        pyuri_formatter, rdflib_formatter
+        pyuri_formatter, rdflib_formatter, xmletree_formatter
 
 import base64
 
@@ -99,7 +99,8 @@ class BaseRdfDataType(metaclass=RegInstanceMeta):
                                            "sparql_uri",
                                            "pyuri",
                                            "clean_uri",
-                                           "rdflib"]}]
+                                           "rdflib",
+                                           "etree"]}]
     __nested_idx_attrs__ = {"type"}
     type = "literal"
     default_method = "sparql"
@@ -228,6 +229,13 @@ class Uri(BaseRdfDataType, str, metaclass=RegPerformInstanceMeta):
             encapsulation
         """
         return http_formatter(*self.value)
+
+    @property
+    def etree(self):
+        """
+        Returns string in the python xml etree format
+        """
+        return xmletree_formatter(*self.value)
 
     def __str__(self):
         return self.clean_uri

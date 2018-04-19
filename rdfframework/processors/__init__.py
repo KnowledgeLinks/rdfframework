@@ -9,6 +9,7 @@ Processors are used to manipulate rdf date within the framework.
 """
 
 from .propertyprocessors import PropertyProcessor
+from .classprocessors import ClassProcessor
 
 
 __author__ = "Mike Stabile, Jeremy Nelson"

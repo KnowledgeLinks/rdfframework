@@ -11,6 +11,27 @@ from rdfframework.datatypes import RdfNsManager, Uri
 NSM = RdfNsManager()
 DEBUG = True
 
+def run_query_series(queries, conn):
+    """
+    Iterates through a list of queries and runs them through the connection
+
+    Args:
+    -----
+        queries: list of strings or tuples containing (query_string, kwargs)
+        conn: the triplestore connection to use
+    """
+    results = []
+    for item in queries:
+        qry = item
+        kwargs = {}
+        if isinstance(item, tuple):
+            qry = item[0]
+            kwargs = item[1]
+        result = conn.update_query(qry, **kwargs)
+        # pdb.set_trace()
+        results.append(result)
+    return results
+
 def get_all_item_data(items, conn, graph=None, output='json', **kwargs):
     """ queries a triplestore with the provided template or uses a generic
     template that returns triples 3 edges out in either direction from the

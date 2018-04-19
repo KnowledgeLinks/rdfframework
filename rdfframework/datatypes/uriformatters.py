@@ -57,3 +57,12 @@ def rdflib_formatter(namespace, value):
         value: end value to attach to the namespace
     """
     return URIRef(http_formatter(namespace, value))
+
+def xmletree_formatter(namespace, value):
+    """ formats the URI as an 'rdflib' URIRef
+
+    args:
+        namespace: RdfNamespace or tuple in the format of (prefix, uri,)
+        value: end value to attach to the namespace
+    """
+    return "{%s}%s" % (namespace[1], value)

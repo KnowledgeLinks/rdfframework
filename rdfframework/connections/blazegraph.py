@@ -79,7 +79,7 @@ class Blazegraph(RdfwConnections):
                            'json': 'application/sparql-results+json',
                            'binary': 'application/x-binary-rdf-results-table',
                            'tsv': 'text/tab-separated-values',
-                           'cxv': 'text/csv'}
+                           'csv': 'text/csv'}
     # file extensions that contain rdf data
     rdf_formats = {'rdf': 'application/rdf+xml',
                    'xml': 'application/rdf+xml',
