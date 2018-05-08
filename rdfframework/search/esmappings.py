@@ -125,6 +125,7 @@ class EsMappings():
         }
 
         for idx_cls in idx_obj[idx_name]:
+            # pdb.set_trace()
             es_map['body']['mappings'][idx_cls.es_defs['kds_esDocType'][0]] = \
                     {'properties': idx_cls.es_mapping(idx_cls)}
 

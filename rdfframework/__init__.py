@@ -24,7 +24,7 @@ import types
 import logging
 
 __author__ = "Mike Stabile, Jeremy Nelson"
-__version__ = '0.0.37'
+__version__ = '0.0.38'
 
 def package_modules(parent_module, registered=[]):
     parent_name = parent_module.__name__

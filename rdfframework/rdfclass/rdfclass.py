@@ -321,8 +321,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
                 use_prop = len(set(value.owl_inverseOf) - parent_props) > 0
             except AttributeError:
                 use_prop = True
-            if not use_prop:
-                print(prop)
+            # if not use_prop:
+            #     print(prop)
             if prop in nested_props and use_prop:
                 return True
             return False
@@ -583,6 +583,8 @@ class RdfClassBase(dict, metaclass=RdfClassMeta):
         rml_maps = self.get_all_rml(role=role)
         if rml_maps:
                 rtn_obj['rml_map'] = rml_maps
+        # if self.get('bf_contribution'):
+        #     pdb.set_trace()
         return rtn_obj
 
     def get_rml(self, rml_def, **kwargs):

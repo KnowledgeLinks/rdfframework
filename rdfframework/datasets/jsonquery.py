@@ -50,7 +50,9 @@ def parse_json_qry(qry_str):
     or_parts = main_parts.pop(0).strip()
     params = param_analyzer(main_parts)
     rtn_list = []
-    for or_part in [item.strip() for item in or_parts.split(",")]:
+    for or_part in [item.strip()
+                    for item in or_parts.split(",")
+                    if item.strip()]:
         dallor, asterick, question_mark = None, None, None
         dot_parts = or_part.split(".")
         rtn_list.append(([part_analyzer(part, i) \

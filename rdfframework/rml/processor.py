@@ -490,9 +490,12 @@ class Processor(object, metaclass=KeyRegistryMeta):
         rtn_format = kwargs.get("rtn_format")
         if rtn_format:
             if rtn_format == "json-ld":
-                return self.json_ld(output, **kwargs)
+                result = self.json_ld(output, **kwargs)
+                # pdb.set_trace()
+                return result
             else:
                 return output.serialize(format=rtn_format).decode()
+
         return output
 
     def json_ld(self, output, **kwargs):
@@ -512,6 +515,7 @@ class Processor(object, metaclass=KeyRegistryMeta):
                 for key, val in item.items():
                     if key in test_flds and not isinstance(val, list):
                         json_data['@graph'][i][key] = [val]
+        # print(json.dumps(json_data, indent=4))
         return json.dumps(json_data, indent=4)
 
 class CSVProcessor(Processor):
@@ -1098,6 +1102,9 @@ class SPARQLProcessor(Processor):
                 if pred_obj_map.json_query and self.use_json_qry:
                     json_query = pred_obj_map.json_query
                     start = datetime.datetime.now()
+                    # pdb.set_trace()
+                    # if str(pred_obj_map.predicate) == "http://purl.org/dc/terms/creator":
+                    #     pdb.set_trace()
                     pre_obj_bindings = kwargs['dataset'].json_qry(json_query,
                                                                   {'$': entity})
                 else:
