@@ -9,6 +9,7 @@ if __name__ == '__main__':
     from utilities.test_fileutilities import *
     from search import *
     from sparql import *
+    from utilities import *
     from datatypes.test_rdfdatatypes import *
     from datatypes.test_namespaces import *
     unittest.main()
