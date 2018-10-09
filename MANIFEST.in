@@ -1,0 +1,2 @@
+recursive-include rdfframework/sparql/queries *.rq
+recursive-include rdfframework/datamanager/vocabularies *.*

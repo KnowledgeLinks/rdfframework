@@ -1,0 +1,136 @@
+PREFIX ore: <http://www.openarchives.org/ore/terms/>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX dbr: <http://dbpedia.org/resource/>
+PREFIX kds: <http://knowledgelinks.io/ns/data-structures/>
+PREFIX edm: <http://www.europeana.eu/schemas/edm/>
+PREFIX mods: <http://www.loc.gov/mods/v3>
+PREFIX schema: <http://schema.org/>
+PREFIX bf: <http://id.loc.gov/ontologies/bibframe/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX m21: <http://knowledgelinks.io/ns/marc21/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterm: <http://purl.org/dc/terms/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX acl: <http://www.w3.org/ns/auth/acl#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX relator: <http://id.loc.gov/vocabulary/relators/>
+PREFIX xml: <http://www.w3.org/XML/1998/namespace>
+PREFIX es: <http://knowledgelinks.io/ns/elasticsearch/>
+PREFIX dbp: <http://dbpedia.org/property/>
+PREFIX loc: <http://id.loc.gov/authorities/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX dpla: <http://dp.la/about/map/>
+PREFIX kdr: <http://knowledgelinks.io/ns/data-resources/>
+
+SELECT DISTINCT ?RdfClass ?item ?s ?p ?o
+{
+  {
+    SELECT DISTINCT ?RdfClass
+    {
+      {
+      	?RdfClass rdf:type rdfs:Class .
+      } UNION {
+        ?RdfClass rdf:type owl:Class .
+      } UNION {
+        ?RdfClass rdfs:subClassOf ?ignore .
+      }
+      filter(isiri(?RdfClass))
+    }
+  }
+  BIND(?RdfClass as ?item)
+  {
+      # get all of the triples for the base item
+      ?item ?p ?o .
+      BIND(?item as ?s) .
+  } UNION {
+      # get the domain tied properties
+      ?s rdfs:domain ?item .
+      ?s ?p ?o .
+  } UNION {
+      # get the 1st level blanknodes tied by kds:classUri
+      ?prop rdfs:domain ?item .
+      ?prop ?p1 ?s .
+      # selects only the base linked subjects
+      {
+        ?s kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s kds:classUri ?item .
+      }
+      ?s ?p ?o .
+      FILTER isblank(?s)
+  } UNION {
+      # get the 2nd level blanknodes tied by kds:classUri
+      ?prop rdfs:domain ?item .
+      ?prop ?p0 ?s1 .
+      # selects only the base linked subjects
+      {
+        ?s1 kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s1 kds:classUri ?item .
+      }
+      ?s1 ?p1 ?s .
+      ?s ?p ?o
+      FILTER isblank(?s)
+  } UNION {
+      # get the 3rd level blanknodes tied by kds:classUri
+      ?prop rdfs:domain ?item .
+      ?prop ?p0 ?s1 .
+      # selects only the base linked subjects
+      {
+        ?s1 kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s1 kds:classUri ?item .
+      }
+      ?s1 ?p1 ?s2 .
+      ?s2 ?p2 ?s .
+      ?s ?p ?o
+      FILTER isblank(?s)
+  } UNION {
+      # get the domain tied properties
+      ?s schema:domainIncludes ?item .
+      ?s ?p ?o .
+  } UNION {
+      # get the 1st level blanknodes tied by kds:classUri
+      ?prop schema:domainIncludes ?item .
+      ?prop ?p1 ?s .
+      # selects only the base linked subjects
+      {
+        ?s kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s kds:classUri ?item .
+      }
+      ?s ?p ?o .
+      FILTER isblank(?s)
+  } UNION {
+      # get the 2nd level blanknodes tied by kds:classUri
+      ?prop schema:domainIncludes ?item .
+      ?prop ?p0 ?s1 .
+      # selects only the base linked subjects
+      {
+        ?s1 kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s1 kds:classUri ?item .
+      }
+      ?s1 ?p1 ?s .
+      ?s ?p ?o
+      FILTER isblank(?s)
+  } UNION {
+      # get the 3rd level blanknodes tied by kds:classUri
+      ?prop schema:domainIncludes ?item .
+      ?prop ?p0 ?s1 .
+      # selects only the base linked subjects
+      {
+        ?s1 kds:classUri kdr:AllClasses .  
+      } UNION {
+        ?s1 kds:classUri ?item .
+      }
+      ?s1 ?p1 ?s2 .
+      ?s2 ?p2 ?s .
+      ?s ?p ?o
+      FILTER isblank(?s)
+  }
+}

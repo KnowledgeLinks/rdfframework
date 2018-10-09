@@ -5,6 +5,11 @@ __author__ = "Mike Stabile"
 
 pp = pprint.PrettyPrinter(indent=2)
 
+def p_args(args, kwargs={}):
+    return "\n\t\t".join(["args[%s] = %s" % (i, v) \
+            for i, v in enumerate(args)]) + \
+           "\n\t\tkwargs = %s" % kwargs
+
 def dumpable_obj(obj):
     ''' takes an object that fails with json.dumps and converts it to
     a json.dumps dumpable object. This is useful for debuging code when
