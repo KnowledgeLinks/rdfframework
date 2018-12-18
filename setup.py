@@ -30,7 +30,7 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'urllib3<1.22,>=1.21.1',
+        'urllib3>=1.23',
         'click',
         'elasticsearch>5.4.0,<6',
         'elasticsearch_dsl',
