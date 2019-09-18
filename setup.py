@@ -30,9 +30,9 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'urllib3<1.22,>=1.21.1',
+        'urllib3>=1.23',
         'click',
-        'elasticsearch>5.4.0,<6',
+        'elasticsearch>6.0.0,<7.0.0',
         'elasticsearch_dsl',
         'Flask',
         'Flask-WTF',
